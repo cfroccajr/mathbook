@@ -520,6 +520,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- The front matter has its own style -->
 <xsl:template match="frontmatter" mode="section-header" />
 
+<!-- A book or article is the top level, so the   -->
+<!-- masthead might suffice, else an author can   -->
+<!-- provide a frontmatter/titlepage to provide   -->
+<!-- more specific information.  In either event, -->
+<!-- a typical section header is out of place.    -->
+<xsl:template match="book|article" mode="section-header" />
 
 <!-- ######## -->
 <!-- Headings -->
@@ -854,17 +860,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="notation-list">
     <table>
         <tr>
-            <th style="text-align:left">
+            <th style="text-align:left;">
                 <xsl:call-template name="type-name">
                     <xsl:with-param name="string-id" select="'symbol'" />
                 </xsl:call-template>
             </th>
-            <th style="text-align:left">
+            <th style="text-align:left;">
                 <xsl:call-template name="type-name">
                     <xsl:with-param name="string-id" select="'description'" />
                 </xsl:call-template>
             </th>
-            <th style="text-align:left">
+            <th style="text-align:left;">
                 <xsl:call-template name="type-name">
                     <xsl:with-param name="string-id" select="'location'" />
                 </xsl:call-template>
@@ -879,15 +885,15 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Create a cross-reference to enclosing content -->
 <xsl:template match="notation" mode="backmatter">
     <tr>
-        <td>
+        <td style="text-align:left; vertical-align:top;">
             <xsl:text>\(</xsl:text>
             <xsl:value-of select="usage" />
             <xsl:text>\)</xsl:text>
         </td>
-        <td>
+        <td style="text-align:left; vertical-align:top;">
             <xsl:apply-templates select="description" />
         </td>
-        <td>
+        <td style="text-align:left; vertical-align:top;">
             <xsl:apply-templates select="." mode="enclosure-xref" />
         </td>
     </tr>
@@ -2485,7 +2491,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <!-- no heading, since captioned -->
-<xsl:template match="&FIGURE-LIKE;|list" mode="heading-birth" />
+<xsl:template match="&FIGURE-LIKE;" mode="heading-birth" />
 
 <xsl:template match="figure|table|listing" mode="body">
     <xsl:apply-templates select="*[not(self::caption)]"/>
@@ -3223,6 +3229,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}</xsl:text>
     <xsl:apply-templates select="." mode="alignat-columns" />
     <xsl:apply-templates select="text()|var|fillin" />
+    <!-- look ahead to absorb immediate sentence-ending punctuation -->
+    <xsl:apply-templates select="." mode="get-sentence-punctuation" />
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
@@ -3237,6 +3245,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}</xsl:text>
     <xsl:apply-templates select="." mode="alignat-columns" />
     <xsl:apply-templates select="text()|var|fillin" />
+    <!-- look ahead to absorb immediate sentence-ending punctuation -->
+    <xsl:apply-templates select="." mode="get-sentence-punctuation" />
     <!-- label original -->
     <xsl:apply-templates select="." mode="label" />
     <xsl:apply-templates select="." mode="tag" />
@@ -3251,6 +3261,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}</xsl:text>
     <xsl:apply-templates select="." mode="alignat-columns" />
     <xsl:apply-templates select="text()|var|fillin" />
+    <!-- look ahead to absorb immediate sentence-ending punctuation -->
+    <xsl:apply-templates select="." mode="get-sentence-punctuation" />
     <xsl:apply-templates select="." mode="tag" />
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
@@ -3294,6 +3306,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- (4) Last row special, has no line-break marker    -->
 <xsl:template match="md/mrow">
     <xsl:apply-templates select="text()|xref|var|fillin" />
+    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
+        <!-- look ahead to absorb immediate sentence-ending punctuation -->
+        <!-- pass the context as enclosing environment (md)             -->
+        <xsl:apply-templates select="parent::md" mode="get-sentence-punctuation" />
+    </xsl:if>
     <xsl:if test="@number='yes'">
         <!-- label original -->
         <xsl:apply-templates select="." mode="label" />
@@ -3307,6 +3324,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <xsl:template match="md/mrow" mode="duplicate">
     <xsl:apply-templates select="text()|xref|var|fillin" />
+    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
+        <!-- look ahead to absorb immediate sentence-ending punctuation -->
+        <!-- pass the context as enclosing environment (md)             -->
+        <xsl:apply-templates select="parent::md" mode="get-sentence-punctuation" />
+    </xsl:if>
     <xsl:if test="@number='yes'">
         <xsl:apply-templates select="." mode="tag"/>
     </xsl:if>
@@ -3318,6 +3340,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <xsl:template match="mdn/mrow">
     <xsl:apply-templates select="text()|xref|var|fillin" />
+    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
+        <!-- look ahead to absorb immediate sentence-ending punctuation -->
+        <!-- pass the context as enclosing environment (md)             -->
+        <xsl:apply-templates select="parent::md" mode="get-sentence-punctuation" />
+    </xsl:if>
     <xsl:choose>
         <xsl:when test="@number='no'">
             <xsl:text>\notag</xsl:text>
@@ -3336,6 +3363,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <xsl:template match="mdn/mrow" mode="duplicate">
     <xsl:apply-templates select="text()|xref|var|fillin" />
+    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
+        <!-- look ahead to absorb immediate sentence-ending punctuation -->
+        <!-- pass the context as enclosing environment (md)             -->
+        <xsl:apply-templates select="parent::md" mode="get-sentence-punctuation" />
+    </xsl:if>
     <xsl:choose>
         <xsl:when test="@number='no'">
             <xsl:text>\notag</xsl:text>
@@ -3431,6 +3463,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- on match in label templates.      -->
 <xsl:template match="ol|ul">
     <xsl:element name="{local-name(.)}">
+        <xsl:attribute name="id">
+            <xsl:apply-templates select="." mode="internal-id" />
+        </xsl:attribute>
         <xsl:if test="@cols">
             <xsl:attribute name="class">
                 <!-- HTML-specific, but in mathbook-common.xsl -->
@@ -3450,6 +3485,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- But no support for multiple columns      -->
 <xsl:template match="dl">
     <xsl:element name="dl">
+        <xsl:attribute name="id">
+            <xsl:apply-templates select="." mode="internal-id" />
+        </xsl:attribute>
         <xsl:attribute name="class">
             <xsl:choose>
                 <xsl:when test="@width = 'narrow'">
@@ -4114,6 +4152,39 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:text>&amp;end=</xsl:text>
                 <xsl:value-of select="@end" />
             </xsl:if>
+        </xsl:attribute>
+    </xsl:element>
+</xsl:template>
+
+<!-- ############ -->
+<!-- Music Scores -->
+<!-- ############ -->
+
+<!-- Embed an interactive score from MuseScore                          -->
+<!-- Flag: score element has two MuseScore-specific attributes          -->
+<!-- https://musescore.org/user/{usernumber}/scores/{scorenumber}/embed -->
+<!-- into an iframe with width and height (todo)                        -->
+<xsl:template match="score[@musescoreuser and @musescore]">
+    <xsl:element name="iframe">
+        <xsl:attribute name="width">
+            <xsl:text>100%</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="height">
+            <xsl:text>500</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="frameborder">
+            <xsl:text>0</xsl:text>
+        </xsl:attribute>
+        <!-- empty attribute, just switch -->
+        <xsl:attribute name="allowfullscreen">
+            <xsl:text></xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="src">
+            <xsl:text>https://musescore.com/user/</xsl:text>
+            <xsl:value-of select="@musescoreuser" />
+            <xsl:text>/scores/</xsl:text>
+            <xsl:value-of select="@musescore" />
+            <xsl:text>/embed</xsl:text>
         </xsl:attribute>
     </xsl:element>
 </xsl:template>
@@ -5643,6 +5714,31 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 </td></tr></table>
 </xsl:template>
 
+<!-- JSXGraph -->
+<xsl:template match="jsxgraph">
+    <!-- the div to hold the JSX output -->
+    <xsl:element name="div">
+        <xsl:attribute name="id">
+            <xsl:apply-templates select="." mode="internal-id" />
+        </xsl:attribute>
+        <xsl:attribute name="class">
+            <xsl:text>jxgbox</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="style">
+            <xsl:text>width:400px; height:400px;</xsl:text>
+        </xsl:attribute>
+    </xsl:element>
+    <!-- the script to hold the code -->
+    <xsl:element name="script">
+        <xsl:attribute name="type">
+            <xsl:text>text/javascript</xsl:text>
+        </xsl:attribute>
+        <xsl:call-template name="sanitize-text">
+            <xsl:with-param name="text" select="input" />
+        </xsl:call-template>
+    </xsl:element>
+</xsl:template>
+
 <!-- ########################## -->
 <!-- WeBWorK Embedded Exercises -->
 <!-- ########################## -->
@@ -5724,6 +5820,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <xsl:call-template name="mathbook-js" />
             <xsl:call-template name="fonts" />
             <xsl:call-template name="hypothesis-annotation" />
+            <xsl:call-template name="jsxgraph" />
             <xsl:call-template name="css" />
             <xsl:if test="//video">
                 <xsl:call-template name="video" />
@@ -5819,6 +5916,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <xsl:call-template name="knowl" />
             <xsl:call-template name="fonts" />
             <xsl:call-template name="hypothesis-annotation" />
+            <xsl:call-template name="jsxgraph" />
             <xsl:call-template name="css" />
         </head>
         <!-- TODO: needs some padding etc -->
@@ -5919,7 +6017,9 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
     <xsl:choose>
         <xsl:when test="$intermediate='true'">
             <!-- Descend once, will always have a child that is structural -->
-            <xsl:variable name="first-structural-child" select="*[not(self::title or self::subtitle or self::todo or self::introduction or self::conclusion or self::titlepage or self::author)][1]" />
+            <xsl:variable name="first-structural-child" select="*[&STRUCTURAL-FILTER;][1]" />
+            <xsl:apply-templates select="$first-structural-child" mode="url" />
+            <!-- remainder is a basic check, could be removed -->
             <xsl:variable name="structural">
                 <xsl:apply-templates select="$first-structural-child" mode="is-structural" />
             </xsl:variable>
@@ -5927,7 +6027,6 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
                 <xsl:message>MBX:ERROR: descending into first node of an intermediate page (<xsl:value-of select="local-name($first-structural-child)" />) that is non-structural; maybe your source has incorrect structure</xsl:message>
                 <xsl:apply-templates select="." mode="location-report" />
             </xsl:if>
-            <xsl:apply-templates select="$first-structural-child" mode="url" />
         </xsl:when>
         <xsl:otherwise>
             <!-- try going sideways, which climbs up the tree recursively -->
@@ -6017,14 +6116,15 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <xsl:apply-templates select="." mode="url" />
         </xsl:when>
         <xsl:otherwise>
-            <xsl:variable name="last-structural-child" select="*[not(self::title or self::subtitle or self::todo or self::introduction or self::conclusion)][last()]" />
+            <xsl:variable name="last-structural-child" select="*[&STRUCTURAL-FILTER;][last()]" />
+            <xsl:apply-templates select="$last-structural-child" mode="previous-descent-url" />
+            <!-- remainder is a basic check, could be removed -->
             <xsl:variable name="structural">
                 <xsl:apply-templates select="$last-structural-child" mode="is-structural" />
             </xsl:variable>
             <xsl:if test="$structural='false'">
                 <xsl:message>MBX:ERROR: descending into last node of an intermediate page (<xsl:value-of select="local-name($last-structural-child)" />) that is non-structural</xsl:message>
             </xsl:if>
-            <xsl:apply-templates select="$last-structural-child" mode="previous-descent-url" />
         </xsl:otherwise>
     </xsl:choose>
 </xsl:template>
@@ -6301,12 +6401,22 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
         <div class="container">
             <!-- Several buttons across the top -->
             <div class="navbar-top-buttons">
-                <!-- "contents" button is uniform across logic, style -->
-                <button class="sidebar-left-toggle-button button active">
+                <!-- "contents" button brings up document root page       -->
+                <!-- Perhaps better to make a link and style as a button? -->
+                <!-- http://stackoverflow.com/questions/2906582           -->
+                <xsl:element name="button">
+                    <xsl:attribute name="class">
+                        <xsl:text>sidebar-left-toggle-button button active</xsl:text>
+                    </xsl:attribute>
+                    <xsl:attribute name="onclick">
+                        <xsl:text>window.location.href='</xsl:text>
+                        <xsl:apply-templates select="$document-root" mode="url" />
+                        <xsl:text>'</xsl:text>
+                    </xsl:attribute>
                     <xsl:call-template name="type-name">
                         <xsl:with-param name="string-id" select="'toc'" />
                     </xsl:call-template>
-                </button>
+                </xsl:element>
                 <!-- Prev/Up/Next buttons on top, according to options -->
                 <xsl:choose>
                     <xsl:when test="$nav-style = 'full'">
@@ -6891,6 +7001,14 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready",function () {
         <xsl:text>}</xsl:text>
         </script>
         <script src="https://hypothes.is/embed.js" async=""></script>
+    </xsl:if>
+</xsl:template>
+
+<!-- JSXGraph -->
+<xsl:template name="jsxgraph">
+    <xsl:if test="$b-has-jsxgraph">
+        <link rel="stylesheet" type="text/css" href="http://jsxgraph.uni-bayreuth.de/distrib/jsxgraph.css" />
+        <script type="text/javascript" src="http://jsxgraph.uni-bayreuth.de/distrib/jsxgraphcore.js"></script>
     </xsl:if>
 </xsl:template>
 

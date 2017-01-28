@@ -317,7 +317,7 @@
             <xsl:text>  "PGessaymacros.pl",&#xa;</xsl:text>
         </xsl:if>
         <!-- when there is a PGgraphmacros graph -->
-        <xsl:if test="./statement//image[@pg-name]|./solution//image[@pg-name]">
+        <xsl:if test=".//image[@pg-name]">
             <xsl:text>  "PGgraphmacros.pl",&#xa;</xsl:text>
         </xsl:if>
         <!-- ################### -->
@@ -438,7 +438,7 @@
     <xsl:value-of select="$course-macro" />
     <xsl:text>);&#xa;</xsl:text>
     <!-- if images are used, explicitly refresh or stale images will be used in HTML -->
-    <xsl:if test="./statement//image[@pg-name]|./solution//image[@pg-name]">
+    <xsl:if test=".//image[@pg-name]">
         <xsl:text>$refreshCachedImages= 1;</xsl:text>
     </xsl:if>
     <!-- shorten name of PGML::Format to save characters for base64 url -->
@@ -474,7 +474,7 @@
 <xsl:template match="webwork//var" mode="static-warning">
     <xsl:variable name="varname" select="@name" />
     <xsl:variable name="problem" select="ancestor::webwork" />
-    <xsl:if test="not($problem/setup/var[@name=$varname]/static) and not($problem/setup/var[@name=$varname]/set/member) and not(@form='essay')">
+    <xsl:if test="substring($varname,1,1)='$' and not($problem/setup/var[@name=$varname]/static) and not($problem/setup/var[@name=$varname]/set/member) and not(@form='essay')">
         <xsl:message>
             <xsl:text>MBX:WARNING: A WeBWorK exercise uses a var (name="</xsl:text>
             <xsl:value-of select="$varname"/>

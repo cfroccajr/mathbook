@@ -401,9 +401,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\setdefaultlanguage{english}&#xa;</xsl:text>
     <xsl:if test="/mathbook/*[not(self::docinfo)]//@xml:lang='el'">
         <xsl:text>%% Greek (Modern) specified by 'el' language tag&#xa;</xsl:text>
+        <xsl:text>%% Font families: CMU Serif, Linux Libertine O, GFS Artemisia&#xa;</xsl:text>
         <!-- <xsl:text>\setotherlanguage[variant=ancient,numerals=greek]{greek}&#xa;</xsl:text> -->
-        <xsl:text>\setotherlanguage[numerals=greek]{greek}&#xa;</xsl:text>
-        <xsl:text>\newfontfamily\greekfont[Script=Greek]{GFS Artemisia}&#xa;</xsl:text>
+        <xsl:text>\setotherlanguage{greek}&#xa;</xsl:text>
+        <xsl:text>\newfontfamily\greekfont[Script=Greek]{CMU Serif}&#xa;</xsl:text>
     </xsl:if>
     <xsl:if test="/mathbook/*[not(self::docinfo)]//@xml:lang='ko-KR'">
         <xsl:text>%% Korean specified by 'ko-KR' language tag&#xa;</xsl:text>
@@ -412,11 +413,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
     <xsl:text>%% Magyar (Hungarian)&#xa;</xsl:text>
     <xsl:text>\setotherlanguage{magyar}&#xa;</xsl:text>
-    <!-- http://tex.stackexchange.com/questions/91507/liberation-mono-the-current-roman-font-does-not-contain-the-cyrillic-script -->
     <xsl:if test="/mathbook/*[not(self::docinfo)]//@xml:lang='ru-RU'">
         <xsl:text>%% Russian specified by 'ru-RU' language tag&#xa;</xsl:text>
+        <xsl:text>%% Font families: CMU Serif, Linux Libertine O&#xa;</xsl:text>
         <xsl:text>\setotherlanguage{russian}&#xa;</xsl:text>
-        <xsl:text>\newfontfamily\cyrillicfont{Liberation Serif}&#xa;</xsl:text>
+        <xsl:text>\newfontfamily\cyrillicfont[Script=Cyrillic]{CMU Serif}&#xa;</xsl:text>
     </xsl:if>
     <xsl:text>%% Spanish&#xa;</xsl:text>
     <xsl:text>\setotherlanguage{spanish}&#xa;</xsl:text>
@@ -439,30 +440,36 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- TODO: put a pdflatex font package hook here? -->
     <xsl:text>%% end: pdflatex-specific configuration&#xa;</xsl:text>
     <xsl:text>}&#xa;</xsl:text>
-    <xsl:text>%% Monospace font: Inconsolata (zi4)&#xa;</xsl:text>
-    <xsl:text>%% Sponsored by TUG: http://levien.com/type/myfonts/inconsolata.html&#xa;</xsl:text>
-    <xsl:text>%% See package documentation for excellent instructions&#xa;</xsl:text>
-    <xsl:text>%% One caveat, seem to need full file name to locate OTF files&#xa;</xsl:text>
-    <xsl:text>%% Loads the "upquote" package as needed, so we don't have to&#xa;</xsl:text>
-    <xsl:text>%% Upright quotes might come from the  textcomp  package, which we also use&#xa;</xsl:text>
-    <xsl:text>%% We employ the shapely \ell to match Google Font version&#xa;</xsl:text>
-    <xsl:text>%% pdflatex: "varqu" option produces best upright quotes&#xa;</xsl:text>
-    <xsl:text>%% xelatex,lualatex: add StylisticSet 1 for shapely \ell&#xa;</xsl:text>
-    <xsl:text>%% xelatex,lualatex: add StylisticSet 2 for plain zero&#xa;</xsl:text>
-    <xsl:text>%% xelatex,lualatex: we add StylisticSet 3 for upright quotes&#xa;</xsl:text>
-    <xsl:text>%% &#xa;</xsl:text>
-    <xsl:text>\ifthenelse{\boolean{xetex} \or \boolean{luatex}}{%&#xa;</xsl:text>
-    <xsl:text>%% begin: xelatex and lualatex-specific monospace font&#xa;</xsl:text>
-    <xsl:text>\usepackage{zi4}&#xa;</xsl:text>
-    <xsl:text>\setmonofont[BoldFont=Inconsolatazi4-Bold.otf,StylisticSet={1,3}]{Inconsolatazi4-Regular.otf}&#xa;</xsl:text>
-    <!-- TODO: put a xelatex/lualatex monospace font package hook here? -->
-    <xsl:text>%% end: xelatex and lualatex-specific monospace font&#xa;</xsl:text>
-    <xsl:text>}{%&#xa;</xsl:text>
-    <xsl:text>%% begin: pdflatex-specific monospace font&#xa;</xsl:text>
-     <xsl:text>\usepackage[varqu]{zi4}&#xa;</xsl:text>
-    <xsl:text>%% end: pdflatex-specific monospace font&#xa;</xsl:text>
-    <!-- TODO: put a pdflatex monospace font package hook here? -->
-    <xsl:text>}&#xa;</xsl:text>
+    <!-- Two approaches to the same monospace font: Inconsolata -->
+    <!-- Conditional on various verbatim type environments      -->
+    <!-- Note: no-content URLs get a monospace font but absent  -->
+    <!-- other monospace use, we do not load an extra font      -->
+    <xsl:if test="$document-root//c or $document-root//cd or $document-root//pre or $document-root//program or $document-root//console or $document-root//sage">
+        <xsl:text>%% Monospace font: Inconsolata (zi4)&#xa;</xsl:text>
+        <xsl:text>%% Sponsored by TUG: http://levien.com/type/myfonts/inconsolata.html&#xa;</xsl:text>
+        <xsl:text>%% See package documentation for excellent instructions&#xa;</xsl:text>
+        <xsl:text>%% One caveat, seem to need full file name to locate OTF files&#xa;</xsl:text>
+        <xsl:text>%% Loads the "upquote" package as needed, so we don't have to&#xa;</xsl:text>
+        <xsl:text>%% Upright quotes might come from the  textcomp  package, which we also use&#xa;</xsl:text>
+        <xsl:text>%% We employ the shapely \ell to match Google Font version&#xa;</xsl:text>
+        <xsl:text>%% pdflatex: "varqu" option produces best upright quotes&#xa;</xsl:text>
+        <xsl:text>%% xelatex,lualatex: add StylisticSet 1 for shapely \ell&#xa;</xsl:text>
+        <xsl:text>%% xelatex,lualatex: add StylisticSet 2 for plain zero&#xa;</xsl:text>
+        <xsl:text>%% xelatex,lualatex: we add StylisticSet 3 for upright quotes&#xa;</xsl:text>
+        <xsl:text>%% &#xa;</xsl:text>
+        <xsl:text>\ifthenelse{\boolean{xetex} \or \boolean{luatex}}{%&#xa;</xsl:text>
+        <xsl:text>%% begin: xelatex and lualatex-specific monospace font&#xa;</xsl:text>
+        <xsl:text>\usepackage{zi4}&#xa;</xsl:text>
+        <xsl:text>\setmonofont[BoldFont=Inconsolatazi4-Bold.otf,StylisticSet={1,3}]{Inconsolatazi4-Regular.otf}&#xa;</xsl:text>
+        <!-- TODO: put a xelatex/lualatex monospace font package hook here? -->
+        <xsl:text>%% end: xelatex and lualatex-specific monospace font&#xa;</xsl:text>
+        <xsl:text>}{%&#xa;</xsl:text>
+        <xsl:text>%% begin: pdflatex-specific monospace font&#xa;</xsl:text>
+         <xsl:text>\usepackage[varqu]{zi4}&#xa;</xsl:text>
+        <xsl:text>%% end: pdflatex-specific monospace font&#xa;</xsl:text>
+        <!-- TODO: put a pdflatex monospace font package hook here? -->
+        <xsl:text>}&#xa;</xsl:text>
+    </xsl:if>
     <xsl:text>%% Symbols, align environment, bracket-matrix&#xa;</xsl:text>
     <xsl:text>\usepackage{amsmath}&#xa;</xsl:text>
     <xsl:text>\usepackage{amssymb}&#xa;</xsl:text>
@@ -832,12 +839,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <!-- TODO: load just once, see webwork -->
         <xsl:text>\usepackage[framemethod=tikz]{mdframed}&#xa;</xsl:text>
         <xsl:if test="//assemblage">
-            <xsl:text>%% assemblage: minimally structured content, high visibility presentation&#xa;</xsl:text>
-            <xsl:text>%% assemblage environment and style&#xa;</xsl:text>
+            <xsl:text>%% begin: assemblage&#xa;</xsl:text>
+            <xsl:text>%% minimally structured content, high visibility presentation&#xa;</xsl:text>
+            <xsl:text>%% environments (untitled, titled), with style&#xa;</xsl:text>
+            <xsl:text>\newenvironment{assemblage-untitled}{\mdfsetup{%&#xa;</xsl:text>
+            <xsl:text>roundcorner=2ex, backgroundcolor=blue!5,linecolor=blue!75!black,}%&#xa;</xsl:text>
+            <xsl:text>\begin{mdframed}}{\end{mdframed}}&#xa;</xsl:text>
             <xsl:text>\newenvironment{assemblage}[1]{\mdfsetup{frametitle={\colorbox{blue!20}{\space#1\space}},%&#xa;</xsl:text>
             <xsl:text>frametitlealignment={\hspace*{1ex}}, frametitleaboveskip=-1.5ex, frametitlebelowskip=0pt,%&#xa;</xsl:text>
-            <xsl:text>roundcorner=2ex, backgroundcolor=blue!5,%&#xa;</xsl:text>
-            <xsl:text>linecolor=blue!75!black,} \begin{mdframed}}{\end{mdframed}}&#xa;</xsl:text>
+            <xsl:text>roundcorner=2ex, backgroundcolor=blue!5,linecolor=blue!75!black,}%&#xa;</xsl:text>
+            <xsl:text>\begin{mdframed}}{\end{mdframed}}&#xa;</xsl:text>
+            <xsl:text>%% end: assemblage&#xa;</xsl:text>
         </xsl:if>
         <xsl:if test="//aside or //historical or //biographical">
             <xsl:text>%% aside, biographical, historical environments and style&#xa;</xsl:text>
@@ -1311,14 +1323,24 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>\lstdefinestyle{genericinput}{breaklines=true,breakatwhitespace=true,columns=fixed,frame=single,xleftmargin=4ex,xrightmargin=4ex,&#xa;</xsl:text>
             <xsl:text>basicstyle=\small\ttfamily,identifierstyle=\color{identifiers},commentstyle=\color{comments},stringstyle=\color{strings},keywordstyle=\color{keywords}}&#xa;</xsl:text>
         </xsl:if>
+        <!-- Set "framerule", set "framesep" (latter like CSS padding)            -->
+        <!-- Then set margins on the code to pull box flush with surrounding text -->
+        <!-- "xmargins" = framerule + framesep + epsilon (~0.25pt)                -->
         <xsl:if test="//sage">
             <xsl:text>%% Sage's blue is 50%, we go way lighter (blue!05 would work)&#xa;</xsl:text>
             <xsl:text>\definecolor{sageblue}{rgb}{0.95,0.95,1}&#xa;</xsl:text>
             <xsl:text>%% Sage input, listings package: Python syntax, boxed, colored, line breaking&#xa;</xsl:text>
-            <xsl:text>%% Indent from left margin, flush at right margin&#xa;</xsl:text>
-            <xsl:text>\lstdefinestyle{sageinput}{language=Python,breaklines=true,breakatwhitespace=true,basicstyle=\small\ttfamily,columns=fixed,frame=single,backgroundcolor=\color{sageblue},xleftmargin=4ex}&#xa;</xsl:text>
+            <xsl:text>%% Flush with surrounding text's margins&#xa;</xsl:text>
+            <xsl:text>%% xmargins are sum of framerule, framesep, epsilon&#xa;</xsl:text>
+            <xsl:text>%% space between input/output comes from input style "belowskip",&#xa;</xsl:text>
+            <xsl:text>%% by giving output an aboveskip of zero&#xa;</xsl:text>
+            <xsl:text>\lstdefinestyle{sageinput}{language=Python,breaklines=true,breakatwhitespace=true,%&#xa;</xsl:text>
+            <xsl:text>basicstyle=\small\ttfamily,columns=fixed,frame=single,backgroundcolor=\color{sageblue},%&#xa;</xsl:text>
+            <xsl:text>framerule=0.5pt,framesep=4pt,xleftmargin=4.75pt,xrightmargin=4.75pt}&#xa;</xsl:text>
+            <!--  -->
             <xsl:text>%% Sage output, similar, but not boxed, not colored&#xa;</xsl:text>
-            <xsl:text>\lstdefinestyle{sageoutput}{language=Python,breaklines=true,breakatwhitespace=true,basicstyle=\small\ttfamily,columns=fixed,xleftmargin=4ex}&#xa;</xsl:text>
+            <xsl:text>\lstdefinestyle{sageoutput}{language=Python,breaklines=true,%&#xa;</xsl:text>
+            <xsl:text>breakatwhitespace=true,basicstyle=\small\ttfamily,columns=fixed,aboveskip=0pt}&#xa;</xsl:text>
         </xsl:if>
     </xsl:if>
     <xsl:if test="//console or //sidebyside/pre">
@@ -1531,6 +1553,104 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:if test="$sbsdebug">
         <xsl:text>\setlength{\fboxrule}{1pt}&#xa;</xsl:text>
         <xsl:text>\setlength{\fboxsep}{-1pt}&#xa;</xsl:text>
+    </xsl:if>
+
+    <!-- PGML definitions. What follows is the PGML problem preamble in its entirety, taken from  -->
+    <!-- https://github.com/openwebwork/pg/blob/master/macros/PGML.pl. However some lines are     -->
+    <!-- commented out, as they clash with MBX LaTeX.                                             -->
+    <xsl:if test="//webwork[@source]">
+        <xsl:text>%% PGML macros&#xa;</xsl:text>
+        <xsl:text>%% formatted to exactly match output from PGML.pl as of 11/22/2016&#xa;</xsl:text>
+        <xsl:text>%% but with some lines commented out&#xa;</xsl:text>
+        <xsl:text>%\ifx\pgmlMarker\undefined&#xa;</xsl:text>
+        <xsl:text>%  \newdimen\pgmlMarker \pgmlMarker=0.00314159pt  % hack to tell if \newline was used&#xa;</xsl:text>
+        <xsl:text>%\fi&#xa;</xsl:text>
+        <xsl:text>%\ifx\oldnewline\undefined \let\oldnewline=\newline \fi&#xa;</xsl:text>
+        <xsl:text>%\def\newline{\oldnewline\hskip-\pgmlMarker\hskip\pgmlMarker\relax}%&#xa;</xsl:text>
+        <xsl:text>%\parindent=0pt&#xa;</xsl:text>
+        <xsl:text>%\catcode`\^^M=\active&#xa;</xsl:text>
+        <xsl:text>%\def^^M{\ifmmode\else\fi\ignorespaces}%  skip paragraph breaks in the preamble&#xa;</xsl:text>
+        <xsl:text>%\def\par{\ifmmode\else\endgraf\fi\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>%\ifdim\lastskip=\pgmlMarker&#xa;</xsl:text>
+        <xsl:text>%  \let\pgmlPar=\relax&#xa;</xsl:text>
+        <xsl:text>% \else&#xa;</xsl:text>
+        <xsl:text>  \let\pgmlPar=\par&#xa;</xsl:text>
+        <xsl:text>%  \vadjust{\kern3pt}%&#xa;</xsl:text>
+        <xsl:text>%\fi&#xa;</xsl:text>
+        <xsl:text>%&#xa;</xsl:text>
+        <xsl:text>%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%&#xa;</xsl:text>
+        <xsl:text>%%&#xa;</xsl:text>
+        <xsl:text>%%    definitions for PGML&#xa;</xsl:text>
+        <xsl:text>%%&#xa;</xsl:text>
+        <xsl:text>%&#xa;</xsl:text>
+        <xsl:text>%\ifx\pgmlCount\undefined  % do not redefine if multiple files load PGML.pl&#xa;</xsl:text>
+        <xsl:text>  \newcount\pgmlCount&#xa;</xsl:text>
+        <xsl:text>  \newdimen\pgmlPercent&#xa;</xsl:text>
+        <xsl:text>  \newdimen\pgmlPixels  \pgmlPixels=.5pt&#xa;</xsl:text>
+        <xsl:text>%\fi&#xa;</xsl:text>
+        <xsl:text>%\pgmlPercent=.01\hsize&#xa;</xsl:text>
+        <xsl:text>%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlSetup{%&#xa;</xsl:text>
+        <xsl:text>  \parskip=0pt \parindent=0pt&#xa;</xsl:text>
+        <xsl:text>%  \ifdim\lastskip=\pgmlMarker\else\par\fi&#xa;</xsl:text>
+        <xsl:text>  \pgmlPar&#xa;</xsl:text>
+        <xsl:text>}%&#xa;</xsl:text>
+        <xsl:text>&#xa;</xsl:text>
+        <xsl:text>\def\pgmlIndent{\par\advance\leftskip by 2em \advance\pgmlPercent by .02em \pgmlCount=0}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlbulletItem{\par\indent\llap{$\bullet$ }\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlcircleItem{\par\indent\llap{$\circ$ }\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlsquareItem{\par\indent\llap{\vrule height 1ex width .75ex depth -.25ex\ }\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlnumericItem{\par\indent\advance\pgmlCount by 1 \llap{\the\pgmlCount. }\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlalphaItem{\par\indent{\advance\pgmlCount by `\a \llap{\char\pgmlCount. }}\advance\pgmlCount by 1\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlAlphaItem{\par\indent{\advance\pgmlCount by `\A \llap{\char\pgmlCount. }}\advance\pgmlCount by 1\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlromanItem{\par\indent\advance\pgmlCount by 1 \llap{\romannumeral\pgmlCount. }\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlRomanItem{\par\indent\advance\pgmlCount by 1 \llap{\uppercase\expandafter{\romannumeral\pgmlCount}. }\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>&#xa;</xsl:text>
+        <xsl:text>\def\pgmlCenter{%&#xa;</xsl:text>
+        <xsl:text>  \par \parfillskip=0pt&#xa;</xsl:text>
+        <xsl:text>  \advance\leftskip by 0pt plus .5\hsize&#xa;</xsl:text>
+        <xsl:text>  \advance\rightskip by 0pt plus .5\hsize&#xa;</xsl:text>
+        <xsl:text>  \def\pgmlBreak{\break}%&#xa;</xsl:text>
+        <xsl:text>}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlRight{%&#xa;</xsl:text>
+        <xsl:text>  \par \parfillskip=0pt&#xa;</xsl:text>
+        <xsl:text>  \advance\leftskip by 0pt plus \hsize&#xa;</xsl:text>
+        <xsl:text>  \def\pgmlBreak{\break}%&#xa;</xsl:text>
+        <xsl:text>}%&#xa;</xsl:text>
+        <xsl:text>&#xa;</xsl:text>
+        <xsl:text>\def\pgmlBreak{\\}%&#xa;</xsl:text>
+        <xsl:text>&#xa;</xsl:text>
+        <xsl:text>\def\pgmlHeading#1{%&#xa;</xsl:text>
+        <xsl:text>  \par\bfseries&#xa;</xsl:text>
+        <xsl:text>  \ifcase#1 \or\huge \or\LARGE \or\large \or\normalsize \or\footnotesize \or\scriptsize \fi&#xa;</xsl:text>
+        <xsl:text>}%&#xa;</xsl:text>
+        <xsl:text>&#xa;</xsl:text>
+        <xsl:text>\def\pgmlRule#1#2{%&#xa;</xsl:text>
+        <xsl:text>  \par\noindent&#xa;</xsl:text>
+        <xsl:text>  \hbox{%&#xa;</xsl:text>
+        <xsl:text>    \strut%&#xa;</xsl:text>
+        <xsl:text>    \dimen1=\ht\strutbox%&#xa;</xsl:text>
+        <xsl:text>    \advance\dimen1 by -#2%&#xa;</xsl:text>
+        <xsl:text>    \divide\dimen1 by 2%&#xa;</xsl:text>
+        <xsl:text>    \advance\dimen2 by -\dp\strutbox%&#xa;</xsl:text>
+        <xsl:text>    \raise\dimen1\hbox{\vrule width #1 height #2 depth 0pt}%&#xa;</xsl:text>
+        <xsl:text>  }%&#xa;</xsl:text>
+        <xsl:text>  \par&#xa;</xsl:text>
+        <xsl:text>}%&#xa;</xsl:text>
+        <xsl:text>&#xa;</xsl:text>
+        <xsl:text>\def\pgmlIC#1{\futurelet\pgmlNext\pgmlCheckIC}%&#xa;</xsl:text>
+        <xsl:text>\def\pgmlCheckIC{\ifx\pgmlNext\pgmlSpace \/\fi}%&#xa;</xsl:text>
+        <xsl:text>{\def\getSpace#1{\global\let\pgmlSpace= }\getSpace{} }%&#xa;</xsl:text>
+        <xsl:text>%&#xa;</xsl:text>
+        <xsl:text>%{\catcode`\ =12\global\let\pgmlSpaceChar= }%&#xa;</xsl:text>
+        <xsl:text>%{\obeylines\gdef\pgmlPreformatted{\par\small\ttfamily\hsize=10\hsize\obeyspaces\obeylines\let^^M=\pgmlNL\pgmlNL}}%&#xa;</xsl:text>
+        <xsl:text>%\def\pgmlNL{\par\bgroup\catcode`\ =12\pgmlTestSpace}%&#xa;</xsl:text>
+        <xsl:text>%\def\pgmlTestSpace{\futurelet\next\pgmlTestChar}%&#xa;</xsl:text>
+        <xsl:text>%\def\pgmlTestChar{\ifx\next\pgmlSpaceChar\ \pgmlTestNext\fi\egroup}%&#xa;</xsl:text>
+        <xsl:text>%\def\pgmlTestNext\fi\egroup#1{\fi\pgmlTestSpace}%&#xa;</xsl:text>
+        <xsl:text>%&#xa;</xsl:text>
+        <xsl:text>%\def^^M{\ifmmode\else\space\fi\ignorespaces}%&#xa;</xsl:text>
+        <xsl:text>%% END PGML macros&#xa;</xsl:text>
     </xsl:if>
 
 </xsl:template>
@@ -2235,8 +2355,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
+<!-- Deccription column is "p" to enable word-wrapping  -->
+<!-- The 60% width is arbitrary, could see improvements -->
 <xsl:template match="notation-list">
-    <xsl:text>\begin{longtable}[l]{llr}&#xa;</xsl:text>
+    <xsl:text>\begin{longtable}[l]{lp{0.60\textwidth}r}&#xa;</xsl:text>
     <xsl:text>\textbf{</xsl:text>
     <xsl:call-template name="type-name">
         <xsl:with-param name="string-id" select="'symbol'" />
@@ -3119,7 +3241,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Here, we just provide a light wrapper, and drop an    -->
 <!-- include, since the basename for the filenames has     -->
 <!-- been managed by the  mbx  script to be predictable.   -->
-<xsl:template match="webwork[@source]|webwork[descendant::image[@pg-name]]">
+<xsl:template match="webwork[@source]">
     <!-- directory of server LaTeX must be specified -->
     <xsl:if test="$webwork.server.latex = ''">
         <xsl:message terminate="yes">MBX:ERROR   For LaTeX versions of WeBWorK problems on a server, the mbx script will collect the LaTeX source and then this conversion must specify the location through the "webwork.server.latex" command line stringparam.  Quitting...</xsl:message>
@@ -3137,7 +3259,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates select="introduction" /> <!-- before boxed problem -->
     <xsl:text>\begin{mdframed}&#xa;</xsl:text>
     <xsl:text>{</xsl:text> <!-- prophylactic wrapper -->
-    <xsl:value-of select="$server-tex/preamble" />
+    <!-- mbx script collects problem preamble, but we do not use it here -->
     <!-- process in the order server produces them, may be several -->
     <xsl:apply-templates select="$server-tex/statement|$server-tex/solution|$server-tex/hint" />
     <xsl:text>}</xsl:text>
@@ -3175,6 +3297,44 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
 </xsl:template>
 
+<!-- ############################# -->
+<!-- WeBWorK Images   from Servers -->
+<!-- ############################# -->
+
+<!-- When a webwork exercise is written in MBX source, but -->
+<!-- uses an image with an @pg-name, we make the exercise  -->
+<!-- in the usual way but include an image which has been  -->
+<!-- created by the mbx script with a predictable name     -->
+<!-- For such images, width and height are pixel counts    -->
+<!-- sent to the PG image creator, intended to define the  -->
+<!-- width of HTML output. A separate tex_size is intended -->
+<!-- to define width of LaTeX output. tex_size of say 800  -->
+<!-- means 0.800\linewidth. We use 400px for the default   -->
+<!-- width in mathbook-webwork-pg. Since 600px is the      -->
+<!-- default design width in html, we use 667 as the       -->
+<!-- default for tex_size                                  -->
+
+<xsl:template match="webwork//image[@pg-name]">
+    <xsl:text>\includegraphics[width=</xsl:text>
+    <xsl:choose>
+        <xsl:when test="@tex_size">
+            <xsl:value-of select="@tex_size*0.001"/>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:text>0.667</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
+    <xsl:text>\linewidth]{</xsl:text>
+        <!-- assumes path has trailing slash -->
+        <xsl:value-of select="$webwork.server.latex" />
+        <xsl:apply-templates select="ancestor::webwork" mode="internal-id" />
+        <xsl:text>-image-</xsl:text>
+        <xsl:number count="image[@pg-name]" from="webwork" level="any" />
+        <xsl:text>.png</xsl:text>
+    <xsl:text>}&#xa;</xsl:text>
+</xsl:template>
+
+
 <!-- Remark Like, Example Like, Project Like -->
 <!-- Simpler than theorems, definitions, etc            -->
 <!-- Information comes from self, so slightly different -->
@@ -3209,8 +3369,21 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\end{aside}&#xa;</xsl:text>
 </xsl:template>
 
-<!-- An assemblage is low-structure content, high-visibility presentation -->
+<!-- Assemblages -->
+<!-- Low-structure content, high-visibility presentation -->
+<!-- Title is optional, keep remainders coordinated      -->
+
+<!-- Less specific first, untitled version -->
 <xsl:template match="assemblage">
+    <xsl:text>\begin{assemblage-untitled}</xsl:text>
+    <xsl:apply-templates select="." mode="label"/>
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:apply-templates select="p|table|figure|sidebyside" />
+    <xsl:text>\end{assemblage-untitled}&#xa;</xsl:text>
+</xsl:template>
+
+<!-- More-specific next, title as environment parameter -->
+<xsl:template match="assemblage[title]">
     <xsl:text>\begin{assemblage}{</xsl:text>
     <xsl:apply-templates select="." mode="title-full" />
     <xsl:text>}</xsl:text>
@@ -3280,15 +3453,49 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- So prior to second, and subsequent -->
 <!-- Guarantee: Never a blank line,     -->
 <!-- always finish with newline         -->
+
+<!-- NOTE: combine this into general template with a test on   -->
+<!-- preceding-sibling::*[not(todo)][1][self::p or self::paragraphs]  -->
+<!-- for necessity of \par (do careful diff to see subtle differences -->
 <xsl:template match="p[1]">
-    <xsl:apply-templates />
-    <xsl:text>%&#xa;</xsl:text>
+    <!-- build the paragraph as output -->
+    <xsl:variable name="raw-latex" >
+        <xsl:apply-templates />
+        <xsl:text>%&#xa;</xsl:text>
+    </xsl:variable>
+    <!-- control whitespace, or not -->
+    <xsl:choose>
+        <xsl:when test="$whitespace-style='flexible'">
+            <xsl:call-template name="sanitize-latex">
+                <xsl:with-param name="text" select="$raw-latex" />
+            </xsl:call-template>
+        </xsl:when>
+        <xsl:when test="$whitespace-style='strict'">
+            <xsl:value-of select="$raw-latex" />
+        </xsl:when>
+        <xsl:otherwise />
+    </xsl:choose>
 </xsl:template>
 
 <xsl:template match="p">
-    <xsl:text>\par&#xa;</xsl:text>
-    <xsl:apply-templates />
-    <xsl:text>%&#xa;</xsl:text>
+    <!-- build the paragraph as output -->
+    <xsl:variable name="raw-latex" >
+        <xsl:text>\par&#xa;</xsl:text>
+        <xsl:apply-templates />
+        <xsl:text>%&#xa;</xsl:text>
+    </xsl:variable>
+    <!-- control whitespace, or not -->
+    <xsl:choose>
+        <xsl:when test="$whitespace-style='flexible'">
+            <xsl:call-template name="sanitize-latex">
+                <xsl:with-param name="text" select="$raw-latex" />
+            </xsl:call-template>
+        </xsl:when>
+        <xsl:when test="$whitespace-style='strict'">
+            <xsl:value-of select="$raw-latex" />
+        </xsl:when>
+        <xsl:otherwise />
+    </xsl:choose>
 </xsl:template>
 
 <!-- For a memo, not indenting the first paragraph helps -->
@@ -3349,6 +3556,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:apply-templates select="text()|fillin" />
         </xsl:otherwise>
     </xsl:choose>
+    <!-- look ahead to absorb immediate sentence-ending punctuation -->
+    <xsl:apply-templates select="." mode="get-sentence-punctuation" />
+    <!-- finish LaTeX environment -->
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
@@ -3365,6 +3575,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}</xsl:text>
     <xsl:apply-templates select="." mode="alignat-columns" />
     <xsl:apply-templates select="text()|fillin" />
+    <!-- look ahead to absorb immediate sentence-ending punctuation -->
+    <xsl:apply-templates select="." mode="get-sentence-punctuation" />
     <xsl:apply-templates select="." mode="label"/>
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
@@ -3403,6 +3615,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:apply-templates select="text()|xref|fillin" />
         </xsl:otherwise>
     </xsl:choose>
+    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
+        <!-- look ahead to absorb immediate sentence-ending punctuation -->
+        <!-- pass the context as enclosing environment (md)             -->
+        <xsl:apply-templates select="parent::md" mode="get-sentence-punctuation" />
+    </xsl:if>
     <xsl:choose>
         <xsl:when test="@number='yes'">
             <xsl:apply-templates select="." mode="label" />
@@ -3424,6 +3641,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:apply-templates select="text()|xref|fillin" />
         </xsl:otherwise>
     </xsl:choose>
+    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
+        <!-- look ahead to absorb immediate sentence-ending punctuation -->
+        <!-- pass the context as enclosing environment (md)             -->
+        <xsl:apply-templates select="parent::mdn" mode="get-sentence-punctuation" />
+    </xsl:if>
     <xsl:choose>
         <xsl:when test="@number='no'">
             <xsl:text>\notag</xsl:text>
@@ -3445,7 +3667,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates />
     <xsl:text>}&#xa;</xsl:text>
 </xsl:template>
-
 
 <!-- ##### -->
 <!-- Index -->
@@ -3749,6 +3970,22 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\end{tabular}&#xa;</xsl:text>
 </xsl:template>
 
+<!-- ############ -->
+<!-- Music Scores -->
+<!-- ############ -->
+
+<!-- Embed an interactive score from MuseScore                          -->
+<!-- Flag: score element has two MuseScore-specific attributes          -->
+<!-- https://musescore.org/user/{usernumber}/scores/{scorenumber}/embed -->
+<!-- into an iframe with width and height (todo)                        -->
+<xsl:template match="score[@musescoreuser and @musescore]">
+    <xsl:text>[\texttt{\nolinkurl{https://musescore.org/user/</xsl:text>
+    <xsl:value-of select="@musescoreuser" />
+    <xsl:text>/scores/</xsl:text>
+    <xsl:value-of select="@musescore" />
+    <xsl:text>}} not yet realized in \LaTeX]&#xa;</xsl:text>
+</xsl:template>
+
 <!-- Numbers, units, quantities                     -->
 <!-- quantity                                       -->
 <xsl:template match="quantity">
@@ -3970,48 +4207,37 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 
-<!-- External URLs, Email        -->
-<!-- URL itself, if content-less -->
-<!-- http://stackoverflow.com/questions/9782021/check-for-empty-xml-element-using-xslt -->
+<!-- ############# -->
+<!-- External URLs -->
+<!-- ############# -->
+
+<!-- We escape all the problem LaTeX characters      -->
+<!-- when given in the @href attribute, the \url{}   -->
+<!-- and \href{}{} seem to do the right thing        -->
+<!-- and they do better in footnotes and table cells -->
+
 <xsl:template match="url">
-    <xsl:choose>
-        <xsl:when test="not(*) and not(normalize-space())">
-            <xsl:text>\url{</xsl:text>
+    <xsl:text>\url{</xsl:text>
+    <xsl:call-template name="escape-latex">
+        <xsl:with-param name="text">
             <xsl:value-of select="@href" />
-            <xsl:text>}</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:text>\href{</xsl:text>
-            <xsl:value-of select="@href" />
-            <xsl:text>}{</xsl:text>
-            <xsl:apply-templates />
-            <xsl:text>}</xsl:text>
-        </xsl:otherwise>
-    </xsl:choose>
+        </xsl:with-param>
+    </xsl:call-template>
+    <xsl:text>}</xsl:text>
 </xsl:template>
 
-<!-- More care necessary in tables, when wrapped   -->
-<!-- in \multicolumn, but we just protect them all -->
-<!-- Wrap *entire* href as a group, and            -->
-<!-- adjust macro character in href                -->
-<!-- Entirely similar to above                     -->
-<xsl:template match="tabular/row/cell//url">
-    <xsl:choose>
-        <xsl:when test="not(*) and not(normalize-space())">
-            <!-- wrap whole href in a group -->
-            <xsl:text>{\url{</xsl:text>
-            <xsl:value-of select="str:replace(@href, '#', '\#')" />
-            <xsl:text>}}</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-            <!-- wrap whole href in a group -->
-            <xsl:text>{\href{</xsl:text>
-            <xsl:value-of select="str:replace(@href, '#', '\#')" />
-            <xsl:text>}{</xsl:text>
-            <xsl:apply-templates />
-            <xsl:text>}}</xsl:text>
-        </xsl:otherwise>
-    </xsl:choose>
+<!-- Checking for "content-less" form           -->
+<!-- http://stackoverflow.com/questions/9782021 -->
+<xsl:template match="url[* or normalize-space()]">
+    <xsl:text>\href{</xsl:text>
+    <xsl:call-template name="escape-latex">
+        <xsl:with-param name="text">
+            <xsl:value-of select="@href" />
+        </xsl:with-param>
+    </xsl:call-template>
+    <xsl:text>}{</xsl:text>
+    <xsl:apply-templates />
+    <xsl:text>}</xsl:text>
 </xsl:template>
 
 <!-- ############# -->
@@ -4055,16 +4281,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- contained in an argument of some other command -->
 <!-- cause problems and need to be escaped          -->
 <!--                                                -->
+<!-- NB: some table entries get wrapped in a        -->
+<!-- \multicolumn, largely to override table-wide   -->
+<!-- defaults. This situation requires escaping the -->
+<!-- LaTeX characters, so in turn we must then      -->
+<!-- wrap any cell that has escaped characters by a -->
+<!-- \multicolumn elsewhere                         -->
+<!--                                                -->
 <!-- Situations                                     -->
 <!--   (1) table entries, especially \multicolumn   -->
 <!--   (2) text portion of an href                  -->
 <!--                                                -->
-<!-- Characters                                     -->
-<!--   (1) #, %, leading ~                          -->
-<!--   (2) %, leading ~, but not #                  -->
-<!--                                                -->
-<!-- Escaping all three characters, every time, is  -->
-<!-- is overkill, but seems to not be a problem     -->
 <xsl:template match="tabular/row/cell//c|url//c">
     <xsl:variable name="separator">
         <xsl:choose>
@@ -4076,15 +4303,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
-    <!-- wrap in a group {,} to prevent look-ahead -->
-    <!-- http://tex.stackexchange.com/questions/102119/why-doesnt-lstinline-work-in-table-column -->
-    <!-- tilde seems to only be a problem as the leading character -->
-    <xsl:text>{\lstinline</xsl:text>
+    <xsl:text>\lstinline</xsl:text>
     <xsl:value-of select="$separator" />
-    <!-- macro character needs help -->
-    <xsl:value-of select="str:replace(str:replace(str:replace(text(), '#', '\#'), '~', '\~'),  '%', '\%')" />
+    <!-- make LaTeX characters into escape sequences -->
+    <xsl:call-template name="escape-latex">
+        <xsl:with-param name="text" select="text()" />
+    </xsl:call-template>
     <xsl:value-of select="$separator" />
-    <xsl:text>}</xsl:text>
+    <xsl:text></xsl:text>
 </xsl:template>
 
 <!-- 100% analogue of LaTeX's verbatim            -->
@@ -4666,6 +4892,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>\par\smallskip\centerline{A GeoGebra demonstration is here in Web version.}\smallskip</xsl:text>
         </xsl:otherwise>
     </xsl:choose>
+</xsl:template>
+
+<!-- JSXGraph -->
+<xsl:template match="jsxgraph">
+    <xsl:text>\par\smallskip\centerline{A JSXGraph interactive demonstration goes here in interactive output.}\smallskip&#xa;</xsl:text>
 </xsl:template>
 
 <!-- Captions for Figures and Tables -->
@@ -5728,11 +5959,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!--         conflict with the column specification                  -->
     <!--    -if we have a colspan                                        -->
     <!--    -if there are paragraphs in the cell                         -->
+    <!--    -if the cell contains verbatim text that gets LaTeX-escaped  -->
     <!-- $table-left and $row-left *can* differ on first use,            -->
     <!-- but row-left is subsequently set to $table-left.                -->
     <xsl:if test="$the-cell">
         <xsl:choose>
-            <xsl:when test="not($table-left = $row-left) or not($column-halign = $cell-halign) or not($column-right = $cell-right) or ($column-span > 1) or $the-cell/p">
+            <xsl:when test="not($table-left = $row-left) or not($column-halign = $cell-halign) or not($column-right = $cell-right) or ($column-span > 1) or $the-cell/p or $the-cell//c[contains(., '\') or contains(., '&amp;') or contains(., '#') or contains(., '%') or contains(., '~') or contains(., '{') or contains(., '}') or contains(., '&#x22;')]">
                 <xsl:text>\multicolumn{</xsl:text>
                 <xsl:value-of select="$column-span" />
                 <xsl:text>}{</xsl:text>
@@ -6501,6 +6733,30 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates select="." mode="label" />
     <xsl:text>&#xa;</xsl:text>
     <xsl:apply-templates />
+</xsl:template>
+
+<!-- ######### -->
+<!-- Utilities -->
+<!-- ######### -->
+
+<!-- Escape Verbatim Text as LaTeX -->
+<!-- Slash first, so don't clobber later additions    -->
+<!-- Double-quote is problematic in LaTeX, and also   -->
+<!-- in strings below, so use &#x22; it's hex Unicode -->
+<!--     \ & # % ~ { } "                              -->
+<!-- no problem yet with math underscore or caret     -->
+<!-- (a text-only template, but LaTeX-specific)       -->
+<xsl:template name="escape-latex">
+    <xsl:param    name="text" />
+    <xsl:variable name="sans-slash" select="str:replace($text,       '\',      '\\'      )" />
+    <xsl:variable name="sans-amp"   select="str:replace($sans-slash, '&amp;',  '\&amp;'  )" />
+    <xsl:variable name="sans-hash"  select="str:replace($sans-amp,   '#',      '\#'      )" />
+    <xsl:variable name="sans-per"   select="str:replace($sans-hash,  '%',      '\%'      )" />
+    <xsl:variable name="sans-tilde" select="str:replace($sans-per,   '~',      '\~'      )" />
+    <xsl:variable name="sans-open"  select="str:replace($sans-tilde, '{',      '\{'      )" />
+    <xsl:variable name="sans-close" select="str:replace($sans-open,  '}',      '\}'      )" />
+    <xsl:variable name="sans-quote" select="str:replace($sans-close, '&#x22;', '\&#x22;' )" />
+    <xsl:value-of select="$sans-quote" />
 </xsl:template>
 
 <!-- Miscellaneous -->

@@ -384,6 +384,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:variable>
 
+<!-- The main "mathbook" element only has two possible children     -->
+<!-- One is "docinfo", the other is "book", "article", etc.         -->
+<!-- This is of interest by itself, or the root of content searches -->
+<xsl:variable name="document-root" select="/mathbook/*[not(self::docinfo)]" />
+
+<!-- Source Analysis -->
+<!-- Some boolean variables ("b-*") for -->
+<!-- the presence of certain elements -->
+<xsl:variable name="b-has-jsxgraph" select="boolean($document-root//jsxgraph)" />
+
+
 <!-- We read the document language translation -->
 <!-- nodes out of the right file, which relies -->
 <!-- on filenames with country codes           -->
@@ -425,6 +436,31 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- we set it here to something outlandish                -->
 <!-- This should be overridden in an importing stylesheet  -->
 <xsl:variable name="file-extension" select="'.need-to-set-file-extension-variable'" />
+
+<!-- Prior to January 2017 we treated all whitespace as -->
+<!-- significant in mixed-content nodes.  With changes  -->
+<!-- in this policy we preserve the option to process   -->
+<!-- in this older style.  This could avoid frequent    -->
+<!-- applications of low-level text-processing routines -->
+<!-- and perhaps speed up processing.  Switch here      -->
+<!-- controls possible whitespace modes.                -->
+<!-- NB: default will change to 'flexible' once fully implemented -->
+<xsl:param name="whitespace" select="'strict'" />
+<xsl:variable name="whitespace-style">
+    <xsl:choose>
+        <xsl:when test="$whitespace='strict' or $whitespace='flexible'">
+            <xsl:value-of select="$whitespace" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message terminate="yes">
+                <xsl:text>MBX:ERROR: the whitespace parameter can be 'strict' or 'flexible', not '</xsl:text>
+                <xsl:value-of select="$whitespace" />
+                <xsl:text>'</xsl:text>
+            </xsl:message>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:variable>
+
 
 <!-- ############## -->
 <!-- Entry Template -->
@@ -806,7 +842,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:with-param name="language-attribute">
             <xsl:value-of select="'practice'" />
         </xsl:with-param>
-        <xsl:with-param name="in" select="'# Sage practice area&#xa;'"/>
+        <xsl:with-param name="in" select="'# Practice area (not linked for Sage Cell use)&#xa;'"/>
         <xsl:with-param name="out" select="''" />
     </xsl:call-template>
 </xsl:template>
@@ -903,12 +939,34 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
+<!-- ########################## -->
+<!-- Text Manipulation Routines -->
+<!-- ########################## -->
+
+<!-- Various bits of textual material            -->
+<!-- (eg Sage, code, verbatim, LaTeX)            -->
+<!-- require manipulation to                     -->
+<!--                                             -->
+<!--   (a) behave in some output format          -->
+<!--   (b) produce human-readable output (LaTeX) -->
+
+<!-- We need to identify particular characters   -->
+<!-- space, tab, carriage return, newline        -->
+<xsl:variable name="whitespaces">
+    <xsl:text>&#x20;&#x9;&#xD;&#xA;</xsl:text>
+</xsl:variable>
+<!-- space, tab, carriage return, newline        -->
+<xsl:variable name="blanks">
+    <xsl:text>&#x20;&#x9;</xsl:text>
+</xsl:variable>
+<!-- Punctuation ending a sentence               -->
+<xsl:variable name="sentence-end">
+    <xsl:text>.?!</xsl:text>
+</xsl:variable>
 
 <!-- Sanitize Code -->
 <!-- No leading whitespace, no trailing -->
 <!-- http://stackoverflow.com/questions/1134318/xslt-xslstrip-space-does-not-work -->
-<xsl:variable name="whitespace"><xsl:text>&#x20;&#x9;&#xD;&#xA;</xsl:text></xsl:variable>
-
 <!-- Trim all whitespace at end of code hunk -->
 <!-- Append carriage return to mark last line, remove later -->
 <xsl:template name="trim-end">
@@ -918,7 +976,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$last-char=''">
             <xsl:text>&#xA;</xsl:text>
         </xsl:when>
-        <xsl:when test="contains($whitespace, $last-char)">
+        <xsl:when test="contains($whitespaces, $last-char)">
             <xsl:call-template name="trim-end">
                 <xsl:with-param name="text" select="substring($text, 1, string-length($text) - 1)" />
             </xsl:call-template>
@@ -945,7 +1003,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:with-param name="text" select="substring($text, 2)" />
             </xsl:call-template>
         </xsl:when>
-        <xsl:when test="contains($whitespace, $first-char)">
+        <xsl:when test="contains($whitespaces, $first-char)">
             <xsl:call-template name="trim-start-lines">
                 <xsl:with-param name="text" select="substring($text, 2)" />
                 <xsl:with-param name="pad"  select="concat($pad, $first-char)" />
@@ -968,7 +1026,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$first-char='&#xA;'">
             <xsl:value-of select="string-length($pad)" />
         </xsl:when>
-        <xsl:when test="contains($whitespace, $first-char)">
+        <xsl:when test="contains($whitespaces, $first-char)">
             <xsl:call-template name="count-pad-length">
                 <xsl:with-param name="text" select="substring($text, 2)" />
                 <xsl:with-param name="pad"  select="concat($pad, $first-char)" />
@@ -1207,6 +1265,256 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
+<!-- Remove empty lines -->
+<!-- These are lines with no characters -->
+<!-- at all, just a newline             -->
+<!-- 2017-01-22: UNUSED, UNTESTED, incorporate with caution  -->
+<xsl:template name="strip-empty-lines">
+    <xsl:param name="text" />
+    <xsl:choose>
+        <!-- no more splitting, output $text, empty or not -->
+        <xsl:when test="not(contains($text, '&#xa;'))">
+            <xsl:value-of select="$text" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:variable name="firstline" select="substring-before($text, '&#xa;')" />
+            <xsl:choose>
+                <!-- silently drop an empty line, newline already gone -->
+                <xsl:when test="not($firstline)" />
+                <!-- output first line with restored newline -->
+                <xsl:otherwise>
+                    <xsl:value-of select="concat($firstline, '&#xa;')" />
+                </xsl:otherwise>
+            </xsl:choose>
+            <!-- recurse with remainder -->
+            <xsl:call-template name="strip-empty-lines">
+                <xsl:with-param name="text" select="substring-after($text, '&#xa;')" />
+            </xsl:call-template>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- Gobble leading whitespace -->
+<!-- Drop consecutive leading spaces and tabs           -->
+<!-- Designed for a single line as input                -->
+<!-- Used after maniplating sentence ending punctuation -->
+<xsl:template name="strip-leading-blanks">
+    <xsl:param name="text" />
+    <xsl:variable name="first-char" select="substring($text, 1, 1)" />
+    <xsl:choose>
+        <!-- if empty, done -->
+        <xsl:when test="not($first-char)" />
+        <!-- first character is space, tab, drop it -->
+        <xsl:when test="contains($blanks, $first-char)">
+            <xsl:call-template name="strip-leading-blanks">
+                <xsl:with-param name="text" select="substring($text, 2)" />
+            </xsl:call-template>
+        </xsl:when>
+        <!-- finished stripping, output as-is -->
+        <xsl:otherwise>
+            <xsl:value-of select="$text" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- Shove text left -->
+<!-- Remove all leading whitespace from every line -->
+<!-- Note: very similar to "sanitize-latex" below           -->
+<!-- 2017-01-22: UNUSED, UNTESTED, incorporate with caution -->
+<xsl:template name="slide-text-left">
+    <xsl:param name="text" />
+    <xsl:choose>
+        <!-- no more splitting, strip leading whitespace -->
+        <xsl:when test="not(contains($text, '&#xa;'))">
+            <xsl:call-template name="strip-leading-blanks">
+                <xsl:with-param name="text">
+                    <xsl:value-of select="$text" />
+                </xsl:with-param>
+            </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:call-template name="strip-leading-blanks">
+                <xsl:with-param name="text" select="concat(substring-before($text, '&#xa;'), '&#xa;')" />
+            </xsl:call-template>
+            <!-- recurse with remainder -->
+            <xsl:call-template name="slide-text-left">
+                <xsl:with-param name="text" select="substring-after($text, '&#xa;')" />
+            </xsl:call-template>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- Sanitize LaTex -->
+<!-- We allow authors to include whitespace for readability          -->
+<!--                                                                 -->
+<!-- (1) Newlines used to format complicated math (eg matrices)      -->
+<!-- (2) Newlines used to avoid word-wrapping in editing tools       -->
+<!-- (3) Newlines to support atomic version control changesets       -->
+<!-- (4) Source indentation of above, consonant with XML indentation -->
+<!--                                                                 -->
+<!-- But once we form LaTeX output we want to                        -->
+<!--                                                                 -->
+<!--   (i) Remove 100% whitespace lines                              -->
+<!--   (ii) Remove leading whitespace                                -->
+<!--                                                                 -->
+<!-- So we                                                           -->
+<!--                                                                 -->
+<!-- (a) Strip all leading whitespace                                -->
+<!-- (b) Remove any 100% empty lines (newline only)                  -->
+<!-- (c) Preserve remaining newlines                                 -->
+<!-- (d) Preserve remaining whitespace                               -->
+<xsl:template name="sanitize-latex">
+    <xsl:param name="text" />
+    <xsl:variable name="first-char" select="substring($text, 1, 1)" />
+    <xsl:choose>
+        <!-- empty, end recursion -->
+        <xsl:when test="not($first-char)" />
+        <!-- first character is whitespace, including newline -->
+        <!-- silently drop it as we recurse on remainder      -->
+        <xsl:when test="contains($whitespaces, $first-char)">
+            <xsl:call-template name="sanitize-latex">
+                <xsl:with-param name="text" select="substring($text, 2)" />
+            </xsl:call-template>
+        </xsl:when>
+        <!-- content followed by newline -->
+        <!-- split, output, and recurse  -->
+        <xsl:when test="contains($text, '&#xa;')">
+            <xsl:value-of select="substring-before($text, '&#xa;')" />
+            <xsl:text>&#xa;</xsl:text>
+            <xsl:call-template name="sanitize-latex">
+                <xsl:with-param name="text" select="substring-after($text, '&#xa;')" />
+            </xsl:call-template>
+        </xsl:when>
+        <!-- content, no following newline -->
+        <!-- output in full, end recursion -->
+        <xsl:otherwise>
+            <xsl:value-of select="$text" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- This collects "sentence-ending" punctuation   -->
+<!-- from the *front* of a text node.  It does not -->
+<!-- change the text node, but simply outputs the  -->
+<!-- punctuation for use by another template       -->
+<xsl:template name="leading-sentence-punctuation">
+    <xsl:param name="text" />
+    <xsl:variable name="first-char" select="substring($text, 1, 1)" />
+    <xsl:choose>
+        <!-- empty, quit -->
+        <xsl:when test="not($first-char)" />
+        <!-- if punctuation, output and recurse -->
+        <!-- else silently quit recursion       -->
+        <xsl:when test="contains($sentence-end, $first-char)">
+            <xsl:value-of select="$first-char" />
+            <xsl:call-template name="leading-sentence-punctuation">
+                <xsl:with-param name="text" select="substring($text, 2)" />
+            </xsl:call-template>
+        </xsl:when>
+        <!-- consecutive only, stop collecting -->
+        <xsl:otherwise />
+    </xsl:choose>
+</xsl:template>
+
+<!-- If we absorb punctuation, we need to scrub it by    -->
+<!-- examining and manipulating the text node with       -->
+<!-- those characters.  We drop consecutive punctuation. -->
+<xsl:template name="drop-sentence-punctuation">
+    <xsl:param name="text" />
+    <xsl:variable name="first-char" select="substring($text, 1, 1)" />
+    <xsl:choose>
+        <!-- if empty, done -->
+        <xsl:when test="not($first-char)" />
+        <!-- first character ends sentence, drop it, recurse -->
+        <xsl:when test="contains($sentence-end, $first-char)">
+            <xsl:call-template name="drop-sentence-punctuation">
+                <xsl:with-param name="text" select="substring($text, 2)" />
+            </xsl:call-template>
+        </xsl:when>
+        <!-- no more punctuation, output as-is -->
+        <xsl:otherwise>
+            <xsl:value-of select="$text" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- Remove consecutive run of blanks and  -->
+<!-- newlines in first portion of a string -->
+<xsl:template name="strip-leading-whitespace">
+    <xsl:param name="text" />
+    <xsl:variable name="first-char" select="substring($text, 1, 1)" />
+    <xsl:choose>
+        <!-- if empty, quit -->
+        <xsl:when test="not($first-char)" />
+        <!-- if first character is whitespace, drop it -->
+        <xsl:when test="contains($whitespaces, $first-char)">
+            <xsl:call-template name="strip-leading-whitespace">
+                <xsl:with-param name="text" select="substring($text, 2)" />
+            </xsl:call-template>
+        </xsl:when>
+        <!-- else finished stripping, output as-is -->
+        <xsl:otherwise>
+            <xsl:value-of select="$text" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- Remove consecutive run of blanks and -->
+<!-- newlines in last portion of a string -->
+<xsl:template name="strip-trailing-whitespace">
+    <xsl:param name="text" />
+    <xsl:variable name="last-char" select="substring($text, string-length($text), 1)" />
+    <xsl:choose>
+        <!-- if empty, quit -->
+        <xsl:when test="not($last-char)" />
+        <!-- if last character is whitespace, drop it -->
+        <xsl:when test="contains($whitespaces, $last-char)">
+            <xsl:call-template name="strip-trailing-whitespace">
+                <xsl:with-param name="text" select="substring($text, 1, string-length($text)-1)" />
+            </xsl:call-template>
+        </xsl:when>
+        <!-- else finished stripping, output as-is -->
+        <xsl:otherwise>
+            <xsl:value-of select="$text" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- spurious newlines introduce whitespace on either side -->
+<!-- we split at newlines, strip consecutive whitesapce on either side, -->
+<!-- and replace newlines by spaces (could restore a single newline) -->
+<xsl:template name="strip-newlines">
+    <xsl:param name="text" />
+    <xsl:choose>
+        <!-- if has newline, modify newline-free front portion -->
+        <!-- replace splitting newline with new separator      -->
+        <!-- modify trailing portion, and recurse with it      -->
+        <xsl:when test="contains($text, '&#xa;')">
+            <!-- clean trailing portion of left half -->
+            <xsl:call-template name="strip-trailing-whitespace">
+                <xsl:with-param name="text" select="substring-before($text, '&#xa;')" />
+            </xsl:call-template>
+            <!-- restore a separator, blank now -->
+            <!-- Note: this could be a newline, perhaps optionally (whitespace="breaks") -->
+            <!-- Note: this could be " %\n" in LaTeX output to be super explicit -->
+            <xsl:text> </xsl:text>
+            <!-- recurse with modified right half -->
+            <xsl:call-template name="strip-newlines">
+                <xsl:with-param name="text">
+                    <!-- clean leading portion of right half -->
+                    <xsl:call-template name="strip-leading-whitespace">
+                        <xsl:with-param name="text" select="substring-after($text, '&#xa;')" />
+                    </xsl:call-template>
+                </xsl:with-param>
+            </xsl:call-template>
+        </xsl:when>
+        <!-- else finished stripping, output as-is -->
+        <xsl:otherwise>
+            <xsl:value-of select="$text" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
 <!-- File Extension -->
 <!-- Input: full filename                       -->
 <!-- Output: extension (no period), lowercase'd -->
@@ -1221,6 +1529,65 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:value-of select="translate($extension, &UPPERCASE;, &LOWERCASE;)" />
 </xsl:template>
 
+<!-- ################## -->
+<!-- LaTeX Shortcomings -->
+<!-- ################## -->
+
+<!-- Math bits are authored in LaTeX syntax, -->
+<!-- but sometimes LaTeX needs a little help -->
+<!-- to do the right thing.  This help is    -->
+<!-- often common to several output formats, -->
+<!-- so we put these modal templates here.   -->
+
+<!-- Sentences ending with display math -->
+<!-- We look for an immediately adjacent/subsequent           -->
+<!-- text node and if we get any punctuation, we wrap         -->
+<!-- it for inclusion in the final throes of the display math -->
+<xsl:template match="me|men|md|mdn" mode="get-sentence-punctuation">
+    <xsl:variable name="trailing-text" select="following-sibling::node()[1]/self::text()" />
+    <xsl:variable name="punctuation">
+        <xsl:call-template name="leading-sentence-punctuation">
+            <xsl:with-param name="text" select="$trailing-text" />
+        </xsl:call-template>
+    </xsl:variable>
+    <!-- unclear why  test="$punctuation"  tests true always here -->
+    <xsl:if test="not($punctuation='')">
+        <xsl:text>\text{</xsl:text>
+        <xsl:value-of select="$punctuation" />
+        <xsl:text>}</xsl:text>
+    </xsl:if>
+</xsl:template>
+
+<!-- ################################## -->
+<!-- General Text Handling and Clean-Up -->
+<!-- ################################## -->
+
+<!-- Text adjustments -->
+<!-- This is a general template for every text node. -->
+<!-- We are first using it to adjust for             -->
+<!-- sentence-ending punctuation being absorbed into -->
+<!-- display math, so it is here near math handling. -->
+<!-- If generalized for other tasks, some chaining   -->
+<!-- of transformations will be necessary.           -->
+<xsl:template match="text()">
+    <xsl:variable name="first-char" select="substring(., 1, 1)" />
+    <!-- scrub sentence-ending punctuation, absorbed elsewhere -->
+    <!-- Scrub the extra leading whitespace that results       -->
+    <xsl:choose>
+        <xsl:when test="contains($sentence-end, $first-char) and preceding-sibling::node()[1][self::me or self::men or self::md or self::mdn]">
+            <xsl:call-template name="strip-leading-blanks">
+                <xsl:with-param name="text">
+                    <xsl:call-template name="drop-sentence-punctuation">
+                        <xsl:with-param name="text" select="." />
+                    </xsl:call-template>
+                </xsl:with-param>
+            </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:value-of select="." />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
 
 <!-- Date and Time Functions -->
 <!-- http://stackoverflow.com/questions/1437995/how-to-convert-2009-09-18-to-18th-sept-in-xslt -->
@@ -1433,10 +1800,12 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     </xsl:variable>
      <xsl:choose>
         <xsl:when test="$chunk='true'">
+            <!-- Very informative output for debugging purposes, comment/uncomment, but do not remove  -->
             <!-- <xsl:message>CHUNK: <xsl:apply-templates select="." mode="long-name" /></xsl:message> -->
             <xsl:apply-templates select="." mode="chunk" />
         </xsl:when>
         <xsl:otherwise>
+            <!-- Very informative output for debugging purposes, comment/uncomment, but do not remove  -->
             <!-- <xsl:message>INTER: <xsl:apply-templates select="." mode="long-name" /></xsl:message> -->
             <xsl:apply-templates select="." mode="intermediate" />
             <xsl:apply-templates select="&STRUCTURAL;" mode="chunking" />
@@ -4369,78 +4738,82 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- Groupings -->
 <!-- ######## -->
 
-<!-- Characters with left and right variants naturally  -->
-<!-- give rise to tags with begin and end variants      -->
-<!-- We implement these here with Result Tree Fragments -->
-<!-- using polymorphic techniques for the characters    -->
-<!-- Be sure not add a temporary top-level element to   -->
-<!-- the result tree fragment, so default template can  -->
-<!-- process its contents                               -->
+<!-- Characters with left and right variants naturally       -->
+<!-- give rise to tags with begin and end variants           -->
+<!-- We implement these here with Result Tree Fragments      -->
+<!-- as a polymorphic technique for the actual characters    -->
+<!-- LaTeX quotes are odd, so we override "q" and "sq" there -->
 
 <xsl:template match="q">
-    <xsl:variable name="q-rtf">
-        <fakeroot>
-            <lq />
-            <xsl:copy-of select="*|text()"/>
-            <rq />
-        </fakeroot>
+    <xsl:variable name="lq-rtf">
+        <lq />
     </xsl:variable>
-    <xsl:apply-templates select="exsl:node-set($q-rtf)/fakeroot" />
+    <xsl:apply-templates select="exsl:node-set($lq-rtf)" />
+    <xsl:apply-templates />
+    <xsl:variable name="rq-rtf">
+        <rq />
+    </xsl:variable>
+    <xsl:apply-templates select="exsl:node-set($rq-rtf)" />
 </xsl:template>
 
 <xsl:template match="sq">
-    <xsl:variable name="sq-rtf">
-        <fakeroot>
-            <lsq />
-            <xsl:copy-of select="*|text()"/>
-            <rsq />
-        </fakeroot>
+    <xsl:variable name="lsq-rtf">
+        <lsq />
     </xsl:variable>
-    <xsl:apply-templates select="exsl:node-set($sq-rtf)/fakeroot" />
+    <xsl:apply-templates select="exsl:node-set($lsq-rtf)" />
+    <xsl:apply-templates />
+    <xsl:variable name="rsq-rtf">
+        <rsq />
+    </xsl:variable>
+    <xsl:apply-templates select="exsl:node-set($rsq-rtf)" />
 </xsl:template>
 
 <xsl:template match="braces">
-    <xsl:variable name="braces-rtf">
-        <fakeroot>
-            <lbrace />
-            <xsl:copy-of select="*|text()"/>
-            <rbrace />
-        </fakeroot>
+    <xsl:variable name="lbrace-rtf">
+        <lbrace />
     </xsl:variable>
-    <xsl:apply-templates select="exsl:node-set($braces-rtf)/fakeroot" />
+    <xsl:apply-templates select="exsl:node-set($lbrace-rtf)" />
+    <xsl:apply-templates />
+    <xsl:variable name="rbrace-rtf">
+        <rbrace />
+    </xsl:variable>
+    <xsl:apply-templates select="exsl:node-set($rbrace-rtf)" />
 </xsl:template>
 
 <xsl:template match="brackets">
-    <xsl:variable name="brackets-rtf">
-        <fakeroot>
-            <lbracket />
-            <xsl:copy-of select="*|text()"/>
-            <rbracket />
-        </fakeroot>
+    <xsl:variable name="lbracket-rtf">
+        <lbracket />
     </xsl:variable>
-    <xsl:apply-templates select="exsl:node-set($brackets-rtf)/fakeroot" />
+    <xsl:apply-templates select="exsl:node-set($lbracket-rtf)" />
+    <xsl:apply-templates />
+    <xsl:variable name="rbracket-rtf">
+        <rbracket />
+    </xsl:variable>
+    <xsl:apply-templates select="exsl:node-set($rbracket-rtf)" />
 </xsl:template>
 
 <xsl:template match="dblbrackets">
-    <xsl:variable name="dblbrackets-rtf">
-        <fakeroot>
-            <ldblbracket />
-            <xsl:copy-of select="*|text()"/>
-            <rdblbracket />
-        </fakeroot>
+    <xsl:variable name="ldblbracket-rtf">
+        <ldblbracket />
     </xsl:variable>
-    <xsl:apply-templates select="exsl:node-set($dblbrackets-rtf)/fakeroot" />
+    <xsl:apply-templates select="exsl:node-set($ldblbracket-rtf)" />
+    <xsl:apply-templates />
+    <xsl:variable name="rdblbracket-rtf">
+        <rdblbracket />
+    </xsl:variable>
+    <xsl:apply-templates select="exsl:node-set($rdblbracket-rtf)" />
 </xsl:template>
 
 <xsl:template match="angles">
-    <xsl:variable name="angles-rtf">
-        <fakeroot>
-            <langle />
-            <xsl:copy-of select="*|text()"/>
-            <rangle />
-            </fakeroot>
+    <xsl:variable name="langle-rtf">
+        <langle />
     </xsl:variable>
-    <xsl:apply-templates select="exsl:node-set($angles-rtf)/fakeroot" />
+    <xsl:apply-templates select="exsl:node-set($langle-rtf)" />
+    <xsl:apply-templates />
+    <xsl:variable name="rangle-rtf">
+        <rangle />
+    </xsl:variable>
+    <xsl:apply-templates select="exsl:node-set($rangle-rtf)" />
 </xsl:template>
 
 <!-- ############ -->
@@ -4520,7 +4893,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- and forgetting the command-line switch is a common mistake -->
 <!-- The following is not perfect, but reasonably effective     -->
 <xsl:template match="mathbook" mode="xinclude-warnings">
-    <xsl:if test="book and not(book/chapter)">
+    <xsl:if test="book and not(book/chapter or book/part/chapter)">
         <xsl:message>
             <xsl:text>MBX:WARNING:    </xsl:text>
             <xsl:text>Your &lt;book&gt; does not have any chapters.  Maybe you forgot the '--xinclude' switch on your 'xsltproc' command line?</xsl:text>

@@ -366,6 +366,21 @@
                 </webwork>
             </exercise>
 
+            <exercise>
+                <title>No Randomization</title>
+                <introduction>
+                    <p>This problem has no randomization at all, not even if it were exported to be part of a problem set on a <webwork /> server. As such, it really doesn't need any lines of Perl code in its setup, so you have the option of skipping that part of the authoring process.</p>
+                </introduction>
+                <webwork>
+                    <statement>
+                        <p><m>1+2=</m><var name="3" width="5" /></p>
+                    </statement>
+                </webwork>
+                <conclusion>
+                    <p>For more about problems that do not require any randomization, see the MBX Author Guide.</p>
+                </conclusion>
+            </exercise>
+
         </section>
 
         <section>
@@ -949,7 +964,7 @@
                             </image>
                         </figure>
 
-                        <p><m>x=</m> <var name="$answer"/></p>
+                        <p><m>x=</m> <var name="$answer" width="5"/></p>
                     </statement>
 
                     <solution>
@@ -1228,5 +1243,227 @@
 
         </section>
 
+        <section>
+            <title>Stress Tests</title>
+
+            <exercise>
+                <title>MBX problem source with server-generated images</title>
+                <webwork>
+                    <setup>
+                        <pg-code>
+                            for my $i(0..7){$gr[$i] = init_graph(-1,-1,4,4,axes=>[0,0],grid=>[5,5],size=>[150,150]);};
+                            add_functions($gr[0], "1 for x in &lt;-1,4> using color:blue and weight:2");
+                            add_functions($gr[1], "x for x in &lt;-1,4> using color:blue and weight:2");
+                            add_functions($gr[2], "x^2 for x in &lt;-1,4> using color:blue and weight:2");
+                            add_functions($gr[3], "x^3 for x in &lt;-1,4> using color:blue and weight:2");
+                            add_functions($gr[4], "e^x for x in &lt;-1,4> using color:blue and weight:2");
+                            add_functions($gr[5], "sin(x) for x in &lt;-1,4> using color:blue and weight:2");
+                            add_functions($gr[6], "cos(x) for x in &lt;-1,4> using color:blue and weight:2");
+                            add_functions($gr[7], "exp(-x^2) for x in &lt;-1,4> using color:blue and weight:2");
+                        </pg-code>
+                    </setup>
+                    <stage>
+                        <statement>
+                            <figure><image pg-name="$gr[0]" width="150" height="150" tex_size="150"/></figure>
+                            <figure><image pg-name="$gr[1]" width="150" height="150" tex_size="150"/></figure>
+                        </statement>
+                        <solution>
+                            <figure><image pg-name="$gr[2]" width="150" height="150" tex_size="150"/></figure>
+                        </solution>
+                    </stage>
+                    <stage>
+                        <statement>
+                            <figure><image pg-name="$gr[3]" width="150" height="150" tex_size="150"/></figure>
+                            <figure><image pg-name="$gr[4]" width="150" height="150" tex_size="150"/></figure>
+                            <figure><image pg-name="$gr[5]" width="150" height="150" tex_size="150"/></figure>
+                        </statement>
+                        <!-- No hints for now because with displayMode=tex, the anonymous problem rendering is not -->
+                        <!--generating a hints section at all. Will have to work with Mike to investigate this.    -->
+                        <!--<hint>
+                            <figure><image pg-name="$gr[6]" width="150" height="150" tex_size="150"/></figure>
+                        </hint>-->
+                        <solution>
+                            <figure><image pg-name="$gr[7]" width="150" height="150" tex_size="150"/></figure>
+                        </solution>
+                  </stage>
+                </webwork>
+            </exercise>
+        </section>
+
+        <section>
+            <title>Layout Configuration Testing</title>
+            <p>This section is to provide a single page demonstrating all of the combinations that may factor into a problem's layout.</p>
+
+            <exercise>
+                <webwork>
+                    <statement>
+                        <p><m>1+1=2</m></p>
+                    </statement>
+                </webwork>
+            </exercise>
+            <exercise>
+                <title>Has a Title</title>
+                <webwork>
+                    <statement>
+                        <p><m>1+1=2</m></p>
+                    </statement>
+                </webwork>
+            </exercise>
+            <exercise>
+                <introduction>
+                    <p>Has an introduction.</p>
+                </introduction>
+                <webwork>
+                    <statement>
+                        <p><m>1+1=2</m></p>
+                    </statement>
+                </webwork>
+            </exercise>
+            <exercise>
+                <introduction>
+                    <p>Has an introduction.</p>
+                </introduction>
+                <title>Has a Title</title>
+                <webwork>
+                    <statement>
+                        <p><m>1+1=2</m></p>
+                    </statement>
+                </webwork>
+            </exercise>
+            <exercise>
+                <webwork>
+                    <statement>
+                        <p><m>1+1=2</m></p>
+                    </statement>
+                </webwork>
+                <conclusion>
+                    <p>Has a conclusion.</p>
+                </conclusion>
+            </exercise>
+            <exercise>
+                <title>Has a Title</title>
+                <webwork>
+                    <statement>
+                        <p><m>1+1=2</m></p>
+                    </statement>
+                </webwork>
+                <conclusion>
+                    <p>Has a conclusion.</p>
+                </conclusion>
+            </exercise>
+            <exercise>
+                <introduction>
+                    <p>Has an introduction.</p>
+                </introduction>
+                <webwork>
+                    <statement>
+                        <p><m>1+1=2</m></p>
+                    </statement>
+                </webwork>
+                <conclusion>
+                    <p>Has a conclusion.</p>
+                </conclusion>
+            </exercise>
+            <exercise>
+                <introduction>
+                    <p>Has an introduction.</p>
+                </introduction>
+                <title>Has a Title</title>
+                <webwork>
+                    <statement>
+                        <p><m>1+1=2</m></p>
+                    </statement>
+                </webwork>
+                <conclusion>
+                    <p>Has a conclusion.</p>
+                </conclusion>
+            </exercise>
+            <exercises>
+                <exercise>
+                    <webwork>
+                        <statement>
+                            <p><m>1+1=2</m></p>
+                        </statement>
+                    </webwork>
+                </exercise>
+                <exercise>
+                    <title>Has a Title</title>
+                    <webwork>
+                        <statement>
+                            <p><m>1+1=2</m></p>
+                        </statement>
+                    </webwork>
+                </exercise>
+                <exercise>
+                    <introduction>
+                        <p>Has an introduction.</p>
+                    </introduction>
+                    <webwork>
+                        <statement>
+                            <p><m>1+1=2</m></p>
+                        </statement>
+                    </webwork>
+                </exercise>
+                <exercise>
+                    <introduction>
+                        <p>Has an introduction.</p>
+                    </introduction>
+                    <title>Has a Title</title>
+                    <webwork>
+                        <statement>
+                            <p><m>1+1=2</m></p>
+                        </statement>
+                    </webwork>
+                </exercise>
+                <exercise>
+                    <webwork>
+                        <statement>
+                            <p><m>1+1=2</m></p>
+                        </statement>
+                    </webwork>
+                    <conclusion>
+                        <p>Has a conclusion.</p>
+                    </conclusion>
+                </exercise>
+                <exercise>
+                    <title>Has a Title</title>
+                    <webwork>
+                        <statement>
+                            <p><m>1+1=2</m></p>
+                        </statement>
+                    </webwork>
+                    <conclusion>
+                        <p>Has a conclusion.</p>
+                    </conclusion>
+                </exercise>
+                <exercise>
+                    <introduction>
+                        <p>Has an introduction.</p>
+                    </introduction>
+                    <webwork>
+                        <statement>
+                            <p><m>1+1=2</m></p>
+                        </statement>
+                    </webwork>
+                    <conclusion>
+                        <p>Has a conclusion.</p>
+                    </conclusion>
+                </exercise>
+                <exercise>
+                    <introduction>
+                        <p>Has an introduction.</p>
+                    </introduction>
+                    <title>Has a Title</title>
+                    <webwork>
+                        <statement>
+                            <p><m>1+1=2</m></p>
+                        </statement>
+                    </webwork>
+                    <conclusion>
+                        <p>Has a conclusion.</p>
+                    </conclusion>
+                </exercise>
+            </exercises>
+        </section>
     </article>
 </mathbook>

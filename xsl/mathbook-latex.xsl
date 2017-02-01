@@ -3458,44 +3458,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- preceding-sibling::*[not(todo)][1][self::p or self::paragraphs]  -->
 <!-- for necessity of \par (do careful diff to see subtle differences -->
 <xsl:template match="p[1]">
-    <!-- build the paragraph as output -->
-    <xsl:variable name="raw-latex" >
-        <xsl:apply-templates />
-        <xsl:text>%&#xa;</xsl:text>
-    </xsl:variable>
-    <!-- control whitespace, or not -->
-    <xsl:choose>
-        <xsl:when test="$whitespace-style='flexible'">
-            <xsl:call-template name="sanitize-latex">
-                <xsl:with-param name="text" select="$raw-latex" />
-            </xsl:call-template>
-        </xsl:when>
-        <xsl:when test="$whitespace-style='strict'">
-            <xsl:value-of select="$raw-latex" />
-        </xsl:when>
-        <xsl:otherwise />
-    </xsl:choose>
+    <xsl:apply-templates />
+    <xsl:text>%&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="p">
-    <!-- build the paragraph as output -->
-    <xsl:variable name="raw-latex" >
         <xsl:text>\par&#xa;</xsl:text>
         <xsl:apply-templates />
         <xsl:text>%&#xa;</xsl:text>
-    </xsl:variable>
-    <!-- control whitespace, or not -->
-    <xsl:choose>
-        <xsl:when test="$whitespace-style='flexible'">
-            <xsl:call-template name="sanitize-latex">
-                <xsl:with-param name="text" select="$raw-latex" />
-            </xsl:call-template>
-        </xsl:when>
-        <xsl:when test="$whitespace-style='strict'">
-            <xsl:value-of select="$raw-latex" />
-        </xsl:when>
-        <xsl:otherwise />
-    </xsl:choose>
 </xsl:template>
 
 <!-- For a memo, not indenting the first paragraph helps -->
@@ -4263,7 +4233,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:variable>
     <xsl:text>\lstinline</xsl:text>
     <xsl:value-of select="$separator" />
-    <xsl:value-of select="text()" />
+    <xsl:value-of select="." />
     <xsl:value-of select="$separator" />
 </xsl:template>
 
@@ -4272,7 +4242,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- \texttt so that font-scaling can happen            -->
 <xsl:template match="title//c">
     <xsl:text>\texttt{</xsl:text>
-    <xsl:value-of select="text()" />
+    <xsl:value-of select="." />
     <xsl:text>}</xsl:text>
 </xsl:template>
 
@@ -4307,7 +4277,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:value-of select="$separator" />
     <!-- make LaTeX characters into escape sequences -->
     <xsl:call-template name="escape-latex">
-        <xsl:with-param name="text" select="text()" />
+        <xsl:with-param name="text" select="." />
     </xsl:call-template>
     <xsl:value-of select="$separator" />
     <xsl:text></xsl:text>
@@ -4326,7 +4296,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="cd">
     <xsl:text>%&#xa;</xsl:text>
     <xsl:text>\begin{verbatim}&#xa;</xsl:text>
-    <xsl:apply-templates select="text()" />
+    <xsl:value-of select="." />
     <xsl:text>&#xa;</xsl:text>
     <xsl:text>\end{verbatim}&#xa;</xsl:text>
 </xsl:template>
@@ -4836,8 +4806,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- match immediately preceding, only if a prompt:                   -->
 <!-- https://www.oxygenxml.com/archives/xsl-list/199910/msg00541.html -->
 <xsl:template match="console/input">
-    <!-- Assumes prompt does not exceed one line -->
-    <xsl:apply-templates select="preceding-sibling::*[1][self::prompt]" />
+    <!-- Assumes prompt does not exceed one line, and do -->
+    <!-- not sanitize through generic text() template    -->
+    <xsl:value-of select="preceding-sibling::*[1][self::prompt]" />
     <!-- sanitize left-margin, etc                    -->
     <!-- then employ \consoleinput macro on each line -->
     <xsl:call-template name="wrap-console-input">

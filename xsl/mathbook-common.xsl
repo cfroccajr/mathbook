@@ -959,9 +959,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:variable name="blanks">
     <xsl:text>&#x20;&#x9;</xsl:text>
 </xsl:variable>
-<!-- Punctuation ending a sentence               -->
-<xsl:variable name="sentence-end">
-    <xsl:text>.?!</xsl:text>
+<!-- Punctuation ending a clause of a sentence   -->
+<!-- Asymmetric: no space, mark, space           -->
+<xsl:variable name="clause-ending-marks">
+    <xsl:text>.?!:;,</xsl:text>
 </xsl:variable>
 
 <!-- Sanitize Code -->
@@ -1354,21 +1355,27 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!--                                                                 -->
 <!-- But once we form LaTeX output we want to                        -->
 <!--                                                                 -->
-<!--   (i) Remove 100% whitespace lines                              -->
-<!--   (ii) Remove leading whitespace                                -->
+<!--   (i)   Remove 100% whitespace lines                            -->
+<!--   (ii)  Remove leading whitespace                               -->
+<!--   (iii) Finish without a newline                                -->
 <!--                                                                 -->
 <!-- So we                                                           -->
 <!--                                                                 -->
 <!-- (a) Strip all leading whitespace                                -->
-<!-- (b) Remove any 100% empty lines (newline only)                  -->
-<!-- (c) Preserve remaining newlines                                 -->
-<!-- (d) Preserve remaining whitespace                               -->
+<!-- (b) Remove any 100% resulting empty lines (newline only)        -->
+<!-- (c) Preserve remaining newlines (trailing after content)        -->
+<!-- (d) Preserve remaining whitespace (eg, within expressions)      -->
+<!-- (e) Take care with trailing characters, except final newline    -->
+<!--                                                                 -->
+<!-- We can do this because of the limited purposes of the           -->
+<!-- m, me, men, md, mdn elements.  The whitespace we strip is not   -->
+<!-- relevant/important, and what we leave does not change output    -->
 <xsl:template name="sanitize-latex">
     <xsl:param name="text" />
     <xsl:variable name="first-char" select="substring($text, 1, 1)" />
     <xsl:choose>
         <!-- empty, end recursion -->
-        <xsl:when test="not($first-char)" />
+        <xsl:when test="$first-char = ''" />
         <!-- first character is whitespace, including newline -->
         <!-- silently drop it as we recurse on remainder      -->
         <xsl:when test="contains($whitespaces, $first-char)">
@@ -1376,14 +1383,21 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:with-param name="text" select="substring($text, 2)" />
             </xsl:call-template>
         </xsl:when>
-        <!-- content followed by newline -->
-        <!-- split, output, and recurse  -->
+        <!-- content followed by newline                           -->
+        <!-- split, preserve newline, output, and recurse, but     -->
+        <!-- drop a newline that only protects trailing whitespace -->
         <xsl:when test="contains($text, '&#xa;')">
             <xsl:value-of select="substring-before($text, '&#xa;')" />
-            <xsl:text>&#xa;</xsl:text>
-            <xsl:call-template name="sanitize-latex">
-                <xsl:with-param name="text" select="substring-after($text, '&#xa;')" />
-            </xsl:call-template>
+            <xsl:variable name="remainder" select="substring-after($text, '&#xa;')" />
+            <xsl:choose>
+                <xsl:when test="normalize-space($remainder) = ''" />
+                <xsl:otherwise>
+                    <xsl:text>&#xa;</xsl:text>
+                    <xsl:call-template name="sanitize-latex">
+                        <xsl:with-param name="text" select="$remainder" />
+                    </xsl:call-template>
+                </xsl:otherwise>
+            </xsl:choose>
         </xsl:when>
         <!-- content, no following newline -->
         <!-- output in full, end recursion -->
@@ -1393,11 +1407,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
-<!-- This collects "sentence-ending" punctuation   -->
+<!-- This collects "clause-ending" punctuation     -->
 <!-- from the *front* of a text node.  It does not -->
 <!-- change the text node, but simply outputs the  -->
 <!-- punctuation for use by another template       -->
-<xsl:template name="leading-sentence-punctuation">
+<xsl:template name="leading-clause-punctuation">
     <xsl:param name="text" />
     <xsl:variable name="first-char" select="substring($text, 1, 1)" />
     <xsl:choose>
@@ -1405,9 +1419,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="not($first-char)" />
         <!-- if punctuation, output and recurse -->
         <!-- else silently quit recursion       -->
-        <xsl:when test="contains($sentence-end, $first-char)">
+        <xsl:when test="contains($clause-ending-marks, $first-char)">
             <xsl:value-of select="$first-char" />
-            <xsl:call-template name="leading-sentence-punctuation">
+            <xsl:call-template name="leading-clause-punctuation">
                 <xsl:with-param name="text" select="substring($text, 2)" />
             </xsl:call-template>
         </xsl:when>
@@ -1419,15 +1433,15 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- If we absorb punctuation, we need to scrub it by    -->
 <!-- examining and manipulating the text node with       -->
 <!-- those characters.  We drop consecutive punctuation. -->
-<xsl:template name="drop-sentence-punctuation">
+<xsl:template name="drop-clause-punctuation">
     <xsl:param name="text" />
     <xsl:variable name="first-char" select="substring($text, 1, 1)" />
     <xsl:choose>
         <!-- if empty, done -->
         <xsl:when test="not($first-char)" />
         <!-- first character ends sentence, drop it, recurse -->
-        <xsl:when test="contains($sentence-end, $first-char)">
-            <xsl:call-template name="drop-sentence-punctuation">
+        <xsl:when test="contains($clause-ending-marks, $first-char)">
+            <xsl:call-template name="drop-clause-punctuation">
                 <xsl:with-param name="text" select="substring($text, 2)" />
             </xsl:call-template>
         </xsl:when>
@@ -1543,10 +1557,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- We look for an immediately adjacent/subsequent           -->
 <!-- text node and if we get any punctuation, we wrap         -->
 <!-- it for inclusion in the final throes of the display math -->
-<xsl:template match="me|men|md|mdn" mode="get-sentence-punctuation">
+<xsl:template match="me|men|md|mdn" mode="get-clause-punctuation">
     <xsl:variable name="trailing-text" select="following-sibling::node()[1]/self::text()" />
     <xsl:variable name="punctuation">
-        <xsl:call-template name="leading-sentence-punctuation">
+        <xsl:call-template name="leading-clause-punctuation">
             <xsl:with-param name="text" select="$trailing-text" />
         </xsl:call-template>
     </xsl:variable>
@@ -1570,20 +1584,20 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Text adjustments -->
 <!-- This is a general template for every text node. -->
 <!-- We are first using it to adjust for             -->
-<!-- sentence-ending punctuation being absorbed into -->
+<!-- clause-ending punctuation being absorbed into   -->
 <!-- display math, so it is here near math handling. -->
 <!-- If generalized for other tasks, some chaining   -->
 <!-- of transformations will be necessary.           -->
 <xsl:template match="text()">
-    <!-- Scrub sentence-ending punctuation, absorbed elsewhere -->
+    <!-- Scrub clause-ending punctuation, absorbed elsewhere   -->
     <!-- Also scrub the extra leading whitespace that results  -->
     <xsl:variable name="first-char" select="substring(., 1, 1)" />
     <xsl:variable name="math-punctuation">
         <xsl:choose>
-            <xsl:when test="contains($sentence-end, $first-char) and preceding-sibling::node()[1][self::me or self::men or self::md or self::mdn]">
+            <xsl:when test="contains($clause-ending-marks, $first-char) and preceding-sibling::node()[1][self::me or self::men or self::md or self::mdn]">
                 <xsl:call-template name="strip-leading-whitespace">
                     <xsl:with-param name="text">
-                        <xsl:call-template name="drop-sentence-punctuation">
+                        <xsl:call-template name="drop-clause-punctuation">
                             <xsl:with-param name="text" select="." />
                         </xsl:call-template>
                     </xsl:with-param>

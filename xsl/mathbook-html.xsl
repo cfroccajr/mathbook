@@ -75,6 +75,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- You may elect to have entire side-by-side   -->
 <!-- panels born as knowls, using the switch.    -->
 <!-- PROJECT-LIKE gets own switch here           -->
+<!-- "example" are set to 'yes' by default       -->
+<!-- so new authors know that knowls exist       -->
+<!-- "webwork" are inside "exercise" always,     -->
+<!-- and they are set to 'yes' due to their      -->
+<!-- overhead in rendering                       -->
 <xsl:param name="html.knowl.theorem" select="'no'" />
 <xsl:param name="html.knowl.proof" select="'yes'" />
 <xsl:param name="html.knowl.definition" select="'no'" />
@@ -86,6 +91,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:param name="html.knowl.table" select="'no'" />
 <xsl:param name="html.knowl.listing" select="'no'" />
 <xsl:param name="html.knowl.sidebyside" select="'no'" />
+<xsl:param name="html.knowl.webwork.inline" select="'yes'" />
+<xsl:param name="html.knowl.webwork.sectional" select="'yes'" />
 <xsl:param name="html.knowl.exercise.inline" select="'yes'" />
 <xsl:param name="html.knowl.exercise.sectional" select="'no'" />
 <!-- html.knowl.example.solution: always "yes", could be implemented -->
@@ -159,6 +166,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- ######### -->
 <!-- Variables that affect HTML creation -->
 <!-- More in the common file             -->
+
+<!-- LaTeX is handled with MathJax -->
+<xsl:variable name="latex-processing" select="'mathjax'" />
 
 <!-- This is cribbed from the CSS "max-width"-->
 <!-- Design width, measured in pixels        -->
@@ -1389,6 +1399,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:element name="head">
                 <!-- dissuade indexing duplicated content -->
                 <meta name="robots" content="noindex, nofollow" />
+                <!-- we need Sage cell configuration functions     -->
+                <!-- in the knowl file itself, the main Javascript -->
+                <!-- is being placed on *every* page, if present   -->
+                <!-- anywhere in the document, and that is         -->
+                <!-- sufficient for the external knowl             -->
+                <xsl:apply-templates select="." mode="sagecell" />
             </xsl:element>
 
             <xsl:element name="body">
@@ -1916,83 +1932,92 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:variable>
     <exsl:document href="{$knowl-file}" method="html">
         <xsl:call-template name="converter-blurb-html" />
-        <!-- Actual content of knowl -->
-        <xsl:comment>use 'format=debug' on 'webwork' tag to debug problem</xsl:comment>
-        <xsl:element name="iframe">
-            <xsl:attribute name="width">100%</xsl:attribute> <!-- MBX specific -->
-            <xsl:attribute name="src">
-                <xsl:value-of select="concat($webwork-server,'/webwork2/html2xml?')"/>
-                <xsl:text>&amp;answersSubmitted=0</xsl:text>
-                <xsl:choose>
-                    <xsl:when test="@source">
-                        <xsl:text>&amp;sourceFilePath=</xsl:text>
-                        <xsl:value-of select="@source" />
-                    </xsl:when>
-                    <xsl:when test="not(. = '')">
-                        <xsl:text>&amp;problemSource=</xsl:text>
-                        <!-- formulate PG version with included routine -->
-                        <!-- form base64 version for URL transmission -->
-                        <xsl:variable name="pg-ascii">
-                            <xsl:apply-templates select="." mode="pg" />
-                        </xsl:variable>
-                        <!-- A useful debugging message if WW problems misbehave            -->
-                        <!-- Redirect output with 2> if there is too much at the console    -->
-                        <!-- <xsl:message><xsl:value-of select="$pg-ascii" /></xsl:message> -->
-                        <xsl:call-template name="b64:encode">
-                            <xsl:with-param name="urlsafe" select="true()" />
-                            <xsl:with-param name="asciiString">
-                                <xsl:value-of select="$pg-ascii" />
-                            </xsl:with-param>
-                        </xsl:call-template>
-                    </xsl:when>
-                    <!-- problem not authored, nor pointed at -->
-                    <xsl:otherwise>
-                        <xsl:message>
-                            <xsl:text>MBX:WARNING: A webwork problem requires a source URL or original content</xsl:text>
-                            <xsl:apply-templates select="." mode="location-report" />
-                        </xsl:message>
-                    </xsl:otherwise>
-                </xsl:choose>
-                <xsl:text>&amp;problemSeed=</xsl:text>
-                <xsl:choose>
-                    <xsl:when test="@seed">
-                        <xsl:value-of select="@seed"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:text>123567890</xsl:text>
-                    </xsl:otherwise>
-                </xsl:choose>
-                <xsl:text>&amp;displayMode=MathJax</xsl:text>
-                <xsl:text>&amp;courseID=</xsl:text>
-                <xsl:value-of select="$webwork.course"/>
-                <xsl:text>&amp;userID=</xsl:text>
-                <xsl:value-of select="$webwork.userID"/>
-                <xsl:choose>
-                    <xsl:when test="$webwork.version='2.11'">
-                        <xsl:text>&amp;password=</xsl:text>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:text>&amp;course_password=</xsl:text>
-                    </xsl:otherwise>
-                </xsl:choose>
-                <xsl:value-of select="$webwork.password"/>
-                <xsl:text>&amp;outputformat=</xsl:text>
-                <xsl:choose>
-                    <xsl:when test="@format"><xsl:value-of select="@format" /></xsl:when>
-                    <xsl:otherwise><xsl:text>simple</xsl:text></xsl:otherwise>
-                </xsl:choose>
-            </xsl:attribute>
-            <!-- unclear what this does, mimicing Mike's blog post -->
-            <xsl:if test="not(. = '')">
-                <xsl:attribute name="base64"><xsl:text>1</xsl:text></xsl:attribute>
-                <xsl:attribute name="uri"><xsl:text>1</xsl:text></xsl:attribute>
-            </xsl:if>
-        </xsl:element> <!-- end iframe -->
-        <script type="text/javascript">iFrameResize({log:true,inPageLinks:true,resizeFrom:'child'})</script>
+        <xsl:apply-templates select="." mode="iframe-content" />
     </exsl:document>
     <!-- recurse the tree outside of the file-writing -->
     <xsl:apply-templates select="*" mode="xref-knowl" />
 </xsl:template>
+
+<!-- The guts of a WeBWork problem realized in HTML -->
+<!-- This is heart of an external knowl version, or -->
+<!-- what is born visible under control of a switch -->
+<xsl:template match="webwork" mode="iframe-content">
+    <xsl:comment>use 'format=debug' on 'webwork' tag to debug problem</xsl:comment>
+    <xsl:element name="iframe">
+        <xsl:attribute name="width">100%</xsl:attribute> <!-- MBX specific -->
+        <xsl:attribute name="src">
+            <xsl:value-of select="concat($webwork-server,'/webwork2/html2xml?')"/>
+            <xsl:text>&amp;answersSubmitted=0</xsl:text>
+            <xsl:choose>
+                <xsl:when test="@source">
+                    <xsl:text>&amp;sourceFilePath=</xsl:text>
+                    <xsl:value-of select="@source" />
+                </xsl:when>
+                <xsl:when test="not(. = '')">
+                    <xsl:text>&amp;problemSource=</xsl:text>
+                    <!-- formulate PG version with included routine -->
+                    <!-- form base64 version for URL transmission -->
+                    <xsl:variable name="pg-ascii">
+                        <xsl:apply-templates select="." mode="pg" />
+                    </xsl:variable>
+                    <!-- A useful debugging message if WW problems misbehave            -->
+                    <!-- Redirect output with 2> if there is too much at the console    -->
+                    <!-- <xsl:message><xsl:value-of select="$pg-ascii" /></xsl:message> -->
+                    <xsl:call-template name="b64:encode">
+                        <xsl:with-param name="urlsafe" select="true()" />
+                        <xsl:with-param name="asciiString">
+                            <xsl:value-of select="$pg-ascii" />
+                        </xsl:with-param>
+                    </xsl:call-template>
+                </xsl:when>
+                <!-- problem not authored, nor pointed at -->
+                <xsl:otherwise>
+                    <xsl:message>
+                        <xsl:text>MBX:WARNING: A webwork problem requires a source URL or original content</xsl:text>
+                        <xsl:apply-templates select="." mode="location-report" />
+                    </xsl:message>
+                </xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>&amp;problemSeed=</xsl:text>
+            <xsl:choose>
+                <xsl:when test="@seed">
+                    <xsl:value-of select="@seed"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:text>123567890</xsl:text>
+                </xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>&amp;displayMode=MathJax</xsl:text>
+            <xsl:text>&amp;courseID=</xsl:text>
+            <xsl:value-of select="$webwork.course"/>
+            <xsl:text>&amp;userID=</xsl:text>
+            <xsl:value-of select="$webwork.userID"/>
+            <xsl:choose>
+                <xsl:when test="$webwork.version='2.11'">
+                    <xsl:text>&amp;password=</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:text>&amp;course_password=</xsl:text>
+                </xsl:otherwise>
+            </xsl:choose>
+            <xsl:value-of select="$webwork.password"/>
+            <xsl:text>&amp;outputformat=</xsl:text>
+            <xsl:choose>
+                <xsl:when test="@format"><xsl:value-of select="@format" /></xsl:when>
+                <xsl:otherwise><xsl:text>simple</xsl:text></xsl:otherwise>
+            </xsl:choose>
+        </xsl:attribute>
+        <!-- unclear what this does, mimicing Mike's blog post -->
+        <xsl:if test="not(. = '')">
+            <xsl:attribute name="base64"><xsl:text>1</xsl:text></xsl:attribute>
+            <xsl:attribute name="uri"><xsl:text>1</xsl:text></xsl:attribute>
+        </xsl:if>
+    </xsl:element> <!-- end iframe -->
+    <script type="text/javascript">iFrameResize({log:true,inPageLinks:true,resizeFrom:'child'})</script>
+</xsl:template>
+
+
+
 
 <!-- ########################### -->
 <!-- Environment Implementations -->
@@ -2804,7 +2829,28 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="exercise[child::webwork]" mode="body">
     <xsl:apply-templates select="statement"/>
     <xsl:apply-templates select="introduction"/>
-    <xsl:apply-templates select="webwork" mode="knowl-clickable" />
+    <xsl:choose>
+        <xsl:when test="ancestor::exercises">
+            <xsl:choose>
+                <xsl:when test="$html.knowl.webwork.sectional='yes'">
+                    <xsl:apply-templates select="webwork" mode="knowl-clickable" />
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:apply-templates select="webwork" mode="iframe-content" />
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:choose>
+                <xsl:when test="$html.knowl.webwork.inline='yes'">
+                    <xsl:apply-templates select="webwork" mode="knowl-clickable" />
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:apply-templates select="webwork" mode="iframe-content" />
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:otherwise>
+    </xsl:choose>
     <xsl:apply-templates select="conclusion"/>
 </xsl:template>
 
@@ -3164,15 +3210,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>false</xsl:text>
 </xsl:template>
 
-<!-- ########################## -->
-<!-- Mathematics (HTML/MathJax) -->
-<!-- ########################## -->
+<!-- ########### -->
+<!-- Mathematics -->
+<!-- ########### -->
 
-<!-- Since MathJax interprets a large subset of LaTeX,   -->
-<!-- there are only subtle differences between LaTeX     -->
-<!-- and HTML output.  See LaTeX- and HTML-specific       -->
-<!-- templates for intertext elements and the numbering   -->
-<!-- of equations (automatic for LaTeX, managed for HTML) -->
+<!-- Mathematics authored in LaTeX syntax will be        -->
+<!-- independent of output format.  Despite MathJax's    -->
+<!-- broad array of capabilities, there are enough       -->
+<!-- differences that it is easier to maintain separate  -->
+<!-- routines for different outputs.  Still, we try to   -->
+<!-- isolate some routines in "xsl/mathbook-common.xsl". -->
 
 <!-- Numbering -->
 <!-- We manually "tag" numbered equations in HTML output,       -->
@@ -3193,12 +3240,47 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- differently, and we need to be careful not to    -->
 <!-- place LaTeX "\label{}" in know'ed content.       -->
 
-<!-- Inline Math -->
-<!-- See the common file for the universal "m" template -->
-<!-- Never labeled, so no need for duplicate template   -->
+<!-- Inline Math ("m") -->
+<!-- Never labeled, so not ever knowled,        -->
+<!-- and so no need for a duplicate template    -->
+<!-- Asymmetric LaTeX delimiters \( and \) need -->
+<!-- to be part of MathJax configuration, but   -->
+<!-- also free up the dollar sign               -->
+<!-- TODO: absorb punctuation, bad HTML line breaks -->
+<xsl:template match= "m">
+    <xsl:variable name="raw-latex">
+        <!-- build and save for possible manipulation     -->
+        <!-- Note: generic text() template passes through -->
+        <xsl:choose>
+            <xsl:when test="ancestor::webwork">
+                <xsl:apply-templates select="text()|var" />
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates select="text()|fillin" />
+            </xsl:otherwise>
+        </xsl:choose>
+        <!-- look ahead to absorb immediate clause-ending punctuation -->
+        <xsl:apply-templates select="." mode="get-clause-punctuation" />
+    </xsl:variable>
+    <!-- wrap tightly in math delimiters -->
+    <xsl:text>\(</xsl:text>
+    <!-- Manipulate guts, or not -->
+    <xsl:choose>
+        <xsl:when test="$whitespace = 'strict'">
+            <xsl:value-of select="$raw-latex" />
+        </xsl:when>
+        <xsl:when test="$whitespace = 'flexible'">
+            <xsl:call-template name="sanitize-latex">
+                <xsl:with-param name="text" select="$raw-latex" />
+            </xsl:call-template>
+        </xsl:when>
+    </xsl:choose>
+    <xsl:text>\)</xsl:text>
+</xsl:template>
 
-<!-- We don't wrap math, stay out of MathJax' way -->
-<!-- me is not numbered ever, so not knowlized    -->
+<!-- Minimal templates for general environments       -->
+<!-- These are necessary since we can xross-reference -->
+<!-- numbered equations within a math display         -->
 
 <!-- always visible -->
 <xsl:template match="men|md|mdn" mode="is-hidden">
@@ -3220,9 +3302,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>false</xsl:text>
 </xsl:template>
 
-<!-- Single Displayed Equation, Unnumbered -->
-<!-- Output follows source line breaks     -->
-<!-- MathJax: out-of-the-box support       -->
+<!-- Displayed Single-Line Math, Unnumbered ("me") -->
+<!-- Never numbered, so never knowled, and thus no   -->
+<!-- duplicate template.  Also no wrapping in div's, -->
+<!-- etc. Output follows source line breaks          -->
 <xsl:template match="me">
     <xsl:text>\begin{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
@@ -3236,7 +3319,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}</xsl:text>
 </xsl:template>
 
-<!-- Single Displayed Equation, Numbered -->
+<!-- Displayed Single-Line Math, Numbered ("men") -->
 <!-- MathJax: out-of-the-box support     -->
 <!-- Requires a manual tag for number    -->
 <xsl:template match="men">
@@ -3269,7 +3352,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}</xsl:text>
 </xsl:template>
 
-<!-- Multi-Line Math -->
+<!-- Displayed Multi-Line Math ("md", "mdn") -->
 <!-- Multi-line displayed equations container, globally unnumbered or numbered   -->
 <!-- mrow logic controls numbering, based on variant here, and per-row overrides -->
 <!-- align environment if ampersands are present, gather environment otherwise   -->
@@ -3299,7 +3382,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}</xsl:text>
 </xsl:template>
 
-<!-- Rows of a Multi-line Math Display                 -->
+<!-- Rows of displayed Multi-Line Math ("mrow") -->
 <!-- (1) MathJax config above turns off all numbering  -->
 <!-- (2) Numbering supplied by \tag{}                  -->
 <!-- (3) MathJax config makes span id's predictable    -->
@@ -5304,16 +5387,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- Dashes, Hyphen -->
 <!-- http://www.cs.tut.fi/~jkorpela/dashes.html -->
-<!-- HTML Tidy does not like these characters, but they seem to be OK -->
-<!-- Could do this in CSS, perhaps? -->
 <xsl:template match="mdash">
     <xsl:text>&#8212;</xsl:text>
 </xsl:template>
 <xsl:template match="ndash">
     <xsl:text>&#8211;</xsl:text>
 </xsl:template>
-<!-- Unambiguous hyphen -->
+<!-- A "hyphen" element was a bad idea, very cumbersome -->
 <xsl:template match="hyphen">
+    <xsl:message>MBX:WARNING: the "hyphen" element is deprecated (2017-02-05), use the "hyphen-minus" character instead (aka the "ASCII hyphen")</xsl:message>
+    <xsl:apply-templates select="." mode="location-report" />
     <xsl:text>&#8208;</xsl:text>
 </xsl:template>
 
@@ -5807,7 +5890,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <!-- http://webdesignerwall.com/tutorials/responsive-design-in-3-steps -->
             <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
             <!-- jquery used by sage, webwork, knowls -->
-            <xsl:call-template name="jquery" />
+            <xsl:call-template name="jquery-sagecell" />
             <xsl:call-template name="mathjax" />
             <!-- webwork's iframeResizer needs to come before sage -->
             <xsl:if test="//webwork[@*|node()]">
@@ -5908,7 +5991,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
 
             <!-- jquery used by sage, webwork, knowls -->
-            <xsl:call-template name="jquery" />
+            <xsl:call-template name="jquery-sagecell" />
             <xsl:call-template name="mathjax" />
             <!-- webwork's iframeResizer needs to come before sage -->
             <xsl:if test="//webwork[@*|node()]">
@@ -6746,11 +6829,17 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready",function () {
 <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML-full" />
 </xsl:template>
 
-<!-- jQuery -->
-<!-- used by sage, webwork, knowls                  -->
-<!-- essential to use the version from sagemath.org -->
-<xsl:template name="jquery">
+<!-- jQuery, SageCell -->
+<!-- jQuery used by sage, webwork, knowls, so load always  -->
+<!--  * essential to use the version from sagemath.org *   -->
+<!-- We never know if a Sage cell might be inside a knowl, -->
+<!-- so we load the relevant JavaScript onto every page if -->
+<!-- a cell occurs *anywhere* in the entire document       -->
+<xsl:template name="jquery-sagecell">
     <script type="text/javascript" src="https://sagecell.sagemath.org/static/jquery.min.js"></script>
+    <xsl:if test="$document-root//sage">
+        <script type="text/javascript" src="https://sagecell.sagemath.org/embedded_sagecell.js"></script>
+    </xsl:if>
 </xsl:template>
 
 <!-- Sage Cell Setup -->
@@ -6830,11 +6919,6 @@ MathJax.Hub.Register.StartupHook("TeX Jax Ready",function () {
 <!-- Examine the subtree of the page, which can still be   -->
 <!-- excessive for summary pages, so room for improvement  -->
 <xsl:template match="*" mode="sagecell">
-    <!-- Load Javascript for Sage Cell Server, JQuery is elsewhere -->
-    <xsl:if test=".//sage">
-        <script type="text/javascript" src="https://sagecell.sagemath.org/embedded_sagecell.js"></script>
-    </xsl:if>
-
     <!-- making a Sage version now very liberally, could be more precise -->
     <xsl:if test=".//sage">
         <xsl:call-template name="makesagecell">

@@ -120,6 +120,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Variables that affect LaTeX creation -->
 <!-- More in the common file              -->
 
+<!-- LaTeX is handled natively -->
+<xsl:variable name="latex-processing" select="'native'" />
+
 <!-- We generally want one large complete LaTeX file -->
 <xsl:variable name="chunk-level">
     <xsl:choose>
@@ -3483,42 +3486,73 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>%&#xa;</xsl:text>
 </xsl:template>
 
-<!-- ########################### -->
-<!-- Mathematics (LaTeX/MathJax) -->
-<!-- ########################### -->
+<!-- ########### -->
+<!-- Mathematics -->
+<!-- ########### -->
 
-<!-- Since MathJax interprets a large subset of LaTeX,   -->
-<!-- there are only subtle differences between LaTeX     -->
-<!-- and HTML output.  See LaTeX- and HTML-specific       -->
-<!-- templates for intertext elements and the numbering   -->
-<!-- of equations (automatic for LaTeX, managed for HTML) -->
+<!-- Mathematics authored in LaTeX syntax will be        -->
+<!-- independent of output format.  Despite MathJax's    -->
+<!-- broad array of capabilities, there are enough       -->
+<!-- differences that it is easier to maintain separate  -->
+<!-- routines for different outputs.  Still, we try to   -->
+<!-- isolate some routines in "xsl/mathbook-common.xsl". -->
 
 <!-- Numbering -->
-<!-- We do not tag equations with numbers in LaTeX output,               -->
-<!-- but instead let the LaTeX preamble's configuration                  -->
-<!-- options control the way numbers are generated and assigned.         -->
-<!-- The combination of starred/un-starred LaTeX environments,            -->
-<!-- and the presence of "\label{}", "\notag", or no such command,        -->
-<!-- control the numbering in response to the number of levels specified. -->
+<!-- We do not tag equations with numbers in LaTeX output,   -->
+<!-- but instead let the LaTeX preamble's configuration      -->
+<!-- options control the way numbers are generated and       -->
+<!-- assigned. The combination of starred/un-starred LaTeX   -->
+<!-- environments, and the presence of "\label{}", "\notag", -->
+<!-- or no such command, control the numbering in response   -->
+<!-- to the number of levels specified.                      -->
 
-<!-- NOTE -->
-<!-- The remainder should look very similar to that  -->
-<!-- of the HTML/MathJax version in terms of result. -->
-<!-- Notably, "intertext" elements are implemented   -->
-<!-- differently, and we need to be careful not to   -->
-<!-- place LaTeX "\label{}" in know'ed content.      -->
+<!-- Other differences -->
+<!-- \intertext needs a very different stategy for HTML      -->
+<!-- \label needs to not occur in duplicated content in HTML -->
 
-<!-- Inline Math -->
-<!-- See the common file for the universal "m" template -->
+<!-- Inline Math ("m") -->
+<!-- We use the asymmetric LaTeX delimiters \( and \).     -->
+<!-- For LaTeX these are not "robust", hence break moving  -->
+<!-- items (titles, index), so use the "fixltx2e" package, -->
+<!-- which declares \MakeRobust\( and \MakeRobust\)        -->
+<!-- Note: LaTeX, unlike HTML, needs no help with          -->
+<!-- clause-ending punctuation trailing inline math        -->
+<!-- it always does the right thing.  So when the general  -->
+<!-- template for text nodes in mathbook-common goes to    -->
+<!-- drop this punctuation, it also checks the             -->
+<!-- $latex-processing global variable                     -->
+<xsl:template match= "m">
+    <xsl:variable name="raw-latex">
+        <!-- build and save for possible manipulation     -->
+        <!-- Note: generic text() template passes through -->
+        <xsl:choose>
+            <xsl:when test="ancestor::webwork">
+                <xsl:apply-templates select="text()|var" />
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates select="text()|fillin" />
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <!-- wrap tightly in math delimiters -->
+    <xsl:text>\(</xsl:text>
+    <!-- Manipulate guts, or not -->
+    <xsl:choose>
+        <xsl:when test="$whitespace = 'strict'">
+            <xsl:value-of select="$raw-latex" />
+        </xsl:when>
+        <xsl:when test="$whitespace = 'flexible'">
+            <xsl:call-template name="sanitize-latex">
+                <xsl:with-param name="text" select="$raw-latex" />
+            </xsl:call-template>
+        </xsl:when>
+    </xsl:choose>
+    <xsl:text>\)</xsl:text>
+</xsl:template>
 
-<!-- Displayed Math -->
-
+<!-- Displayed Single-Line Math ("me", "men") -->
 <!-- Single displayed equation, me (unnumbered), men (numbered)    -->
 <!-- Output follows source line breaks                             -->
-<!-- MathJax: out-of-the-box support                               -->
-<!-- LaTeX: with AMS-TeX, \[,\] tranlates to equation* environment -->
-<!-- LaTeX: without AMS-TEX, it is improved version of $$, $$      -->
-<!-- WeBWorK: allow for "var" element                              -->
 <!-- See: http://tex.stackexchange.com/questions/40492/            -->
 <xsl:template match="me|men">
     <!-- build and save for possible manipulation                   -->
@@ -3573,7 +3607,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<!-- Multi-Line Math -->
+<!-- Displayed Multi-Line Math ("md", "mdn") -->
 <!-- Multi-line displayed equations container, globally unnumbered or numbered   -->
 <!-- mrow logic controls numbering, based on variant here, and per-row overrides -->
 <!-- align environment if ampersands are present, gather environment otherwise   -->
@@ -3618,7 +3652,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<!-- Rows of a multi-line math display -->
+<!-- Rows of displayed Multi-Line Math ("mrow") -->
 <!-- Numbering controlled here with \label{}, \notag, or nothing -->
 <!-- Last row different, has no line-break marker                -->
 <!-- Each mrow finishes with a newline, for visual output        -->
@@ -4669,7 +4703,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 
-<!-- Dashes -->
+<!-- Dashes, Hyphen -->
 <!-- http://www.public.asu.edu/~arrows/tidbits/dashes.html -->
 <xsl:template match="mdash">
     <xsl:text>\textemdash{}</xsl:text>
@@ -4677,7 +4711,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="ndash">
     <xsl:text>\textendash{}</xsl:text>
 </xsl:template>
+<!-- A "hyphen" element was a bad idea, very cumbersome -->
 <xsl:template match="hyphen">
+    <xsl:message>MBX:WARNING: the "hyphen" element is deprecated (2017-02-05), use the "hyphen-minus" character instead (aka the "ASCII hyphen")</xsl:message>
+    <xsl:apply-templates select="." mode="location-report" />
     <xsl:text>-</xsl:text>
 </xsl:template>
 

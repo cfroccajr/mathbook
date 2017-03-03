@@ -91,7 +91,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:param name="html.knowl.table" select="'no'" />
 <xsl:param name="html.knowl.listing" select="'no'" />
 <xsl:param name="html.knowl.sidebyside" select="'no'" />
-<xsl:param name="html.knowl.webwork.inline" select="'yes'" />
+<xsl:param name="html.knowl.webwork.inline" select="'no'" />
 <xsl:param name="html.knowl.webwork.sectional" select="'yes'" />
 <xsl:param name="html.knowl.exercise.inline" select="'yes'" />
 <xsl:param name="html.knowl.exercise.sectional" select="'no'" />
@@ -3278,17 +3278,15 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:variable>
     <!-- wrap tightly in math delimiters -->
     <xsl:text>\(</xsl:text>
-    <!-- Manipulate guts, or not -->
-    <xsl:choose>
-        <xsl:when test="$whitespace = 'strict'">
-            <xsl:value-of select="$raw-latex" />
-        </xsl:when>
-        <xsl:when test="$whitespace = 'flexible'">
-            <xsl:call-template name="sanitize-latex">
-                <xsl:with-param name="text" select="$raw-latex" />
-            </xsl:call-template>
-        </xsl:when>
-    </xsl:choose>
+    <!-- we clean whitespace that is irrelevant      -->
+    <!-- MathJax is more tolerant than Latex, but    -->
+    <!-- we choose to treat math bits identically    -->
+    <!-- sanitize-latex template does not provide    -->
+    <!-- a final newline and we do not add one here  -->
+    <!-- either for inline math                      -->
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text" select="$raw-latex" />
+    </xsl:call-template>
     <xsl:text>\)</xsl:text>
 </xsl:template>
 
@@ -3321,49 +3319,109 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- duplicate template.  Also no wrapping in div's, -->
 <!-- etc. Output follows source line breaks          -->
 <xsl:template match="me">
+    <!-- build and save for later manipulation                      -->
+    <!-- Note: template for text nodes passes through mrow children -->
+    <xsl:variable name="raw-latex">
+        <xsl:apply-templates select="." mode="alignat-columns" />
+        <xsl:apply-templates select="text()|var|fillin" />
+        <!-- look ahead to absorb immediate clause-ending punctuation -->
+        <xsl:apply-templates select="." mode="get-clause-punctuation" />
+    </xsl:variable>
+    <!-- we provide a newline for visual appeal -->
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\begin{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
-    <xsl:apply-templates select="." mode="alignat-columns" />
-    <xsl:apply-templates select="text()|var|fillin" />
-    <!-- look ahead to absorb immediate clause-ending punctuation -->
-    <xsl:apply-templates select="." mode="get-clause-punctuation" />
+    <!-- leading whitespace not present, or stripped -->
+    <xsl:text>&#xa;</xsl:text>
+    <!-- we clean whitespace that is irrelevant    -->
+    <!-- MathJax is more tolerant than Latex, but  -->
+    <!-- we choose to treat math bits identically  -->
+    <!-- sanitize-latex template does not provide  -->
+    <!-- a final newline so we add one here        -->
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text" select="$raw-latex" />
+    </xsl:call-template>
+    <!-- We add a newline for visually appealing source -->
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
+    <!-- we provide a newline for visual appeal -->
+    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <!-- Displayed Single-Line Math, Numbered ("men") -->
 <!-- MathJax: out-of-the-box support     -->
 <!-- Requires a manual tag for number    -->
 <xsl:template match="men">
+    <!-- build and save for later manipulation                      -->
+    <!-- Note: template for text nodes passes through mrow children -->
+    <xsl:variable name="raw-latex">
+        <xsl:apply-templates select="." mode="alignat-columns" />
+        <xsl:apply-templates select="text()|var|fillin" />
+        <!-- look ahead to absorb immediate clause-ending punctuation -->
+        <xsl:apply-templates select="." mode="get-clause-punctuation" />
+        <!-- label original -->
+        <xsl:apply-templates select="." mode="label" />
+        <xsl:apply-templates select="." mode="tag" />
+    </xsl:variable>
+    <!-- we provide a newline for visual appeal -->
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\begin{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
-    <xsl:apply-templates select="." mode="alignat-columns" />
-    <xsl:apply-templates select="text()|var|fillin" />
-    <!-- look ahead to absorb immediate clause-ending punctuation -->
-    <xsl:apply-templates select="." mode="get-clause-punctuation" />
-    <!-- label original -->
-    <xsl:apply-templates select="." mode="label" />
-    <xsl:apply-templates select="." mode="tag" />
+    <!-- leading whitespace not present, or stripped -->
+    <xsl:text>&#xa;</xsl:text>
+    <!-- we clean whitespace that is irrelevant    -->
+    <!-- MathJax is more tolerant than Latex, but  -->
+    <!-- we choose to treat math bits identically  -->
+    <!-- sanitize-latex template does not provide  -->
+    <!-- a final newline so we add one here        -->
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text" select="$raw-latex" />
+    </xsl:call-template>
+    <!-- We add a newline for visually appealing source -->
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
+    <!-- we provide a newline for visual appeal -->
+    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="men" mode="duplicate">
+    <!-- build and save for later manipulation                      -->
+    <!-- Note: template for text nodes passes through mrow children -->
+    <xsl:variable name="raw-latex">
+        <xsl:apply-templates select="." mode="alignat-columns" />
+        <xsl:apply-templates select="text()|var|fillin" />
+        <!-- look ahead to absorb immediate clause-ending punctuation -->
+        <xsl:apply-templates select="." mode="get-clause-punctuation" />
+        <xsl:apply-templates select="." mode="tag" />
+    </xsl:variable>
+    <!-- we provide a newline for visual appeal -->
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\begin{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
-    <xsl:apply-templates select="." mode="alignat-columns" />
-    <xsl:apply-templates select="text()|var|fillin" />
-    <!-- look ahead to absorb immediate clause-ending punctuation -->
-    <xsl:apply-templates select="." mode="get-clause-punctuation" />
-    <xsl:apply-templates select="." mode="tag" />
+    <!-- leading whitespace not present, or stripped -->
+    <xsl:text>&#xa;</xsl:text>
+    <!-- we clean whitespace that is irrelevant    -->
+    <!-- MathJax is more tolerant than Latex, but  -->
+    <!-- we choose to treat math bits identically  -->
+    <!-- sanitize-latex template does not provide  -->
+    <!-- a final newline so we add one here        -->
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text" select="$raw-latex" />
+    </xsl:call-template>
+    <!-- We add a newline for visually appealing source -->
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
+    <!-- we provide a newline for visual appeal -->
+    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <!-- Displayed Multi-Line Math ("md", "mdn") -->
@@ -3373,36 +3431,54 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- LaTeX environment from "displaymath-alignment" template in -common.xsl      -->
 <!-- NB: *identical* to LaTeX version, but need "duplicate" version              -->
 <xsl:template match="md|mdn">
+    <!-- We add a newline for visually appealing source -->
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\begin{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
     <xsl:apply-templates select="." mode="alignat-columns" />
+    <!-- We add a newline for visually appealing source -->
     <xsl:text>&#xa;</xsl:text>
     <xsl:apply-templates select="mrow|intertext" />
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
+    <!-- We add a newline for visually appealing source -->
+    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="md|mdn" mode="duplicate">
+    <!-- We add a newline for visually appealing source -->
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\begin{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
     <xsl:apply-templates select="." mode="alignat-columns" />
+    <!-- We add a newline for visually appealing source -->
     <xsl:text>&#xa;</xsl:text>
-    <xsl:apply-templates select="mrow|intertext" mode="duplicate" />
+    <xsl:apply-templates select="mrow|intertext" />
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="." mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
+    <!-- We add a newline for visually appealing source -->
+    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <!-- Rows of displayed Multi-Line Math ("mrow") -->
-<!-- (1) MathJax config above turns off all numbering  -->
-<!-- (2) Numbering supplied by \tag{}                  -->
-<!-- (3) MathJax config makes span id's predictable    -->
-<!-- (4) Last row special, has no line-break marker    -->
+<!-- (1) MathJax config above turns off all numbering -->
+<!-- (2) Numbering supplied by \tag{}                 -->
+<!-- (3) MathJax config makes span id's predictable   -->
+<!-- (4) Last row special, has no line-break marker   -->
+<!-- Unlike for LaTeX output, we perform LaTeX        -->
+<!-- sanitization on each "mrow" since interleaved    -->
+<!-- "intertext" will have HTML output that might get -->
+<!-- stripped out in generic text processing.         -->
 <xsl:template match="md/mrow">
-    <xsl:apply-templates select="text()|xref|var|fillin" />
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text">
+            <xsl:apply-templates select="text()|xref|var|fillin" />
+        </xsl:with-param>
+    </xsl:call-template>
     <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
         <!-- look ahead to absorb immediate clause-ending punctuation -->
         <!-- pass the context as enclosing environment (md)           -->
@@ -3420,7 +3496,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <xsl:template match="md/mrow" mode="duplicate">
-    <xsl:apply-templates select="text()|xref|var|fillin" />
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text">
+            <xsl:apply-templates select="text()|xref|var|fillin" />
+        </xsl:with-param>
+    </xsl:call-template>
     <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
         <!-- look ahead to absorb immediate clause-ending punctuation -->
         <!-- pass the context as enclosing environment (md)           -->
@@ -3436,7 +3516,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <xsl:template match="mdn/mrow">
-    <xsl:apply-templates select="text()|xref|var|fillin" />
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text">
+            <xsl:apply-templates select="text()|xref|var|fillin" />
+        </xsl:with-param>
+    </xsl:call-template>
     <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
         <!-- look ahead to absorb immediate clause-ending punctuation -->
         <!-- pass the context as enclosing environment (md)           -->
@@ -3459,7 +3543,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <xsl:template match="mdn/mrow" mode="duplicate">
-    <xsl:apply-templates select="text()|xref|var|fillin" />
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text">
+            <xsl:apply-templates select="text()|xref|var|fillin" />
+        </xsl:with-param>
+    </xsl:call-template>
     <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
         <!-- look ahead to absorb immediate clause-ending punctuation -->
         <!-- pass the context as enclosing environment (md)           -->
@@ -3490,23 +3578,22 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <!-- Intertext -->
-<!-- A LaTeX construct really, we just jump out/in of     -->
-<!-- the align/gather environment and package the text    -->
-<!-- in an HTML paragraph, assuming it is just a snippet. -->
-<!-- This breaks the alignment, but MathJax has no good   -->
-<!-- solution for this.                                   -->
-<!-- NB: we check the *parent* for alignment information  -->
+<!-- A LaTeX construct really, we just jump out/in of    -->
+<!-- the align/gather environment and process the text   -->
+<!-- "md" and "mdn" can only occur in a "p" so no wrap   -->
+<!-- This breaks the alignment, but MathJax has no good  -->
+<!-- solution for this.                                  -->
+<!-- NB: we check the *parent* for alignment information -->
 <xsl:template match="md/intertext|mdn/intertext">
     <xsl:text>\end{</xsl:text>
-    <xsl:apply-templates select=".." mode="displaymath-alignment" />
+    <xsl:apply-templates select="parent::*" mode="displaymath-alignment" />
     <xsl:text>}&#xa;</xsl:text>
-    <p>
-        <xsl:apply-templates />
-    </p>
+    <xsl:apply-templates />
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\begin{</xsl:text>
-    <xsl:apply-templates select=".." mode="displaymath-alignment" />
+    <xsl:apply-templates select="parent::*" mode="displaymath-alignment" />
     <xsl:text>}</xsl:text>
-    <xsl:apply-templates select=".." mode="alignat-columns" />
+    <xsl:apply-templates select="parent::*" mode="alignat-columns" />
     <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
@@ -5933,6 +6020,27 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 
 <!-- JSXGraph -->
 <xsl:template match="jsxgraph">
+    <!-- interpret @width percentage and @aspect ratio -->
+    <xsl:variable name="width-percentage">
+        <xsl:apply-templates select="." mode="image-width" />
+    </xsl:variable>
+    <xsl:variable name="aspect-ratio">
+        <xsl:apply-templates select="." mode="aspect-ratio" />
+    </xsl:variable>
+    <xsl:variable name="width-pixels">
+        <xsl:value-of select="round((substring-before($width-percentage, '%') div 100) * $design-width)" />
+    </xsl:variable>
+    <xsl:variable name="height-pixels">
+        <xsl:choose>
+            <xsl:when test="not($aspect-ratio='')">
+                <xsl:value-of select="round($width-pixels div $aspect-ratio)" />
+            </xsl:when>
+            <!-- empty string means not specified, use 1:1, ie square -->
+            <xsl:otherwise>
+                <xsl:value-of select="$width-pixels" />
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
     <!-- the div to hold the JSX output -->
     <xsl:element name="div">
         <xsl:attribute name="id">
@@ -5942,10 +6050,16 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <xsl:text>jxgbox</xsl:text>
         </xsl:attribute>
         <xsl:attribute name="style">
-            <xsl:text>width:400px; height:400px;</xsl:text>
+            <xsl:text>width:</xsl:text>
+            <xsl:value-of select="$width-pixels" />
+            <xsl:text>px; height:</xsl:text>
+            <xsl:value-of select="$height-pixels" />
+            <xsl:text>px;</xsl:text>
         </xsl:attribute>
     </xsl:element>
-    <!-- the script to hold the code -->
+    <!-- the script to hold the code                       -->
+    <!-- JSXGraph code must reference the id on the div,   -->
+    <!-- so ideally an xml:id specifies this in the source -->
     <xsl:element name="script">
         <xsl:attribute name="type">
             <xsl:text>text/javascript</xsl:text>
@@ -6614,21 +6728,13 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <!-- ToC, Prev/Up/Next/Annotation buttons  -->
 <!-- Also organized for small screen modes -->
 <xsl:template match="*" mode="primary-navigation">
-    <nav id="primary-navbar">
+    <nav id="primary-navbar" class="navbar" style="">
         <div class="container">
             <!-- Several buttons across the top -->
             <div class="navbar-top-buttons">
-                <!-- "contents" button brings up document root page       -->
-                <!-- Perhaps better to make a link and style as a button? -->
-                <!-- http://stackoverflow.com/questions/2906582           -->
                 <xsl:element name="button">
                     <xsl:attribute name="class">
                         <xsl:text>sidebar-left-toggle-button button active</xsl:text>
-                    </xsl:attribute>
-                    <xsl:attribute name="onclick">
-                        <xsl:text>window.location.href='</xsl:text>
-                        <xsl:apply-templates select="$document-root" mode="url" />
-                        <xsl:text>'</xsl:text>
                     </xsl:attribute>
                     <xsl:call-template name="type-name">
                         <xsl:with-param name="string-id" select="'toc'" />
@@ -6792,11 +6898,9 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
                         <xsl:attribute name="href">
                             <xsl:value-of select="$outer-url" />
                         </xsl:attribute>
-                        <xsl:if test="1 > $chunk-level">
-                            <xsl:attribute name="data-scroll">
-                                <xsl:value-of select="$outer-internal" />
-                            </xsl:attribute>
-                        </xsl:if>
+                        <xsl:attribute name="data-scroll">
+                            <xsl:value-of select="$outer-internal" />
+                        </xsl:attribute>
                         <xsl:variable name="num"><xsl:apply-templates select="." mode="number" /></xsl:variable>
                         <xsl:if test="$num!=''">
                             <span class="codenumber"><xsl:value-of select="$num" /></span>
@@ -6807,42 +6911,50 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
                     </xsl:element>
                 </h2>
                 <xsl:if test="$toc-level > 1">
-                    <ul>
-                    <xsl:for-each select="./*">
-                        <xsl:variable name="inner-structural">
-                            <xsl:apply-templates select="." mode="is-structural" />
-                        </xsl:variable>
-                        <xsl:if test="$inner-structural='true'">
-                            <!-- Subtree represented by this ToC item -->
-                            <xsl:variable name="inner-node" select="descendant-or-self::*" />
-                            <xsl:variable name="inner-url">
-                                <xsl:apply-templates select="." mode="url" />
+                    <!-- a level 1 ToC entry may not have any structural      -->
+                    <!-- descendants, so we build a possible sublist in a     -->
+                    <!-- variable and do not use it if it ends up being empty -->
+                    <xsl:variable name="sublist">
+                        <xsl:for-each select="./*">
+                            <xsl:variable name="inner-structural">
+                                <xsl:apply-templates select="." mode="is-structural" />
                             </xsl:variable>
-                            <xsl:variable name="inner-internal">
-                                <xsl:apply-templates select="." mode="internal-id" />
-                            </xsl:variable>
-                            <li>
-                                <xsl:element name="a">
-                                    <xsl:attribute name="href">
-                                        <xsl:value-of select="$inner-url" />
-                                    </xsl:attribute>
-                                    <xsl:if test="2 > $chunk-level">
-                                        <xsl:attribute name="data-scroll">
-                                            <xsl:value-of select="$outer-internal" />
+                            <xsl:if test="$inner-structural='true'">
+                                <!-- Subtree represented by this ToC item -->
+                                <xsl:variable name="inner-node" select="descendant-or-self::*" />
+                                <xsl:variable name="inner-url">
+                                    <xsl:apply-templates select="." mode="url" />
+                                </xsl:variable>
+                                <xsl:variable name="inner-internal">
+                                    <xsl:apply-templates select="." mode="internal-id" />
+                                </xsl:variable>
+                                <li>
+                                    <xsl:element name="a">
+                                        <xsl:attribute name="href">
+                                            <xsl:value-of select="$inner-url" />
                                         </xsl:attribute>
-                                    </xsl:if>
-                                    <!-- Add if an "active" class if this is where we are -->
-                                    <xsl:if test="count($this-page-node|$inner-node) = count($inner-node)">
-                                        <xsl:attribute name="class">active</xsl:attribute>
-                                    </xsl:if>
-                                    <xsl:apply-templates select="." mode="title-simple" />
-                                </xsl:element>
-                            </li>
-                        </xsl:if>
-                    </xsl:for-each>
-                    </ul>
-                </xsl:if>
-            </xsl:if>
+                                        <xsl:attribute name="data-scroll">
+                                            <xsl:value-of select="$inner-internal" />
+                                        </xsl:attribute>
+                                        <!-- Add if an "active" class if this is where we are -->
+                                        <xsl:if test="count($this-page-node|$inner-node) = count($inner-node)">
+                                            <xsl:attribute name="class">active</xsl:attribute>
+                                        </xsl:if>
+                                        <xsl:apply-templates select="." mode="title-simple" />
+                                    </xsl:element>
+                                </li>
+                            </xsl:if>
+                        </xsl:for-each>
+                    </xsl:variable>
+                    <!-- not clear why this is the right test         -->
+                    <!-- make an unordered list if there is a sublist -->
+                    <xsl:if test="not($sublist='')">
+                        <ul>
+                            <xsl:copy-of select="$sublist" />
+                        </ul>
+                    </xsl:if>
+                </xsl:if>  <!-- end $toc-level > 1 -->
+            </xsl:if>  <!-- end structural, level 1 -->
         </xsl:for-each>
     </xsl:if>
 </xsl:template>

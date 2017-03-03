@@ -458,8 +458,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- applications of low-level text-processing routines -->
 <!-- and perhaps speed up processing.  Switch here      -->
 <!-- controls possible whitespace modes.                -->
-<!-- NB: default will change to 'flexible' once fully implemented -->
-<xsl:param name="whitespace" select="'strict'" />
+<xsl:param name="whitespace" select="'flexible'" />
 <xsl:variable name="whitespace-style">
     <xsl:choose>
         <xsl:when test="$whitespace='strict' or $whitespace='flexible'">
@@ -799,9 +798,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:value-of select="$latex-left-justified" />
         </xsl:with-param>
     </xsl:call-template>
-    <xsl:text>\newcommand{\lt}{ &lt; }&#xa;</xsl:text>
-    <xsl:text>\newcommand{\gt}{ &gt; }&#xa;</xsl:text>
-    <xsl:text>\newcommand{\amp}{ &amp; }&#xa;</xsl:text>
+    <xsl:text>\newcommand{\lt}{&lt;}&#xa;</xsl:text>
+    <xsl:text>\newcommand{\gt}{&gt;}&#xa;</xsl:text>
+    <xsl:text>\newcommand{\amp}{&amp;}&#xa;</xsl:text>
 </xsl:variable>
 
 <!-- Recursively, line-by-line, find first %                             -->
@@ -1702,6 +1701,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- either side of displayed objects, math and lists -->
     <!-- (only?), in addition to first and last nodes     -->
     <xsl:choose>
+        <!-- pass through if a node within "webwork-tex" -->
+        <xsl:when test="ancestor::webwork-tex">
+            <xsl:value-of select="$math-punctuation" />
+        </xsl:when>
         <!-- pass through if assuming strict adherence to whitespace policy -->
         <xsl:when test="$whitespace='strict'">
             <xsl:value-of select="$math-punctuation" />
@@ -1720,7 +1723,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:variable name="original" select="$math-punctuation" />
             <xsl:variable name="front-cleaned">
                 <xsl:choose>
-                    <xsl:when test="not(preceding-sibling::node()[self::* or self::text()])">
+                    <xsl:when test="not(preceding-sibling::node()[self::* or self::text()]) or preceding-sibling::node()[self::* or self::text()][1][self::me or self::men or self::md or self::mdn or self::cd or self::pre]">
                         <xsl:call-template name="strip-leading-whitespace">
                             <xsl:with-param name="text" select="$original" />
                         </xsl:call-template>
@@ -1732,7 +1735,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:variable>
             <xsl:variable name="back-cleaned">
                 <xsl:choose>
-                    <xsl:when test="not(following-sibling::node()[self::* or self::text()])">
+                    <xsl:when test="not(following-sibling::node()[self::* or self::text()])  or following-sibling::node()[self::* or self::text()][1][self::me or self::men or self::md or self::mdn or self::cd or self::pre]">
                         <xsl:call-template name="strip-trailing-whitespace">
                             <xsl:with-param name="text" select="$front-cleaned" />
                         </xsl:call-template>
@@ -2195,11 +2198,11 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 </xsl:template>
 
 
-<!-- ######################## -->
-<!-- Widths of Images, Videos -->
-<!-- ######################## -->
+<!-- ############################# -->
+<!-- Widths of Images, Videos, Etc -->
+<!-- ############################# -->
 
-<xsl:template match="image|video" mode="image-width">
+<xsl:template match="image|video|jsxgraph" mode="image-width">
     <xsl:param name="width-override" select="''" />
     <!-- every (?) image comes here for width, check for height (never was on video) -->
     <xsl:if test="@height">
@@ -2234,6 +2237,30 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     </xsl:choose>
 </xsl:template>
 
+<!-- Assumes element may have an @aspect attribute   -->
+<!-- Form:  "width:height" or decimal width/height   -->
+<!-- Return: real number, unitless for use by caller -->
+<!-- Totally blank means caller supplies default     -->
+<!-- TODO: add for video, not for image (warn?) -->
+<xsl:template match="jsxgraph" mode="aspect-ratio">
+    <xsl:choose>
+        <xsl:when test="not(@aspect)" />
+        <xsl:when test="contains(@aspect, ':')">
+            <xsl:variable name="width" select="substring-before(@aspect, ':')" />
+            <xsl:variable name="height" select="substring-after(@aspect, ':')" />
+            <xsl:value-of select="$width div $height" />
+        </xsl:when>
+        <!-- NaN does not equal *anything*, so tests if a number -->
+        <!-- http://stackoverflow.com/questions/6895870          -->
+        <xsl:when test="(number(@aspect)=number(@aspect)) and (@aspect > 0)">
+            <xsl:value-of select="@aspect" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message>MBX:WARNING: the @aspect attribute should be a ratio, like 4:3, or a positive number, not "<xsl:value-of select="@aspect" />"</xsl:message>
+            <xsl:apply-templates select="." mode="location-report" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
 
 <!-- ################ -->
 <!-- Names of Objects -->

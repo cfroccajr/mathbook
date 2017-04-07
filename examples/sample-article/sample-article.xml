@@ -502,6 +502,18 @@ the xsltproc executable.
 
             <p>Sage output can sometimes be quite long, though this has improved with some changes in Sage's output routines.  Output code should be included primarily for doctesting purposes, and in this use, you may break at almost whitespace character and the doctesting framework will adjust accordingly.  You may wish to show sample output in a static format, like a PDF, so you can consider formatting your output to fit the width constraints of that medium.  Or you may even adjust exactly what is output, to keep it from being too verbose.  Sage doctesting also allows for a wild-card style syntax which allows you to skip over huge chunks of meaningless or unpredictable output, such as tracebacks on error messages.</p>
 
+
+            <paragraphs>
+                <title>Titled Sage Cells</title>
+                <index><main>Sage cell</main><sub>with a title</sub></index>
+
+                <sage>
+                    <input>integral(sin(x)^2, x)</input>
+                    <output>1/2*x - 1/4*sin(2*x)</output>
+                </sage>
+
+                <p>You can place Sage cells inside of a <c>paragraphs</c> if you want to give them a title, but no numbers, <etc />  Their surrounding box sometimes gets clobbered in <latex  /> output if they are the first piece of content, so we test that here also.</p>
+            </paragraphs>
         </section>
 
         <!--
@@ -1017,7 +1029,7 @@ the xsltproc executable.
                 <description>this symbol could be used for lots of things, but we are just trying to make a super-long description to get it to wrap within the column where it belongs, which is sometimes set to a fixed width to accomodate really complicated explanations</description>
             </notation>
 
-            <p><latex /> has a device where you can interrupt a sequence of equations with a small amout of text and preserve the equation alignment on eithr side.  Here are two tests of that device, with aligned equations and non-aligned equations.  Study the source to see use and differences.  (The math does not make sense.)  Aligned and numbered first.</p>
+            <p><latex /> has a device where you can interrupt a sequence of equations with a small amout of text and preserve the equation alignment on either side.  Here are two tests of that device, with aligned equations and non-aligned equations.  Study the source to see use and differences.  (The math does not make sense.)  Aligned and numbered first.</p>
 
             <p><mdn>
                 <mrow>{\mathcal L}(y')(s)  &amp;= s {\mathcal L}(y)(s) - y(0) = s Y(s) - y(0)</mrow>
@@ -1286,11 +1298,24 @@ the xsltproc executable.
             <subsection>
                 <title>Advanced Mathematics</title>
 
-                <p>MathJax is extremely capable, and improving all the time.  You can get fairly fancy with some of its supported commands.  In particular, if you need to mix in a few words, the <c>\text{}</c> macro is supported.  The following example is a good stress-test.  Note the Unicode left and right smart quotes.  This a contribution from Alex Jordan as part of his work on <booktitle>APEX Calculus</booktitle>.<md>
+                <p>MathJax is extremely capable in rendering a subset of <latex /> in web browsers, and improving all the time.  You can get fairly fancy with some of its supported commands.  In particular, if you need to mix in a few words with your mathematics, the <c>\text{}</c> macro is supported.  For example, you might use an <q>if</q> or an <q>otherwise</q> in the definition of a piecewise function.</p>
+
+                <p>Consider that the first line below is text sandwiched in-between two Greek letters, wrapped in a <c>\text{}</c> macro.  In HTML output we have taken care that the font for text material within display mathematics should match the font of the  surrounding paragraph, as also happens with <latex /> output.  The second line is nearly identical in the source, but is just naked text being rendered like a slew of variables.<md>
+                    <mrow>\alpha\text{ is not equal to }\beta</mrow>
+                    <mrow>\alpha is not equal to \beta</mrow>
+                    <mrow>\alpha\neq\beta</mrow>
+                </md>.  We are not suggesting here that using words in place of symbols, as in the first line, is a good practice.  (It is not.)</p>
+
+                <p>The following example is a good stress-test of using the <c>\text{}</c> macro to achieve certain effects.  Note the Unicode left and right smart quotes.  This a contribution from Alex Jordan as part of his work on <booktitle>APEX Calculus</booktitle>.<md>
                     <mrow>y \rightarrow \frac{\sin(0) }{0} \rightarrow {{\text{“}}\atop{}}\frac{0}{0}{{\text{”}}\atop{}}\text{.}</mrow>
                 </md>And another one from Alex.  Note the use of the <c>\mathord{}</c> and <c>\mathrel{}</c> macros to control spacing around the mathematical symbols.  Examine the source to see how the quotation marks have been authored with <init>XML</init> syntax for Unicode characters.<md>
                     <mrow>\zeta(1)=\sum_{n=1}^{\infty}\frac{1}{n}\mathrel{\text{ &#x201c;}\mathord{=}{\text{&#x201d; }}}\prod_{p}\left(\frac{1}{1-1/p}\right)=\prod_{p}\left(\frac{1}{1-p^{-1}}\right)</mrow>
                 </md></p>
+
+                <p>Generally, you cannot use any <init>XML</init> elements inside of the mathematics elements.  An exception is the <c>xref</c> element which you might want to use to provide justifications for the steps of a derivation.  Here is a visual example that is mathematically meaningless,<md>
+                    <mrow>A&amp;=B+C&amp;&amp;<xref ref="corollary-FTC-derivative" autoname="yes" /></mrow>
+                    <mrow>&amp;=D+E&amp;&amp;<xref ref="theorem-FTC" autoname="title" /></mrow>
+                </md>.</p>
             </subsection>
         </section>
 

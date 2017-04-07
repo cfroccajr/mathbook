@@ -1470,7 +1470,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:text>%% Package for tables spanning several pages&#xa;</xsl:text>
         <xsl:text>\usepackage{longtable}&#xa;</xsl:text>
     </xsl:if>
-    <xsl:text>%% hyperref driver does not need to be specified&#xa;</xsl:text>
+    <!-- http://tex.stackexchange.com/questions/106159/why-i-shouldnt-load-pdftex-option-with-hyperref -->
+    <xsl:text>%% hyperref driver does not need to be specified, it will be detected&#xa;</xsl:text>
     <xsl:text>\usepackage{hyperref}&#xa;</xsl:text>
     <!-- http://tex.stackexchange.com/questions/79051/how-to-style-text-in-hyperref-url -->
     <xsl:if test="//url">
@@ -3479,36 +3480,32 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}&#xa;</xsl:text>
 </xsl:template>
 
+<!-- Paragraphs -->
+<!-- \par *separates* paragraphs So look backward for          -->
+<!-- cases where a paragraph would have been the previous      -->
+<!-- thing in the output Not: "notation", "todo", index, etc   -->
+<!-- Guarantee: Never a blank line, always finish with newline -->
+<!--                                                           -->
+<!-- Note: a paragraph could end with an item we want          -->
+<!-- to look good in teh source, like a list or display        -->
+<!-- math and we already have a newline so any subsequent      -->
+<!-- content from the paragraph will start anwew.  But         -->
+<!-- there might not be anything more to output.  So we        -->
+<!-- always end with a %-newline combo.                        -->
 
-<!-- Paragraphs                         -->
-<!-- \par separates paragraphs          -->
-<!-- So prior to second, and subsequent -->
-<!-- Guarantee: Never a blank line,     -->
-<!-- always finish with newline         -->
-
-<!-- NOTE: combine this into general template with a test on   -->
-<!-- preceding-sibling::*[not(todo)][1][self::p or self::paragraphs]  -->
-<!-- for necessity of \par (do careful diff to see subtle differences -->
-
-<!-- Note: a paragraph could end with visual source, like         -->
-<!-- a list or display math, where we have finishd with a newline -->
-<!-- So we need to finish paragraph with trailing % to protect    -->
-<!-- against a possible blank line                                -->
-<!-- TODO: maybe inspect forward for final node that   -->
-<!-- (sans absorbed punctuation) normalizes to nothing -->
-<xsl:template match="p[1]">
+<!-- TODO: maybe we could look backward at the end of a paragraph       -->
+<!-- to see if the above scenario happens, and we could end gracefully. -->
+<xsl:template match="p">
+    <xsl:if test="preceding-sibling::*[not(&SUBDIVISION-METADATA-FILTER;)][1][self::p or self::paragraphs]">
+        <xsl:text>\par&#xa;</xsl:text>
+    </xsl:if>
     <xsl:apply-templates />
     <xsl:text>%&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="p">
-        <xsl:text>\par&#xa;</xsl:text>
-        <xsl:apply-templates />
-        <xsl:text>%&#xa;</xsl:text>
-</xsl:template>
-
 <!-- For a memo, not indenting the first paragraph helps -->
 <!-- with alignment and the to/from/subject/date block   -->
+<!-- TODO: maybe memo header should set this up          -->
 <xsl:template match="memo/p[1]">
     <xsl:text>\noindent{}</xsl:text>
     <xsl:apply-templates />
@@ -3990,11 +3987,18 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Lists themselves -->
 <!-- If columns are specified, we        -->
 <!-- wrap in the multicolumn environment -->
+<!-- TODO: fewer \leavevmode might be possible.      -->
+<!-- Test for first node of "p", then test for the   -->
+<!-- "p" being first node of some sectioning element -->
 <xsl:template match="ol">
-    <xsl:if test="not(ancestor::ol or ancestor::ul or ancestor::dl)">
-        <xsl:apply-templates select="." mode="leave-vertical-mode" />
-    </xsl:if>
-    <xsl:text>%&#xa;</xsl:text>
+    <xsl:choose>
+        <xsl:when test="not(ancestor::ol or ancestor::ul or ancestor::dl)">
+            <xsl:call-template name="leave-vertical-mode" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:text>%&#xa;</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
     <xsl:if test="@cols">
         <xsl:text>\begin{multicols}{</xsl:text>
         <xsl:value-of select="@cols" />
@@ -4019,10 +4023,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- from LaTeX's so we write out a label  -->
 <!-- choice for each such list             -->
 <xsl:template match="ul">
-    <xsl:if test="not(ancestor::ol or ancestor::ul or ancestor::dl)">
-        <xsl:apply-templates select="." mode="leave-vertical-mode" />
-    </xsl:if>
-    <xsl:text>%&#xa;</xsl:text>
+    <xsl:choose>
+        <xsl:when test="not(ancestor::ol or ancestor::ul or ancestor::dl)">
+            <xsl:call-template name="leave-vertical-mode" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:text>%&#xa;</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
     <xsl:if test="@cols">
         <xsl:text>\begin{multicols}{</xsl:text>
         <xsl:value-of select="@cols" />
@@ -4039,10 +4047,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <xsl:template match="dl">
-    <xsl:if test="not(ancestor::ol or ancestor::ul or ancestor::dl)">
-        <xsl:apply-templates select="." mode="leave-vertical-mode" />
-    </xsl:if>
-    <xsl:text>%&#xa;</xsl:text>
+    <xsl:choose>
+        <xsl:when test="not(ancestor::ol or ancestor::ul or ancestor::dl)">
+            <xsl:call-template name="leave-vertical-mode" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:text>%&#xa;</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
     <xsl:if test="@cols">
         <xsl:text>\begin{multicols}{</xsl:text>
         <xsl:value-of select="@cols" />
@@ -4913,9 +4925,18 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- output text, then wraps it for print, including output          -->
 <!-- But we do not write an environment if there isn't any content   -->
 <!-- So conceivably, this template can do nothing (ie an empty cell) -->
+<!-- As a named template, the context is a calling sage element,     -->
+<!-- this could be reworked and many of the parameters inferred      -->
 <xsl:template name="sage-active-markup">
     <xsl:param name="in" />
     <xsl:param name="out" />
+    <!-- Surrounding box gets clobbered if it is the first -->
+    <!-- thing after a heading.  This could be excessive   -->
+    <!-- if the cell is empty, but should not be harmful.  -->
+    <!-- NB: maybe this should not even be called if all empty -->
+    <xsl:if test="not(preceding-sibling::*[not(&SUBDIVISION-METADATA-FILTER;)])">
+        <xsl:call-template name="leave-vertical-mode" />
+    </xsl:if>
     <xsl:if test="$in!=''">
         <xsl:text>\begin{lstlisting}[style=sageinput]&#xa;</xsl:text>
         <xsl:value-of select="$in" />
@@ -5091,18 +5112,20 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- if the first item of an AMS environment, they may float up       -->
 <!-- Seems LaTeX is stacking boxes vertically, and we need to go to   -->
 <!-- horizontal mode before doing these floating layout-type elements -->
+<!-- Necessary before a "lstlisting" environment with surrounding box -->
 <!-- http://tex.stackexchange.com/questions/22852/function-and-usage-of-leavevmode                       -->
 <!-- Potential alternate solution: write a leading "empty" \mbox{}                                       -->
 <!-- http://tex.stackexchange.com/questions/171220/include-non-floating-graphic-in-a-theorem-environment -->
-<xsl:template match="*" mode="leave-vertical-mode">
-    <xsl:text>\leavevmode</xsl:text>
+<xsl:template name="leave-vertical-mode">
+    <xsl:text>\leavevmode%&#xa;</xsl:text>
 </xsl:template>
 
 <!-- Figures -->
 <!-- Standard LaTeX figure environment redefined, see preamble comments -->
 <xsl:template match="figure">
-    <xsl:apply-templates select="." mode="leave-vertical-mode" />
-    <xsl:text>%&#xa;</xsl:text>
+    <xsl:if test="not(preceding-sibling::*[not(&SUBDIVISION-METADATA-FILTER;)])">
+        <xsl:call-template name="leave-vertical-mode" />
+    </xsl:if>
     <xsl:text>\begin{figure}&#xa;</xsl:text>
     <xsl:text>\centering&#xa;</xsl:text>
     <xsl:apply-templates select="*[not(self::caption)]"/>
@@ -5117,8 +5140,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- since it is not straightforward, maybe  -->
 <!-- requires a savebox and a minipage       -->
 <xsl:template match="listing">
-    <xsl:apply-templates select="." mode="leave-vertical-mode" />
-    <xsl:text>%&#xa;</xsl:text>
+    <xsl:if test="not(preceding-sibling::*[not(&SUBDIVISION-METADATA-FILTER;)])">
+        <xsl:call-template name="leave-vertical-mode" />
+    </xsl:if>
     <xsl:text>\begin{listing}&#xa;</xsl:text>
     <xsl:apply-templates select="*[not(self::caption)]"/>
     <xsl:text>\par&#xa;</xsl:text>
@@ -5344,8 +5368,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\setlength{\panelmax}{0pt}&#xa;</xsl:text>
     <xsl:value-of select="$setup" />
 
-    <xsl:apply-templates select="." mode="leave-vertical-mode" />
-    <xsl:text>%&#xa;</xsl:text>
+    <xsl:call-template name="leave-vertical-mode" />
     <xsl:text>% begin: side-by-side as figure/tabular&#xa;</xsl:text>
     <xsl:text>% \tabcolsep change local to group&#xa;</xsl:text>
     <xsl:text>\setlength{\tabcolsep}{</xsl:text>
@@ -5675,8 +5698,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Standard LaTeX table environment is redefined, -->
 <!-- see preamble comments for details              -->
 <xsl:template match="table">
-    <xsl:apply-templates select="." mode="leave-vertical-mode" />
-    <xsl:text>%&#xa;</xsl:text>
+    <xsl:if test="not(preceding-sibling::*[not(&SUBDIVISION-METADATA-FILTER;)])">
+        <xsl:call-template name="leave-vertical-mode" />
+    </xsl:if>
     <xsl:text>\begin{table}&#xa;</xsl:text>
     <xsl:text>\centering&#xa;</xsl:text>
     <xsl:apply-templates select="*[not(self::caption)]" />

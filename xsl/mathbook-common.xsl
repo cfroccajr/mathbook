@@ -2198,6 +2198,22 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 </xsl:template>
 
 
+<!-- ################ -->
+<!-- Copies of Images -->
+<!-- ################ -->
+
+<xsl:template match="image[@copy]">
+    <xsl:variable name="target" select="id(@copy)" />
+    <xsl:choose>
+        <xsl:when test="$target">
+            <xsl:apply-templates select="$target" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message>MBX:WARNING: &lt;image&gt; failure due to unknown reference @copy="<xsl:value-of select="@copy"/>"</xsl:message>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
 <!-- ############################# -->
 <!-- Widths of Images, Videos, Etc -->
 <!-- ############################# -->
@@ -5475,7 +5491,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
     <xsl:param name="lead-in" />
     <xsl:param name="lead-out" />
     <xsl:copy-of select="$lead-in" /><xsl:text>**************************************</xsl:text><xsl:copy-of select="$lead-out" /><xsl:text>&#xa;</xsl:text>
-    <xsl:copy-of select="$lead-in" /><xsl:text>* Generated from MathBook XML source *</xsl:text><xsl:copy-of select="$lead-out" /><xsl:text>&#xa;</xsl:text>
+    <xsl:copy-of select="$lead-in" /><xsl:text>*    Generated from PreTeXt source   *</xsl:text><xsl:copy-of select="$lead-out" /><xsl:text>&#xa;</xsl:text>
     <xsl:copy-of select="$lead-in" /><xsl:text>*    on </xsl:text>  <xsl:value-of select="date:date-time()" />
                                                                       <xsl:text>    *</xsl:text><xsl:copy-of select="$lead-out" /><xsl:text>&#xa;</xsl:text>
     <xsl:copy-of select="$lead-in" /><xsl:text>*                                    *</xsl:text><xsl:copy-of select="$lead-out" /><xsl:text>&#xa;</xsl:text>

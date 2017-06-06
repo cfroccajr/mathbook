@@ -4448,17 +4448,45 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 
 <!-- Video -->
-<!-- Embed FlowPlayer to play mp4 format                                    -->
-<!-- 2014/03/07:  http://flowplayer.org/docs/setup.html                     -->
-<!-- TODO: use for-each and extension matching to preferentially use WebM format -->
-<!-- <source type="video/mp4" src="http://mydomain.com/path/to/intro.webm">     -->
-<!-- TODO: respect @width attribute on ext rewrite, see YouTube -->
 <xsl:template match="video">
-    <div class="flowplayer" style="width:200px">
-        <xsl:text disable-output-escaping='yes'>&lt;video controls>&#xa;</xsl:text>
-        <source type="video/webm" src="{@source}" />
-        <xsl:text disable-output-escaping='yes'>&lt;/video>&#xa;</xsl:text>
-    </div>
+    <xsl:element name="video">
+        <xsl:attribute name="id">
+            <xsl:apply-templates select="." mode="internal-id"/>
+        </xsl:attribute>
+        <xsl:attribute name="width">
+            <xsl:apply-templates select="." mode="image-width" />
+        </xsl:attribute>
+        <!-- an empty string is equivalent to the "value-less" syntax -->
+        <xsl:attribute name="controls" />
+        <xsl:element name="source">
+            <xsl:attribute name="src">
+                <xsl:value-of select="@source"/>
+                <xsl:text>.mp4</xsl:text>
+            </xsl:attribute>
+            <xsl:attribute name="type">
+                <xsl:text>video/mp4</xsl:text>
+            </xsl:attribute>
+        </xsl:element>
+        <xsl:element name="source">
+            <xsl:attribute name="src">
+                <xsl:value-of select="@source"/>
+                <xsl:text>.ogg</xsl:text>
+            </xsl:attribute>
+            <xsl:attribute name="type">
+                <xsl:text>video/ogg</xsl:text>
+            </xsl:attribute>
+        </xsl:element>
+        <xsl:element name="source">
+            <xsl:attribute name="src">
+                <xsl:value-of select="@source"/>
+                <xsl:text>.webm</xsl:text>
+            </xsl:attribute>
+            <xsl:attribute name="type">
+                <xsl:text>video/webm</xsl:text>
+            </xsl:attribute>
+        </xsl:element>
+        <xsl:text>Your browser does not support the video tag.</xsl:text>
+    </xsl:element>
 </xsl:template>
 
 <!-- You Tube -->
@@ -5346,7 +5374,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>&#x21D0;</xsl:text>
 </xsl:template>
 
-<!-- TeX, LaTeX -->
+<!-- TeX, LaTeX, PreTeXt -->
 <!-- Corresponding CSS from William Hammond   -->
 <!-- attributed to David Carlisle             -->
 <!-- "mathjax-users" Google Group, 2015-12-27 -->
@@ -5355,6 +5383,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 <xsl:template match="tex">
     <span class="latex-logo">T<span class="E">e</span>X</span>
+</xsl:template>
+<xsl:template match="pretext">
+    <span class="latex-logo">PreT<span class="E">e</span>Xt</span>
 </xsl:template>
 
 <!-- External URLs, Email        -->
@@ -6198,7 +6229,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
                 </xsl:if>
             <xsl:apply-templates select="." mode="title-simple" />
             </title>
-            <meta name="Keywords" content="Authored in MathBook XML" />
+            <meta name="Keywords" content="Authored in PreTeXt" />
             <!-- http://webdesignerwall.com/tutorials/responsive-design-in-3-steps -->
             <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
             <!-- jquery used by sage, webwork, knowls -->
@@ -6219,9 +6250,6 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <xsl:call-template name="hypothesis-annotation" />
             <xsl:call-template name="jsxgraph" />
             <xsl:call-template name="css" />
-            <xsl:if test="//video">
-                <xsl:call-template name="video" />
-            </xsl:if>
         </head>
         <xsl:element name="body">
             <!-- the first class controls the default icon -->
@@ -6299,7 +6327,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
     <xsl:call-template name="converter-blurb-html" />
     <html> <!-- lang="", and/or dir="rtl" here -->
         <head>
-            <meta name="Keywords" content="Authored in MathBook XML" />
+            <meta name="Keywords" content="Authored in PreTeXt" />
             <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
 
             <!-- jquery used by sage, webwork, knowls -->
@@ -7098,7 +7126,8 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
         <xsl:call-template name="type-name">
             <xsl:with-param name="string-id" select="'authored'" />
         </xsl:call-template>
-        <xsl:text> MathBook&#xa0;XML</xsl:text>
+        <xsl:text> </xsl:text>
+        <xsl:text>PreTeXt</xsl:text>
     </a>
 </xsl:template>
 
@@ -7523,18 +7552,6 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             </xsl:element>
         </xsl:otherwise>
     </xsl:choose>
-</xsl:template>
-
-<!-- Video header                    -->
-<!-- Flowplayer setup                -->
-<!-- assumes JQuery loaded elsewhere -->
-<!-- 2014/03/07: http://flowplayer.org/docs/setup.html#global-configuration -->
-<xsl:template name="video">
-    <link rel="stylesheet" href="//releases.flowplayer.org/5.4.6/skin/minimalist.css" />
-    <script src="https://releases.flowplayer.org/5.4.6/flowplayer.min.js"></script>
-    <script>flowplayer.conf = {
-    };</script>
-
 </xsl:template>
 
 <!-- ############## -->

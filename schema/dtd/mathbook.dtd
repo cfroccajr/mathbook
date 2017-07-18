@@ -253,8 +253,12 @@
     <!ATTLIST project xml:id ID #IMPLIED>
 <!ELEMENT activity (title?, index*, ((%para;)*|(statement, hint*, answer*, solution*)))>
     <!ATTLIST activity xml:id ID #IMPLIED>
+    <!ATTLIST activity xml:base CDATA    #IMPLIED>
+    <!ATTLIST activity xmlns:xi CDATA #FIXED "http://www.w3.org/2001/XInclude">
 <!ELEMENT exploration (title?, index*, ((%para;)*|(statement, hint*, answer*, solution*)))>
     <!ATTLIST exploration xml:id ID #IMPLIED>
+    <!ATTLIST exploration xml:base CDATA    #IMPLIED>
+    <!ATTLIST exploration xmlns:xi CDATA #FIXED "http://www.w3.org/2001/XInclude">
 <!ELEMENT task (title?, index*, ((%para;)*|(statement, hint*, answer*, solution*)))>
     <!ATTLIST task xml:id ID #IMPLIED>
 <!ELEMENT investigation (title?, index*, ((%para;)*|(statement, hint*, answer*, solution*)))>
@@ -335,7 +339,7 @@
 <!-- Caption -->
 <!ELEMENT caption  (#PCDATA|%linear;)*>
 
-<!ELEMENT table   (title?, index*, caption?, tabular)>
+<!ELEMENT table   (title?, index*, caption, tabular)>
     <!ATTLIST table xml:id ID #IMPLIED>
     <!ATTLIST table width     CDATA                 #IMPLIED>
 
@@ -367,11 +371,11 @@
     <!ATTLIST cell colspan      CDATA                        #IMPLIED>
 
 <!-- Allowing multiple p allows for things like math displays -->
-<!ELEMENT figure  (title?, index*, caption?, (image|video|latex-image-code|p*)*)>
+<!ELEMENT figure  (title?, index*, caption, (image|video|sidebyside|latex-image-code|p*)*)>
     <!ATTLIST figure xml:id ID #IMPLIED>
     <!ATTLIST figure   width    CDATA                 #IMPLIED>
 
-<!ELEMENT listing  (title?, index*, caption?, (pre|program|console)*)>
+<!ELEMENT listing  (title?, index*, caption, (pre|program|console)*)>
     <!ATTLIST listing xml:id ID #IMPLIED>
     <!ATTLIST listing   width    CDATA                 #IMPLIED>
 
@@ -379,7 +383,7 @@
 <!-- Side By Side -->
 <!-- ############ -->
 
-<!ELEMENT sidebyside  (caption?, (figure|image|table|tabular|paragraphs|p|ol|ul|dl|list|pre)*)>
+<!ELEMENT sidebyside  (figure|image|table|tabular|paragraphs|p|ol|ul|dl|list|pre)*>
     <!ATTLIST sidebyside xml:id ID #IMPLIED>
     <!ATTLIST sidebyside   margins   CDATA                 #IMPLIED>
     <!ATTLIST sidebyside   width     CDATA                 #IMPLIED>
@@ -603,6 +607,7 @@
 <!ELEMENT exercises (title?, index*, introduction?, (exercise|exercisegroup|todo)*, conclusion?)>
     <!ATTLIST exercises xml:id   ID       #IMPLIED>
     <!ATTLIST exercises xml:base CDATA    #IMPLIED>
+    <!ATTLIST exercises xmlns:xi CDATA #FIXED "http://www.w3.org/2001/XInclude">
 
 <!ELEMENT exercisegroup (introduction?, exercise+, conclusion?)>
     <!ATTLIST exercisegroup xml:id ID             #IMPLIED>
@@ -690,7 +695,7 @@
 
 <!ENTITY % prefix "yocto|zepto|atto|femto|pico|nano|micro|milli|centi|deci|deca|deka|hecto|kilo|mega|giga|tera|peta|exa|zetta|yotta">
 
-<!ENTITY % base "ampere|candela|kelvin|gram|meter|metre|mole|second|becquerel|gray|sievert|degreeCelsius|celsius|coulomb|henry|ohm|siemens|tesla|volt|weber|hertz|katal|joule|newton|pascal|watt|lumen|lux|radian|steradian|degree|arcminute|arcsecond|day|hour|minute|hectare|liter|litre|percent|degreeFahrenheit|fahrenheit|pound|foot|inch|yard|mile|millennium|century|decade|year|month|week|kilometerperhour|kilometreperhour|mileperhour|gallon|milepergallon">
+<!ENTITY % base "ampere|candela|kelvin|gram|meter|metre|mole|second|becquerel|gray|sievert|degreeCelsius|celsius|coulomb|henry|ohm|siemens|tesla|volt|electronvolt|weber|hertz|katal|joule|newton|pascal|watt|lumen|lux|radian|steradian|degree|arcminute|arcsecond|day|hour|minute|hectare|liter|litre|percent|degreeFahrenheit|fahrenheit|pound|foot|inch|yard|mile|millennium|century|decade|year|month|week|kilometerperhour|kilometreperhour|mileperhour|gallon|milepergallon">
 
 <!ELEMENT quantity   (mag*, unit*, per*)>
 

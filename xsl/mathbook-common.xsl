@@ -4734,6 +4734,17 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     </xsl:call-template>
 </xsl:template>
 
+<!-- #################### -->
+<!-- Common Constructions -->
+<!-- #################### -->
+
+<!-- With no special formatting  -->
+<!-- "PreTeXt" can be in -common -->
+<xsl:template match="pretext">
+    <xsl:text>PreTeXt</xsl:text>
+</xsl:template>
+
+
 <!-- ################## -->
 <!-- Special Characters -->
 <!-- ################## -->
@@ -5078,7 +5089,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- an author will recognize, and then report it -->
 <!-- Useful for warnings that do not contain any  -->
 <!-- identifying information themselves           -->
-<xsl:template match="*" mode="location-report">
+<xsl:template match="*|@*" mode="location-report">
     <xsl:choose>
         <xsl:when test="@xml:id or title">
             <!-- print information about location -->
@@ -5514,6 +5525,13 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
         <xsl:with-param name="occurences" select="$document-root//index[main]" />
         <xsl:with-param name="date-string" select="'2017-07-14'" />
         <xsl:with-param name="message" select="'a &quot;index&quot; element with &quot;main&quot; and &quot;sub&quot; headings is deprecated, replaced by functional equivalent &quot;idx&quot; with &quot;h&quot; headings'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2017-07-14  cosmetic replacement of WW image/@tex_size by image/@tex-size -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//@tex_size" />
+        <xsl:with-param name="date-string" select="'2017-07-18'" />
+        <xsl:with-param name="message" select="'the &quot;tex_size&quot; attribute is deprecated, replaced by functional equivalent &quot;tex-size&quot;'" />
     </xsl:call-template>
     <!--  -->
 </xsl:template>

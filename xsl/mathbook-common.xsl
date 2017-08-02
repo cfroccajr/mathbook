@@ -135,13 +135,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Default is to hide todo's, inline provisionals                   -->
 <!-- Otherwise ('yes'), todo's in red paragraphs, provisionals in red -->
 <xsl:param name="author-tools" select="'no'" />
-<!-- Cross-references like Section 5.2, Theorem 6.7.89    -->
-<!-- "know" what they point to, so we can get the "name"  -->
-<!-- part automatically (and have it change with editing) -->
-<!-- This switch is global, override with @autoname='no'  -->
-<!-- on an <xref> where it is unjustified or a problem    -->
-<!-- Default is to have this feature off                  -->
-<xsl:param name="autoname" select="'no'" />
+<!-- The autoname parameter is deprecated (2017-07-25) -->
+<!-- Replace with docinfo/cross-references/@text       -->
+<xsl:param name="autoname" select="''" />
 <!-- How many levels to table of contents  -->
 <!-- Not peculiar to HTML or LaTeX or etc. -->
 <!-- Sentinel indicates no choice made     -->
@@ -414,7 +410,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- The main "mathbook" element only has two possible children     -->
 <!-- One is "docinfo", the other is "book", "article", etc.         -->
 <!-- This is of interest by itself, or the root of content searches -->
+<!-- And docinfo is the other child                                 -->
+<!-- These help prevent searching the wrong half                    -->
 <xsl:variable name="document-root" select="/mathbook/*[not(self::docinfo)]" />
+<xsl:variable name="docinfo" select="/mathbook/docinfo" />
 
 <!-- Source Analysis -->
 <!-- Some boolean variables ("b-*") for -->
@@ -486,6 +485,49 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:otherwise>
     </xsl:choose>
 </xsl:variable>
+
+<!-- We preserve action of the "autoname" parameter         -->
+<!-- But originally the default was "no", and now is        -->
+<!-- equivalent to "yes".  We set to blank on creation,     -->
+<!-- so we can see if there is command-line action          -->
+<!-- There is a warning that the default behavior has       -->
+<!-- changed, and a warning that setting this is deprecated -->
+<!-- (Deprecation 2017-07-25) -->
+<xsl:variable name="legacy-autoname">
+    <xsl:choose>
+        <!-- nothing on command-line, nothing in docinfo    -->
+        <!-- then this is what will be used globally        -->
+        <!-- so preserve this behavior when this is removed -->
+        <xsl:when test="$autoname = ''">
+            <xsl:text>unset</xsl:text>
+        </xsl:when>
+        <!-- legacy had zero error-checking -->
+        <xsl:otherwise>
+            <xsl:value-of select="$autoname" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:variable>
+
+<!-- Employing variants of the text displayed for a cross-reference -->
+<!-- affects the words shown to the reader, and hence is a choice   -->
+<!-- preserved in the source, and is not just a processing decision -->
+<!-- $xref-text-style is the global choice, based on                -->
+<!--   docinfo/cross-references/@text                               -->
+<!-- We control the possible values with the schema, allowing junk  -->
+<!-- NB: blank is not set, and is ignored so the legacy-autoname    -->
+<!-- scheme controls the global default.  When that goes away, we   -->
+<!-- should set the default here when there is no attribute.        -->
+<xsl:variable name="xref-text-style">
+    <xsl:choose>
+        <xsl:when test="$docinfo/cross-references/@text">
+            <xsl:value-of select="$docinfo/cross-references/@text" />
+        </xsl:when>
+        <xsl:otherwise>
+            <text />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:variable>
+
 
 <!-- Sometimes  xsltproc fails, and fails spectacularly,        -->
 <!-- setting this switch will dump lots of location info to the -->
@@ -2566,12 +2608,12 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
         </xsl:apply-templates>
     </xsl:variable>
     <xsl:choose>
-        <xsl:when test="$subtree-level=-1"><xsl:number from="book|article|letter|memo" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure)]|table[not(parent::sidebyside/parent::figure)]|listing[not(parent::sidebyside/parent::figure)]" /></xsl:when>
-        <xsl:when test="$subtree-level=0"><xsl:number from="part" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure)]|table[not(parent::sidebyside/parent::figure)]|listing[not(parent::sidebyside/parent::figure)]|" /></xsl:when>
-        <xsl:when test="$subtree-level=1"><xsl:number from="chapter|book/backmatter/appendix" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure)]|table[not(parent::sidebyside/parent::figure)]|listing[not(parent::sidebyside/parent::figure)]" /></xsl:when>
-        <xsl:when test="$subtree-level=2"><xsl:number from="section|article/backmatter/appendix" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure)]|table[not(parent::sidebyside/parent::figure)]|listing[not(parent::sidebyside/parent::figure)]" /></xsl:when>
-        <xsl:when test="$subtree-level=3"><xsl:number from="subsection" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure)]|table[not(parent::sidebyside/parent::figure)]|listing[not(parent::sidebyside/parent::figure)]" /></xsl:when>
-        <xsl:when test="$subtree-level=4"><xsl:number from="subsubsection" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure)]|table[not(parent::sidebyside/parent::figure)]|listing[not(parent::sidebyside/parent::figure)]" /></xsl:when>
+        <xsl:when test="$subtree-level=-1"><xsl:number from="book|article|letter|memo" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|table[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|listing[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]" /></xsl:when>
+        <xsl:when test="$subtree-level=0"><xsl:number from="part" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|table[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|listing[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|" /></xsl:when>
+        <xsl:when test="$subtree-level=1"><xsl:number from="chapter|book/backmatter/appendix" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|table[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|listing[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]" /></xsl:when>
+        <xsl:when test="$subtree-level=2"><xsl:number from="section|article/backmatter/appendix" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|table[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|listing[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]" /></xsl:when>
+        <xsl:when test="$subtree-level=3"><xsl:number from="subsection" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|table[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|listing[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]" /></xsl:when>
+        <xsl:when test="$subtree-level=4"><xsl:number from="subsubsection" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|list|exercise[not(ancestor::exercises)]|figure[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|table[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]|listing[not(parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)]" /></xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:ERROR: Subtree level for theorem number computation is out-of-bounds (<xsl:value-of select="$subtree-level" />)</xsl:message>
         </xsl:otherwise>
@@ -2670,21 +2712,28 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 </xsl:template>
 
 <!-- Serial Numbers: Subfigures, Subtables, Sublisting-->
-<!-- Subcaptioning only happens with figures  -->
-<!-- or tables arranged in a sidebyside, which  -->
-<!-- is again contained inside a figure, the  -->
-<!-- element providing the overall caption -->
+<!-- Subcaptioning only happens with figures           -->
+<!-- or tables arranged in a sidebyside, which         -->
+<!-- is again contained inside a figure, the           -->
+<!-- element providing the overall caption             -->
 <!-- The serial number is a sub-number, (a), (b), (c), -->
 <!-- *Always* with the parenthetical formatting        -->
 
 
 <!-- In this case the structure number is the          -->
-<!-- full number of the enclosing side-by-side         -->
+<!-- full number of the enclosing figure               -->
 
-
+<!-- a lone sidebyside, not in a sbsgroup -->
 <xsl:template match="figure/sidebyside/figure | figure/sidebyside/table | figure/sidebyside/listing" mode="serial-number">
     <xsl:text>(</xsl:text>
     <xsl:number format="a" count="figure|table|listing"/>
+    <xsl:text>)</xsl:text>
+</xsl:template>
+
+<!-- when inside a sbsgroup, subcaptions range across entire group -->
+<xsl:template match="figure/sbsgroup/sidebyside/figure | figure/sbsgroup/sidebyside/table | figure/sbsgroup/sidebyside/listing" mode="serial-number">
+    <xsl:text>(</xsl:text>
+    <xsl:number format="a" count="figure|table|listing" level="any" from="sbsgroup"/>
     <xsl:text>)</xsl:text>
 </xsl:template>
 
@@ -2714,11 +2763,33 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:apply-templates select="." mode="item-number" />
 </xsl:template>
 
+
+<!-- Serial Numbers: Exercise Groups -->
+<!-- We provide the range of the     -->
+<!-- group as its serial number.     -->
+<xsl:template match="exercisegroup" mode="serial-number">
+    <xsl:apply-templates select="exercise[1]" mode="serial-number" />
+    <xsl:apply-templates select="." mode="ndash"/>
+    <xsl:apply-templates select="exercise[last()]" mode="serial-number" />
+</xsl:template>
+
+
 <!-- Serial Numbers: the unnumbered     -->
 <!-- Empty string signifies not numbered -->
-<!-- We do provide a "xref number" of an -->
-<!-- exercisegroup, but otherwise not    -->
-<xsl:template match="book|article|letter|memo|introduction|conclusion|paragraphs|blockquote|frontmatter|preface|abstract|acknowledgement|biography|foreword|dedication|index-part|index[index-list]|colophon|backmatter|exercisegroup|webwork|p|sidebyside|assemblage|aside|biographical|historical|case|contributor" mode="serial-number" />
+
+<!-- We choose not to number unique, or semi-unique      -->
+<!-- (eg prefaces, colophons), elements.  Other elements -->
+<!-- are meant as local commentary, and may also carry   -->
+<!-- a title for identification and cross-referencing.   -->
+<xsl:template match="book|article|letter|memo|paragraphs|blockquote|preface|abstract|acknowledgement|biography|foreword|dedication|index-part|index[index-list]|colophon|webwork|p|assemblage|aside|biographical|historical|case|contributor" mode="serial-number" />
+
+<!-- Some items are "containers".  They are not numbered, you  -->
+<!-- cannot point to them, they are invisible to the reader    -->
+<!-- in a way.  We kill their serial nuumbers explicitly here. -->
+<!-- Lists live in paragraphs, exercises, objectives, so       -->
+<!-- should be referenced as part of some enclosing element.   -->
+<!-- "mathbook" helps some tree-climbing routines halt -->
+<xsl:template match="mathbook|introduction|conclusion|frontmatter|backmatter|sidebyside|ol|ul|dl|statement" mode="serial-number" />
 
 <!-- If a list item has any ancestor that is not  -->
 <!-- an ordered list, then it gets no number      -->
@@ -2841,6 +2912,11 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 
 <!-- We compute multi-part numbers to the necessary,  -->
 <!-- or configured, number of components              -->
+<!-- NB: *every* structure number should finish with  -->
+<!-- a period as a separator, which is often provided -->
+<!-- by the "multi-number" template.  Some of the     -->
+<!-- cross-reference text code adds a period before   -->
+<!-- testing equality of strings                      -->
 
 <!-- Structure Numbers: Divisions -->
 <!-- NB: this is number of the *container* of the division,   -->
@@ -2952,6 +3028,13 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:text>.</xsl:text>
 </xsl:template>
 
+<!-- Structure Numbers: Exercise Groups -->
+<!-- An exercisegroup gets it structure number from the parent exercises -->
+<xsl:template match="exercisegroup" mode="structure-number">
+    <xsl:apply-templates select="parent::*" mode="number" />
+    <xsl:text>.</xsl:text>
+</xsl:template>
+
 <!-- Structure Numbers: Objectives -->
 <!-- Objectives are one-per-subdivision, and so   -->
 <!-- get their structure number from their parent -->
@@ -2989,34 +3072,16 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- SideBySide Layouts -->
 <!-- ################## -->
 
-<!-- Horizontal layouts of "panels" with vertical alignment      -->
-<!-- A container for layout of other elements, eg figures        -->
-<!-- Behaves much like a figure when captioned                   -->
-<!-- No notion of columns, no rules or dividers, no row headings -->
+<!-- Horizontal layouts of "panels" with vertical alignments      -->
+<!-- A container for layout of other elements, eg figures, images -->
+<!-- No notion of columns, no rules or dividers, no row headings  -->
+<!-- This is purely a container to specify layout parameters,     -->
+<!-- and place/control the horizontal arrangement in converters   -->
 
 <!-- Debugging information is not documented, nor supported     -->
 <!-- Colored boxes in HTML, black boxes in LaTeX with baselines -->
 <xsl:param name="sbs.debug" select="'no'" />
 <xsl:variable name="sbsdebug" select="boolean($sbs.debug = 'yes')" />
-
-<!-- A side-by-side group ("sbsgroup") is a wrapper     -->
-<!-- around a sequence of "sidebyside".  It provides    -->
-<!--                                                    -->
-<!--   (a) overall title                                -->
-<!--   (b) overall caption                              -->
-<!--   (c) common margins, widths, vertical alignments  -->
-<!--   (d) subcaptioning across entire group            -->
-<!--                                                    -->
-<!-- The implementation here is a working stub, but     -->
-<!-- should be overridden, perhaps with "apply-imports" -->
-
-<xsl:template match="sbsgroup">
-    <!-- start any wrapper -->
-    <!-- handle title -->
-    <xsl:apply-templates select="sidebyside" />
-    <!-- handle (optional) overall caption -->
-    <!-- finish wrapper -->
-</xsl:template>
 
 <!-- A "sidebyside" is a sequence of objects laid out       -->
 <!-- horizontally in panels.  This is a deviation from      -->
@@ -3031,8 +3096,8 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!--                                                        -->
 <!-- (a) "margins"                                          -->
 <!--  - one percentage for both left and right (nn%)        -->
-<!--  - default is 0%                                       -->
 <!--  - "auto" => margins are half the space between panels -->
+<!--  - default is "auto"                                   -->
 <!-- (b) "widths"                                           -->
 <!--  - widths of panels, one per panel                     -->
 <!--  - space separated list of percentages                 -->
@@ -3043,34 +3108,38 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!--  - singular is common alignment for all panels         -->
 <!--  - default is top                                      -->
 <!--                                                        -->
-<!-- Default behavior is no margins, no spacing             -->
+<!-- Default behavior is automatic margins, no spacing      -->
 <!-- between panels and equally wide panels.                -->
 <!--                                                        -->
 <!-- With widths specified, remaining space is              -->
 <!-- used to create equal spacing between panels            -->
 
-<xsl:template match="sidebyside" mode="common-setup">
-    <xsl:param name="b-original" select="true()" />
+<!-- Extensive layout analysis first, main templates follow -->
 
-    <!-- captions, titles on "sidebyside" ignored when used in an sbsgroup -->
-    <xsl:if test="parent::sbsgroup and caption">
-        <xsl:message>MBX:WARNING: caption of a &lt;sidebyside&gt; is ignored when contained in an &lt;sbsgroup&gt;</xsl:message>
-        <xsl:apply-templates select="." mode="location-report" />
-    </xsl:if>
-    <xsl:if test="parent::sbsgroup and title">
-        <xsl:message>MBX:WARNING: title of a &lt;sidebyside&gt; is ignored when contained in an &lt;sbsgroup&gt;</xsl:message>
-        <xsl:apply-templates select="." mode="location-report" />
-    </xsl:if>
+<!-- We analyze the attributes of a "sidebyside" element -->
+<!-- in order to extract/compute the layout parameters   -->
+<!-- This template creates a RTF (result tree fragment), -->
+<!-- which needs to be captured in one variable, then    -->
+<!-- converted to a node-set with an extension function  -->
+<xsl:template match="sidebyside" mode="layout-parameters">
 
-    <!-- count real elements meant for panels, discount others -->
+    <!-- Number of Panels -->
+    <!-- count the elements destined for panels  -->
+    <!-- Metadata banned, roughly 2017-07, now pure container  -->
+    <!-- Retain filter for backward compatibility              -->
     <xsl:variable name="number-panels" select="count(*[not(&METADATA-FILTER;)])" />
     <xsl:if test="$sbsdebug">
         <xsl:message>N:<xsl:value-of select="$number-panels" />:N</xsl:message>
     </xsl:if>
+    <!-- Add to RTF -->
+    <number-panels>
+        <xsl:value-of select="$number-panels" />
+    </number-panels>
 
-    <!-- clean up, organize, vertical alignments                  -->
-    <!-- Always produces space-separated list with trailing space -->
-    <!-- Error-check as $valigns string gets depleted below       -->
+    <!-- Vertical Alignments of Panels -->
+    <!-- Produce temporary space-separated list, with trailing space     -->
+    <!-- Look up into enclosing "sbsgroup" if none given on "sidebyside" -->
+    <!-- Error-check attribute values as $valigns string gets unpacked   -->
     <xsl:variable name="valigns">
         <xsl:choose>
             <!-- individual sbs takes priority -->
@@ -3084,19 +3153,19 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
                      <xsl:with-param name="count" select="$number-panels" />
                  </xsl:call-template>
             </xsl:when>
-            <!-- look to enclosing sidebyside group -->
+            <!-- look to enclosing sbsgroup -->
             <xsl:when test="parent::sbsgroup[@valigns]">
                 <xsl:value-of select="concat(normalize-space(parent::sbsgroup/@valigns), ' ')" />
             </xsl:when>
-            <!-- look to enclosing sidebyside group for singular convenience -->
+            <!-- look to enclosing sbsgroup for singular convenience -->
             <xsl:when test="parent::sbsgroup[@valign]">
                 <xsl:call-template name="duplicate-string">
                      <xsl:with-param name="text" select="concat(normalize-space(parent::sbsgroup/@valign), ' ')" />
                      <xsl:with-param name="count" select="$number-panels" />
                  </xsl:call-template>
             </xsl:when>
-            <!-- default: place all panels at the top    -->
-            <!-- NB: space at end of string is separator -->
+            <!-- default: place all panels at the top   -->
+            <!-- NB: space at end of $text is separator -->
             <xsl:otherwise>
                 <xsl:call-template name="duplicate-string">
                      <xsl:with-param name="text" select="'top '" />
@@ -3108,7 +3177,27 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:if test="$sbsdebug">
         <xsl:message>VA:<xsl:value-of select="$valigns" />:VA</xsl:message>
     </xsl:if>
+    <!-- check length (author-supplied could be wrong) -->
+    <xsl:variable name="nspaces-valigns" select="string-length($valigns) - string-length(translate($valigns, ' ', ''))" />
+    <xsl:choose>
+        <xsl:when test="$nspaces-valigns &lt; $number-panels">
+            <xsl:message>MBX:FATAL:   a &lt;sidebyside&gt; or &lt;sbsgroup&gt; does not have enough "@valigns" (maybe you did not specify enough?)</xsl:message>
+            <xsl:apply-templates select="." mode="location-report" />
+            <xsl:message terminate="yes">             That's fatal.  Sorry.  Quitting...</xsl:message>
+        </xsl:when>
+        <xsl:when test="$nspaces-valigns &gt; $number-panels">
+            <xsl:message>MBX:WARNING: a &lt;sidebyside&gt; or &lt;sbsgroup&gt; has extra "@valigns" (did you confuse singular and plural attribute names?)</xsl:message>
+            <xsl:apply-templates select="." mode="location-report" />
+        </xsl:when>
+    </xsl:choose>
+    <!-- unpack with an error-check on attribute values -->
+    <!-- RTF formation happens with unpacking           -->
+    <xsl:call-template name="decompose-valigns">
+        <xsl:with-param name="valigns" select="$valigns" />
+    </xsl:call-template>
 
+
+    <!-- Margins and Widths -->
     <!-- clean up and organize widths                             -->
     <!-- Always produces space-separated list with trailing space -->
     <!-- Error-check as $widths string gets depleted below        -->
@@ -3155,8 +3244,11 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
             <xsl:when test="parent::sbsgroup[@margins]">
                 <xsl:value-of select="normalize-space(parent::sbsgroup/@margins)" />
             </xsl:when>
+            <!-- default will make pleasing layout: -->
+            <!--   (a) for one panel, no settings -->
+            <!--   (b) no margin given, all sensible widths -->
             <xsl:otherwise>
-                <xsl:text>0%</xsl:text>
+                <xsl:text>auto</xsl:text>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
@@ -3169,7 +3261,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <!-- TOD: error-check that sum is 100 or less -->
     <xsl:variable name="sum-widths">
         <xsl:choose>
-            <xsl:when test="$normalized-widths = ' ' and $normalized-margins = ''">
+            <xsl:when test="$normalized-widths = ' ' and $normalized-margins = 'auto'">
                 <xsl:text>100</xsl:text>
             </xsl:when>
             <xsl:when test="$normalized-widths = ' '">
@@ -3213,6 +3305,12 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
         <xsl:message>MBX:ERROR:   margins of a &lt;sidebyside&gt; ("<xsl:value-of select="$margin" />") is outside the interval [0%, 50%], (this may be computed, check consistency of "@margins" and "@widths")</xsl:message>
         <xsl:apply-templates select="." mode="location-report" />
     </xsl:if>
+    <!-- Add to RTF -->
+    <!-- TODO: someday make a "left-margin" and put -->
+    <!-- "right-margin" as "gap" after last panel   -->
+    <margins>
+        <xsl:value-of select="$margin" />
+    </margins>
 
     <!-- if no widths given, distribute excess beyond margins -->
     <!-- NB: with percent signs, blank at end always          -->
@@ -3235,7 +3333,26 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:if test="$sbsdebug">
         <xsl:message>W:<xsl:value-of select="$widths" />:W</xsl:message>
     </xsl:if>
+    <!-- check length (author-supplied could be wrong) -->
+    <xsl:variable name="nspaces-widths" select="string-length($widths) - string-length(translate($widths, ' ', ''))" />
+    <xsl:choose>
+        <xsl:when test="$nspaces-widths &lt; $number-panels">
+            <xsl:message>MBX:FATAL:   a &lt;sidebyside&gt; or &lt;sbsgroup&gt; does not have enough "@widths" (maybe you did not specify enough?)</xsl:message>
+            <xsl:apply-templates select="." mode="location-report" />
+            <xsl:message terminate="yes">             That's fatal.  Sorry.  Quitting...</xsl:message>
+        </xsl:when>
+        <xsl:when test="$nspaces-widths &gt; $number-panels">
+            <xsl:message>MBX:WARNING: a &lt;sidebyside&gt; or &lt;sbsgroup&gt; has extra "@widths" (did you confuse singular and plural attribute names?)</xsl:message>
+            <xsl:apply-templates select="." mode="location-report" />
+        </xsl:when>
+    </xsl:choose>
+    <!-- unpack with an error-check on attribute values -->
+    <!-- RTF formation happens with unpacking           -->
+    <xsl:call-template name="decompose-widths">
+        <xsl:with-param name="widths" select="$widths" />
+    </xsl:call-template>
 
+    <!-- Spacing Between Panels -->
     <!-- compute common spacing between panels, as percent -->
     <!-- subtract margins and sum-widths from 100,         -->
     <!-- and then distribute to n - 1 spaces               -->
@@ -3266,26 +3383,70 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
             <xsl:apply-templates select="." mode="location-report" />
         </xsl:when>
     </xsl:choose>
+    <!-- Add to RTF -->
+    <space-width>
+        <xsl:value-of select="$space-width" />
+    </space-width>
+</xsl:template>
 
-    <!-- initiate recursing through panels,     -->
-    <!-- building up headings, captions, panels -->
-    <!-- metadata elements skipped in recursion -->
-    <xsl:apply-templates select="." mode="sbs-panel">
-        <xsl:with-param name="b-original" select="$b-original" />
+<!-- ########################### -->
+<!-- SidebySide Layout Utilities -->
+<!-- ########################### -->
 
-        <xsl:with-param name="number-panels" select="$number-panels" />
-        <xsl:with-param name="the-panel" select="*[1]" />
-        <xsl:with-param name="widths" select="$widths" />
-        <xsl:with-param name="margins" select="$margin" />
-        <xsl:with-param name="space-width" select="$space-width" />
-        <xsl:with-param name="valigns" select="$valigns" />
-        <xsl:with-param name="has-headings" select="false()" />
-        <xsl:with-param name="has-captions" select="false()" />
-        <xsl:with-param name="setup" select="''" />
-        <xsl:with-param name="headings" select="''" />
-        <xsl:with-param name="panels" select="''" />
-        <xsl:with-param name="captions" select="''" />
-    </xsl:apply-templates>
+<!-- From a space-separated list of vertical alignments -->
+<!-- create error-checked result tree fragment          -->
+<xsl:template name="decompose-valigns">
+    <xsl:param name="valigns" />
+    <xsl:variable name="the-valign" select="substring-before($valigns, ' ')" />
+    <xsl:if test="not($the-valign = '')">
+        <!-- error-check, since list bypasses schema -->
+        <!-- "top" is default, so check first        -->
+        <xsl:choose>
+            <xsl:when test="$the-valign = 'top'" />
+            <xsl:when test="$the-valign = 'bottom'" />
+            <xsl:when test="$the-valign = 'middle'" />
+            <xsl:otherwise>
+                <xsl:message>MBX:ERROR:   @valign(s) ("<xsl:value-of select="$the-valign" />") in &lt;sidebyside&gt; or &lt;sbsgroup&gt; is not "top," "middle" or "bottom"</xsl:message>
+                <xsl:apply-templates select="." mode="location-report" />
+            </xsl:otherwise>
+        </xsl:choose>
+        <!-- okay, output element -->
+        <valign>
+            <xsl:value-of select="$the-valign" />
+        </valign>
+        <!-- recurse on trailing -->
+        <xsl:call-template name="decompose-valigns">
+            <xsl:with-param name="valigns" select="substring-after($valigns, ' ')" />
+        </xsl:call-template>
+    </xsl:if>
+</xsl:template>
+
+<!-- From a space-separated list of widths (percentages) -->
+<!-- create error-checked result tree fragment           -->
+<xsl:template name="decompose-widths">
+    <xsl:param name="widths" />
+    <xsl:variable name="the-width" select="substring-before($widths, ' ')" />
+    <xsl:if test="not($the-width = '')">
+        <!-- error-check, since author-supplied could be wild -->
+        <xsl:choose>
+            <xsl:when test="substring-before($the-width, '%') &lt; 0">
+                <xsl:message>MBX:ERROR:   panel width ("<xsl:value-of select="$the-width" />") in a &lt;sidebyside&gt; or &lt;sbsgroup&gt; is negative (this may be computed, check "@margin(s)" and "@width(s)")</xsl:message>
+                <xsl:apply-templates select="." mode="location-report" />
+            </xsl:when>
+            <xsl:when test="substring-before($the-width, '%') &gt; 100">
+                <xsl:message>MBX:ERROR:   panel width ("<xsl:value-of select="$the-width" />") in a &lt;sidebyside&gt; or &lt;sbsgroup&gt; is bigger than 100% (this may be computed, check "@margin(s)" and "@width(s)")</xsl:message>
+                <xsl:apply-templates select="." mode="location-report" />
+            </xsl:when>
+        </xsl:choose>
+        <!-- output element -->
+        <width>
+            <xsl:value-of select="$the-width" />
+        </width>
+        <!-- recurse on trailing -->
+        <xsl:call-template name="decompose-widths">
+            <xsl:with-param name="widths" select="substring-after($widths, ' ')" />
+        </xsl:call-template>
+    </xsl:if>
 </xsl:template>
 
 <!-- recursive template to sum percentages         -->
@@ -3308,179 +3469,156 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     </xsl:choose>
 </xsl:template>
 
-<!-- Recursively handle one panel at a time                   -->
-<!-- Implementations need to define modal templates           -->
-<!--   panel-setup, panel-heading, panel-panel, panel-caption -->
-<!-- Final results are collectively sent to modal             -->
-<!--   compose-panels                                         -->
-<!-- template to be arranged                                  -->
-<!-- has-headings and has-captions are updated per panel,     -->
-<!-- so compose-panels can avoid outputting empty space       -->
-<xsl:template match="sidebyside" mode="sbs-panel">
+<!-- ######################## -->
+<!-- SideBySide Main Template -->
+<!-- ######################## -->
+
+<xsl:template match="sidebyside">
     <xsl:param name="b-original" select="true()" />
 
-    <xsl:param name="number-panels" />
-    <xsl:param name="the-panel" />
-    <xsl:param name="widths" />
-    <xsl:param name="margins" />
-    <xsl:param name="space-width" />
-    <xsl:param name="valigns" />
-    <xsl:param name="has-headings" select="false()" />
-    <xsl:param name="has-captions" select="false()" />
-    <xsl:param name="setup" />
-    <xsl:param name="headings" />
-    <xsl:param name="panels" />
-    <xsl:param name="captions" />
-    <xsl:choose>
-        <!-- no more panels -->
-        <xsl:when test="not($the-panel)">
-            <!-- first, check for leftover widths and valigns  -->
-            <xsl:if test="not($widths = '')">
-                <xsl:message>MBX:WARNING: &lt;sidebyside&gt; has extra "@widths" (did you confuse singular and plural?)</xsl:message>
-                <xsl:apply-templates select="." mode="location-report" />
-            </xsl:if>
-            <xsl:if test="not($valigns = '')">
-                <xsl:message>MBX:WARNING: &lt;sidebyside&gt; has extra "@valigns" (did you confuse singular and plural?)</xsl:message>
-                <xsl:apply-templates select="." mode="location-report" />
-            </xsl:if>
-            <xsl:if test="$sbsdebug">
-                <xsl:message>HH: <xsl:value-of select="$has-headings" /> :HH</xsl:message>
-                <xsl:message>HC: <xsl:value-of select="$has-captions" /> :HC</xsl:message>
-                <xsl:message>----</xsl:message>
-            </xsl:if>
-            <!-- if there are no headers or captions, we *could* set to an empty string -->
-            <!-- now collect components into output wrappers -->
-            <xsl:apply-templates select="." mode="compose-panels">
-                <xsl:with-param name="b-original" select="$b-original" />
+    <xsl:variable name="rtf-layout">
+        <xsl:apply-templates select="." mode="layout-parameters" />
+    </xsl:variable>
+    <xsl:variable name="layout" select="exsl:node-set($rtf-layout)" />
 
-                <xsl:with-param name="number-panels" select="$number-panels" />
-                <xsl:with-param name="margins" select="$margins" />
-                <xsl:with-param name="space-width" select="$space-width" />
-                <xsl:with-param name="has-headings" select="$has-headings" />
-                <xsl:with-param name="has-captions" select="$has-captions" />
-                <xsl:with-param name="setup" select="$setup" />
-                <xsl:with-param name="headings" select="$headings" />
-                <xsl:with-param name="panels" select="$panels" />
-                <xsl:with-param name="captions" select="$captions" />
+    <!-- local names of objects? -->
+    <!-- below useful for debugging, worth keeping for a while, 2017-07 -->
+    <!-- 
+    <xsl:message>N:<xsl:value-of select="$layout/number-panels" />:N</xsl:message>
+    <xsl:message>
+        <xsl:text>VA:</xsl:text>
+        <xsl:for-each select="$layout/valign">
+            <xsl:value-of select="." />
+            <xsl:text> </xsl:text>
+        </xsl:for-each>
+        <xsl:text>:VA</xsl:text>
+    </xsl:message>
+    <xsl:message>
+        <xsl:text>W:</xsl:text>
+        <xsl:for-each select="$layout/width">
+            <xsl:value-of select="." />
+            <xsl:text> </xsl:text>
+        </xsl:for-each>
+        <xsl:text>:W</xsl:text>
+    </xsl:message>
+    <xsl:message>
+        <xsl:text>M:</xsl:text>
+        <xsl:value-of select="$layout/margins" />
+        <xsl:text>:M</xsl:text>
+    </xsl:message>
+    <xsl:message>
+        <xsl:text>SW:</xsl:text>
+        <xsl:value-of select="$layout/space-width" />
+        <xsl:text>:SW</xsl:text>
+    </xsl:message>
+    <xsl:message>~~~~~~~~~~~~~~~~~~~~</xsl:message>
+     -->
+
+    <!-- Metadata banned, roughly 2017-07, now pure container  -->
+    <!-- Retain filter for backward compatibility              -->
+     <xsl:variable name="panels" select="*[not(&METADATA-FILTER;)]" />
+
+     <!-- compute necessity of headings (titles) and captions here -->
+     <xsl:variable name="has-headings" select="boolean($panels[title])" />
+     <xsl:variable name="has-captions" select="boolean($panels[caption])" />
+     <xsl:if test="$sbsdebug">
+        <xsl:message>HH: <xsl:value-of select="$has-headings" /> :HH</xsl:message>
+        <xsl:message>HC: <xsl:value-of select="$has-captions" /> :HC</xsl:message>
+        <xsl:message>----</xsl:message>
+    </xsl:if>
+
+    <!-- We build up lists of various parts of a panel      -->
+    <!-- It has setup (LaTeX), headings (titles), panels,   -->
+    <!-- and captions.  These then go to "compose-panels".  -->
+    <!-- Implementations need to define modal templates     -->
+    <!--   panel-setup, panel-heading,                      -->
+    <!--   panel-panel, panel-caption                       -->
+    <!-- The parameters passed to each is the union of what -->
+    <!-- is needed for LaTeX and HTML implementations.      -->
+    <!-- Final results are collectively sent to modal       -->
+    <!--   compose-panels                                   -->
+    <!-- template to be arranged                            -->
+    <!-- TODO: Instead we could pass the $layout to the four,    -->
+    <!-- and infer the $panel-number in the receiving templates. -->
+
+    <xsl:variable name="setup">
+        <xsl:for-each select="$panels">
+            <!-- context is now a particular panel -->
+            <xsl:variable name="panel-number" select="count(preceding-sibling::*) + 1" />
+            <xsl:apply-templates select="." mode="panel-setup">
+                <xsl:with-param name="width" select="$layout/width[$panel-number]" />
             </xsl:apply-templates>
-        </xsl:when>
-        <!-- the overall row can carry metadata (title, caption)  -->
-        <!-- so just skip ahead a panel, with no other net effect -->
-        <xsl:when test="$the-panel[&METADATA-FILTER;]">
-            <xsl:apply-templates select="." mode="sbs-panel">
+        </xsl:for-each>
+    </xsl:variable>
+
+    <xsl:variable name="headings">
+        <xsl:for-each select="$panels">
+            <!-- context is now a particular panel -->
+            <xsl:variable name="panel-number" select="count(preceding-sibling::*) + 1" />
+                <xsl:apply-templates select="." mode="panel-heading">
+                    <xsl:with-param name="width" select="$layout/width[$panel-number]" />
+                    <xsl:with-param name="margins" select="$layout/margins" />
+                </xsl:apply-templates>
+        </xsl:for-each>
+    </xsl:variable>
+
+    <xsl:variable name="panel-panels">
+        <xsl:for-each select="$panels">
+            <!-- context is now a particular panel -->
+            <xsl:variable name="panel-number" select="count(preceding-sibling::*) + 1" />
+            <xsl:apply-templates select="." mode="panel-panel">
                 <xsl:with-param name="b-original" select="$b-original" />
-
-                <xsl:with-param name="number-panels" select="$number-panels" />
-                <xsl:with-param name="the-panel" select="$the-panel/following-sibling::*[1]" />
-                <xsl:with-param name="widths" select="$widths" />
-                <xsl:with-param name="margins" select="$margins" />
-                <xsl:with-param name="space-width" select="$space-width" />
-                <xsl:with-param name="valigns" select="$valigns" />
-                <xsl:with-param name="has-headings" select="$has-headings" />
-                <xsl:with-param name="has-captions" select="$has-captions" />
-                <xsl:with-param name="setup" select="$setup" />
-                <xsl:with-param name="headings" select="$headings" />
-                <xsl:with-param name="panels" select="$panels" />
-                <xsl:with-param name="captions" select="$captions" />
+                <xsl:with-param name="width" select="$layout/width[$panel-number]" />
+                <xsl:with-param name="margins" select="$layout/margins" />
+                <xsl:with-param name="valign" select="$layout/valign[$panel-number]" />
             </xsl:apply-templates>
-        </xsl:when>
-        <xsl:otherwise>
-            <!-- collect options from front of attribute strings, and error-check -->
-            <!-- first, get and check panel width                                 -->
-            <xsl:variable name="width" select="substring-before($widths, ' ')" />
-            <xsl:choose>
-                <xsl:when test="substring-before($width, '%') &lt; 0">
-                    <xsl:message>MBX:ERROR:   panel width in a &lt;sidebyside&gt; ("<xsl:value-of select="$width" />") is negative (this may be computed, check "@margins" and "@widths")</xsl:message>
-                    <xsl:apply-templates select="." mode="location-report" />
-                </xsl:when>
-                <xsl:when test="substring-before($width, '%') &gt; 100">
-                    <xsl:message>MBX:ERROR:   panel width in a &lt;sidebyside&gt; ("<xsl:value-of select="$width" />") is bigger than 100% (this may be computed, check "@margins" and "@widths")</xsl:message>
-                    <xsl:apply-templates select="." mode="location-report" />
-                </xsl:when>
-                <xsl:when test="$width = ''">
-                    <xsl:message>MBX:FATAL:   expecting a &lt;sidebyside&gt; panel width, maybe not enough specified?</xsl:message>
-                    <xsl:apply-templates select="." mode="location-report" />
-                    <xsl:message terminate="yes">             Quitting...</xsl:message>
-                </xsl:when>
-            </xsl:choose>
+        </xsl:for-each>
+    </xsl:variable>
 
-            <!-- next, get and check panel vertical alignment -->
-            <xsl:variable name="valign" select="substring-before($valigns, ' ')" />
-            <xsl:choose>
-                <!-- "top" is default, check first -->
-                <xsl:when test="$valign = 'top'" />
-                <xsl:when test="$valign = 'bottom'" />
-                <xsl:when test="$valign = 'middle'" />
-                <xsl:when test="$valign = ''">
-                    <xsl:message>MBX:FATAL:   expecting a &lt;sidebyside&gt; panel vertical alignment, maybe not enough specified?</xsl:message>
-                    <xsl:apply-templates select="." mode="location-report" />
-                    <xsl:message terminate="yes">             Quitting...</xsl:message>
-                </xsl:when>
-                <xsl:otherwise>
-                    <xsl:message>MBX:ERROR:   vertical alignment ("<xsl:value-of select="$valign" />") in &lt;sidebyside&gt; is not "top," "middle" or "bottom"</xsl:message>
-                    <xsl:apply-templates select="." mode="location-report" />
-                </xsl:otherwise>
-            </xsl:choose>
-
-            <!-- update outputs by appending to recursive calls -->
-            <!-- parameter passing is maximum amount, the       -->
-            <!-- union of LaTeX and HTML implementations        -->
-            <xsl:variable name="new-setup">
-                <xsl:value-of select="$setup" />
-                <xsl:apply-templates select="$the-panel" mode="panel-setup">
-                    <xsl:with-param name="width" select="$width" />
-                </xsl:apply-templates>
-            </xsl:variable>
-
-            <xsl:variable name="new-headings">
-                <xsl:copy-of select="$headings" />
-                <xsl:apply-templates select="$the-panel" mode="panel-heading">
-                    <xsl:with-param name="width" select="$width" />
-                    <xsl:with-param name="margins" select="$margins" />
-                </xsl:apply-templates>
-            </xsl:variable>
-
-            <xsl:variable name="new-panels">
-                <xsl:copy-of select="$panels" />
-                <xsl:apply-templates select="$the-panel" mode="panel-panel">
-                    <xsl:with-param name="b-original" select="$b-original" />
-
-                    <xsl:with-param name="width" select="$width" />
-                    <xsl:with-param name="margins" select="$margins" />
-                    <xsl:with-param name="valign" select="$valign" />
-                </xsl:apply-templates>
-            </xsl:variable>
-
-            <xsl:variable name="new-captions">
-                <xsl:copy-of select="$captions" />
-                <xsl:apply-templates select="$the-panel" mode="panel-caption">
-                    <xsl:with-param name="width" select="$width" />
-                    <xsl:with-param name="margins" select="$margins" />
-                </xsl:apply-templates>
-            </xsl:variable>
-
-            <!-- move to next panel, passing updated components        -->
-            <!-- once incremented "panel-number" here, but not used    -->
-            <!-- update booleans for necessity of headings or captions -->
-            <xsl:apply-templates select="." mode="sbs-panel">
-                <xsl:with-param name="b-original" select="$b-original" />
-
-                <xsl:with-param name="number-panels" select="$number-panels" />
-                <xsl:with-param name="the-panel" select="$the-panel/following-sibling::*[1]" />
-                <xsl:with-param name="widths" select="substring-after($widths, ' ')" />
-                <xsl:with-param name="margins" select="$margins" />
-                <xsl:with-param name="space-width" select="$space-width" />
-                <xsl:with-param name="setup" select="$new-setup" />
-                <xsl:with-param name="valigns" select="substring-after($valigns, ' ')" />
-                <xsl:with-param name="has-headings" select="$has-headings or $the-panel/title" />
-                <xsl:with-param name="has-captions" select="$has-captions or $the-panel/caption" />
-                <xsl:with-param name="headings" select="$new-headings" />
-                <xsl:with-param name="panels" select="$new-panels" />
-                <xsl:with-param name="captions" select="$new-captions" />
+    <xsl:variable name="captions">
+        <xsl:for-each select="$panels">
+            <!-- context is now a particular panel -->
+            <xsl:variable name="panel-number" select="count(preceding-sibling::*) + 1" />
+            <xsl:apply-templates select="." mode="panel-caption">
+                <xsl:with-param name="width" select="$layout/width[$panel-number]" />
+                <xsl:with-param name="margins" select="$layout/margins" />
             </xsl:apply-templates>
-        </xsl:otherwise>
-    </xsl:choose>
+        </xsl:for-each>
+    </xsl:variable>
+
+    <!-- now collect components into output wrappers -->
+    <xsl:apply-templates select="." mode="compose-panels">
+        <xsl:with-param name="b-original" select="$b-original" />
+
+        <xsl:with-param name="layout" select="$layout" />
+        <xsl:with-param name="has-headings" select="$has-headings" />
+        <xsl:with-param name="has-captions" select="$has-captions" />
+        <xsl:with-param name="setup" select="$setup" />
+        <xsl:with-param name="headings" select="$headings" />
+        <xsl:with-param name="panels" select="$panel-panels" />
+        <xsl:with-param name="captions" select="$captions" />
+    </xsl:apply-templates>
 </xsl:template>
+
+<!-- ########################################### -->
+<!-- Side-By-Side Group (sbsgroup) main template -->
+<!-- ########################################### -->
+
+<!-- A side-by-side group ("sbsgroup") is a wrapper    -->
+<!-- around a sequence of "sidebyside".  It provides   -->
+<!-- a place to specify common parameters for several  -->
+<!-- side-by-side, for uniformity.  Also sub-captions  -->
+<!-- should respect the grouping.  It is as pure a     -->
+<!-- container as there can be.  Output is to just     -->
+<!-- pile them up vertically.  Note, layout parameters -->
+<!-- on enclosed "sidebyside" take precedence, and     -->
+<!-- it is the layout template for each sidebyside     -->
+<!-- that goes out to the enclosing group to get them  -->
+
+<xsl:template match="sbsgroup">
+    <xsl:apply-templates select="sidebyside" />
+</xsl:template>
+
 
 <!-- ############## -->
 <!-- List Utilities -->
@@ -4337,364 +4475,291 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Cross-References -->
 <!-- ################ -->
 
-<!-- Any cross-reference can be checked to see if     -->
-<!-- it points to something legitimate, since this is -->
-<!-- a common mistake and often hard to detect/locate -->
-<!-- http://www.stylusstudio.com/xsllist/200412/post20720.html -->
-<xsl:template name="check-ref">
-    <xsl:param name="ref" />
+<!-- The logic of the visible text of a cross-reference is all  -->
+<!-- here in the common routines. That text and the target node -->
+<!-- is then sent to templates that are output-format-specific. -->
+
+<!-- The actual manufacture of a (active) link is delegated  -->
+<!-- to implementations, see abstract (null) implementations -->
+<!-- at the end of the "utilities" section below             -->
+
+<!-- Match on:                                       -->
+<!--     @ref, no list: the most frequent case       -->
+<!--     @ref, a list: mostly for bibliography lists -->
+<!--     @first, @last: a range                      -->
+<!--     @provisional: author convenience            -->
+<!--     remainder: error check                      -->
+
+<!-- Primary case, no separators in @ref -->
+<xsl:template match="xref[@ref and not(contains(normalize-space(@ref), ' ')) and  not(contains(normalize-space(@ref), ','))]">
+    <!-- sanitize, check, and resolve the reference -->
+    <xsl:variable name="ref" select="normalize-space(@ref)" />
+    <xsl:apply-templates select="." mode="check-ref">
+        <xsl:with-param name="ref" select="$ref" />
+    </xsl:apply-templates>
     <xsl:variable name="target" select="id($ref)" />
-    <xsl:if test="not(exsl:node-set($target))">
-        <xsl:message>MBX:WARNING: unresolved &lt;xref&gt; due to unknown reference "<xsl:value-of select="$ref"/>"</xsl:message>
-        <xsl:variable name="inline-warning">
-            <xsl:text>Unresolved xref, reference "</xsl:text>
-            <xsl:value-of select="$ref"/>
-            <xsl:text>"; check spelling or use "provisional" attribute</xsl:text>
-        </xsl:variable>
-        <xsl:variable name="margin-warning">
-            <xsl:text>Unresolved xref</xsl:text>
-        </xsl:variable>
-        <xsl:call-template name="inline-warning">
-            <xsl:with-param name="warning" select="$inline-warning" />
-        </xsl:call-template>
-        <xsl:call-template name="margin-warning">
-            <xsl:with-param name="warning" select="$margin-warning" />
-        </xsl:call-template>
-    </xsl:if>
-</xsl:template>
-
-<!-- A single "ref" is the most common case of an "xref"   -->
-<!-- and we also handle comma-separted lists of refs here. -->
-<!-- TODO: split these with a match on @ref with comma?    -->
-<xsl:template match="xref[@ref]">
-    <xsl:choose>
-        <xsl:when test="contains(@ref, ',')">
-            <!-- For multiple ref, we print an autoname           -->
-            <!-- outside of the link text, similarly any          -->
-            <!-- wrapping is done outside of the links.           -->
-            <!-- These behaviors are controlled by the first ref. -->
-            <xsl:variable name="first-ref" select="normalize-space(substring-before(@ref, ','))" />
-            <!-- check is repeated later, but best to verify now -->
-            <xsl:call-template name="check-ref">
-                <xsl:with-param name="ref" select="$first-ref" />
-            </xsl:call-template>
-            <!-- autoname outside links, wraps -->
-            <xsl:variable name="target" select="id($first-ref)" />
-            <!-- include autoname prefix in link text, since just one -->
-            <xsl:variable name="prefix">
-                <xsl:apply-templates select="." mode="xref-prefix">
-                    <xsl:with-param name="target" select="$target" />
-                </xsl:apply-templates>
-            </xsl:variable>
-            <xsl:if test="not($prefix = '')">
-                <xsl:value-of select="$prefix" />
-                <xsl:apply-templates select="." mode="nbsp"/>
-            </xsl:if>
-            <!-- optionally wrap with parentheses, brackets -->
-            <xsl:apply-templates select="$target" mode="xref-wrap">
-                <xsl:with-param name="content">
-                    <!-- recurse through refs, making links in the process -->
-                    <xsl:call-template name="xref-text-multiple">
-                        <xsl:with-param name="refs-string" select="@ref" />
-                    </xsl:call-template>
-                </xsl:with-param>
-            </xsl:apply-templates>
-        </xsl:when>
-        <xsl:otherwise>
-            <!-- First, check that the single @ref is good -->
-            <xsl:call-template name="check-ref">
-                <xsl:with-param name="ref" select="@ref" />
-            </xsl:call-template>
-            <xsl:variable name="target" select="id(@ref)" />
-            <!-- Send the target and text representation for link to a -->
-            <!-- format-specific and target-specific link manufacture. -->
-            <!-- LaTeX uses \hyperref and \hyperlink, while HTML uses  -->
-            <!-- traditional hyperlinks and also modern knowls.        -->
-            <xsl:apply-templates select="$target" mode="xref-link">
-                <xsl:with-param name="content">
-                    <xsl:apply-templates select="." mode="xref-text-one" />
-                </xsl:with-param>
-            </xsl:apply-templates>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<xsl:template name="xref-text-multiple">
-    <xsl:param name="refs-string" />
-    <xsl:variable name="first-char" select="substring($refs-string, 1, 1)" />
-    <xsl:choose>
-        <!-- leading spaces: repeat in output and strip -->
-        <xsl:when test="contains(' ', $first-char)">
-            <xsl:value-of select="$first-char" />
-            <xsl:call-template name="xref-text-multiple">
-                <xsl:with-param name="refs-string" select="substring($refs-string, 2)" />
-            </xsl:call-template>
-        </xsl:when>
-        <!-- no more separators, last one, process and quit-->
-        <xsl:when test="not(contains($refs-string, ','))">
-            <!-- <xsl:value-of select="$refs-string" /> -->
-            <!-- Check that refs-string is good -->
-            <xsl:call-template name="check-ref">
-                <xsl:with-param name="ref" select="$refs-string" />
-            </xsl:call-template>
-            <xsl:variable name="target" select="id($refs-string)" />
-            <!-- Send the target and number (only) for link manufacture -->
-            <xsl:apply-templates select="$target" mode="xref-link">
-                <xsl:with-param name="content">
-                    <xsl:apply-templates select="$target" mode="xref-number" />
-                </xsl:with-param>
-            </xsl:apply-templates>
-        </xsl:when>
-        <!-- break at comma, normalize head, process, duplicate comma, recurse on tail -->
-        <xsl:otherwise>
-            <xsl:variable name="next-ref" select="normalize-space(substring-before($refs-string, ','))" />
-            <!-- Check that next-ref is good -->
-            <xsl:call-template name="check-ref">
-                <xsl:with-param name="ref" select="$next-ref" />
-            </xsl:call-template>
-            <xsl:variable name="target" select="id($next-ref)" />
-            <!-- Send the target and number (only) for link manufacture -->
-            <xsl:apply-templates select="$target" mode="xref-link">
-                <xsl:with-param name="content">
-                    <xsl:apply-templates select="$target" mode="xref-number" />
-                </xsl:with-param>
-            </xsl:apply-templates>
-            <!-- duplicate comma from split -->
-            <xsl:text>,</xsl:text>
-            <!-- recurse, as there is more to come -->
-            <xsl:call-template name="xref-text-multiple">
-                <xsl:with-param name="refs-string" select="substring-after($refs-string, ',')" />
-            </xsl:call-template>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<xsl:template match="xref[@first and @last]">
-    <!-- check both refs -->
-    <xsl:call-template name="check-ref">
-        <xsl:with-param name="ref" select="@first" />
-    </xsl:call-template>
-    <xsl:call-template name="check-ref">
-        <xsl:with-param name="ref" select="@last" />
-    </xsl:call-template>
-    <!-- form both targets -->
-    <xsl:variable name="target-first" select="id(@first)" />
-    <xsl:variable name="target-last"  select="id(@last)" />
-    <!-- content or autoname prefix consciously outside links -->
-    <xsl:variable name="prefix">
-        <xsl:apply-templates select="." mode="xref-prefix">
-            <xsl:with-param name="target" select="$target-first" />
-        </xsl:apply-templates>
+    <!-- Determine style of visible text in link -->
+    <xsl:variable name="text-style">
+        <xsl:apply-templates select="." mode="get-text-style" />
     </xsl:variable>
-    <xsl:if test="not($prefix = '')">
-        <xsl:value-of select="$prefix" />
-        <xsl:apply-templates select="." mode="nbsp"/>
-    </xsl:if>
-    <!-- first link, number only                    -->
-    <!-- optionally wrap with parentheses, brackets -->
-    <xsl:apply-templates select="$target-first" mode="xref-wrap">
-        <xsl:with-param name="content">
-            <xsl:apply-templates select="$target-first" mode="xref-link">
-                <xsl:with-param name="content">
-                    <xsl:apply-templates select="$target-first" mode="xref-number" />
-                </xsl:with-param>
-            </xsl:apply-templates>
-        </xsl:with-param>
-    </xsl:apply-templates>
-    <!-- ndash as separator -->
-    <xsl:apply-templates select="." mode="ndash"/>
-    <!-- second link, number only                   -->
-    <!-- optionally wrap with parentheses, brackets -->
-    <xsl:apply-templates select="$target-first" mode="xref-wrap">
-        <xsl:with-param name="content">
-            <xsl:apply-templates select="$target-last" mode="xref-link">
-                <xsl:with-param name="content">
-                    <xsl:apply-templates select="$target-last" mode="xref-number" />
-                </xsl:with-param>
-            </xsl:apply-templates>
-        </xsl:with-param>
-    </xsl:apply-templates>
-</xsl:template>
-
-<!-- A single "ref" in an md/mrow needs special treatment       -->
-<!-- We call a specialized template for use only within an "md" -->
-<!-- We restrict to the case of a single ref                    -->
-<xsl:template match="mrow/xref[@ref]">
-    <xsl:if test="contains(@ref, ',')">
-        <xsl:message>MBX:ERROR:   multiple cross-references in a math display (md/mrow, mdn/mrow) are not supported, results may be erratic</xsl:message>
-        <xsl:apply-templates select="." mode="location-report" />
-    </xsl:if>
-    <xsl:call-template name="check-ref">
-        <xsl:with-param name="ref" select="@ref" />
-    </xsl:call-template>
-    <xsl:variable name="target" select="id(@ref)" />
-    <!-- Send the target and text representation for link to a -->
-    <!-- format-specific and target-specific link manufacture. -->
-    <!-- Note the template used here is specific to md/mrow    -->
-    <!-- LaTeX uses \hyperref and \hyperlink, while HTML uses  -->
-    <!-- traditional hyperlinks and also modern knowls.        -->
-    <xsl:apply-templates select="$target" mode="xref-link-md">
-        <xsl:with-param name="content">
-            <xsl:apply-templates select="." mode="xref-text-one" />
-        </xsl:with-param>
-    </xsl:apply-templates>
-</xsl:template>
-
-<!-- TODO: the xref-link should perhaps select/match on      -->
-<!-- the xref and not the target, then the location of       -->
-<!-- the xref can be accomodated (making the "-md" device    -->
-<!-- unnecessary and then just doing an override in the HTML -->
-<!-- code).  Presumably we can also determnine/analyze the   -->
-<!-- target upon reception and deal with it there.           -->
-
-<!-- This is a base implementation for the xref-link -->
-<!-- template, which just repeats the content        -->
-<xsl:template match="*" mode="xref-link">
-    <xsl:param name="content" />
-    <xsl:value-of select="$content" />
-</xsl:template>
-
-<!-- Prefix, Autonaming of Cross-References -->
-<!-- Content in an xref becomes a prefix, no matter what           -->
-<!-- Some references get an autoname prefix (eg Section, Theorem), -->
-<!-- subject to global and local options, interpreted here         -->
-<!-- Element is the  xref, $target  provides the autoname string   -->
-<!-- If autoname="title" and the xref has content, then there      -->
-<!-- is no number because of the title request and the xref        -->
-<!-- content becomes the link text instead                         -->
-<xsl:template match="*" mode="xref-prefix">
-    <!-- We need the target for autonaming with type-name or title -->
-    <xsl:param name="target" />
-    <!-- Variable is the local @autoname of the xref -->
-    <!-- Local:  blank, yes/no, title                -->
-    <!-- Global: yes/no, so 8 combinations           -->
-    <xsl:variable name="local" select="@autoname" />
-    <!-- DEPRECATED: 2016-04-07 autoname="plural" never really was viable -->
-    <xsl:if test="$local='plural'" />
-    <xsl:choose>
-        <!-- if xref has content, then use it, no matter what -->
-        <xsl:when test="normalize-space(.)">
-            <xsl:apply-templates />
-        </xsl:when>
-        <!-- 2 combinations: global no, without local override -->
-        <xsl:when test="$autoname='no' and ($local='' or $local='no')" />
-        <!-- 1 combination: global yes, but local override -->
-        <xsl:when test="$autoname='yes' and $local='no'" />
-        <!-- 2 combinations: global yes/no, local title option-->
-        <xsl:when test="$local='title'">
-            <xsl:apply-templates select="$target" mode="title-simple" />
-        </xsl:when>
-        <!-- 1 combinations: global no, local yes               -->
-        <!-- 2 combinations: global yes, local blank/yes        -->
-        <!-- intercept biblio items, which are identified by [] -->
-        <xsl:when test="$local='yes' or ($autoname='yes' and not($local!=''))">
-            <xsl:if test="not($target[self::biblio])">
-                <xsl:apply-templates select="$target" mode="type-name" />
-            </xsl:if>
-        </xsl:when>
-        <!-- just makes error message effective -->
-        <xsl:when test="not($local != '')"></xsl:when>
-        <xsl:otherwise>
-            <xsl:message>MBX:WARNING: "autoname" attribute should be yes|no|title, not <xsl:value-of select="$local" /></xsl:message>
-            <xsl:apply-templates select="." mode="location-report" />
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<!-- For cross-references, we manufacture text that         -->
-<!-- includes the possible autoname'd prefix, various       -->
-<!-- visual hints as to the nature of the target            -->
-<!-- (parentheses on equations, brackets on citations)      -->
-<!-- and possible extra detail on a citation.               -->
-<!-- These only manufacture generic text, modulo special    -->
-<!-- characters like non-breaking spaces provided by        -->
-<!-- importing stylesheets, and so can be employed in any   -->
-<!-- conversion that provides those characters.             -->
-
-<!-- A single "ref" in a xref may have an autoname,         -->
-<!-- wrapping of the number, and detail for a bibliographic -->
-<!-- item.  We package up all of it as the link text.       -->
-<xsl:template match="*" mode="xref-text-one" >
-    <!-- autoname passed straight into prefix routine -->
-    <!-- detail flagged inside biblio construction    -->
-    <xsl:variable name="target" select="id(@ref)" />
-    <!-- include autoname prefix in link text, since just one -->
-    <xsl:variable name="prefix">
-        <xsl:apply-templates select="." mode="xref-prefix">
+    <!-- if target is a bibliography item, generic -->
+    <!-- text template only makes a number, we add -->
+    <!-- brackets before link manufacture          -->
+    <xsl:variable name="b-is-biblio-target" select="boolean($target/self::biblio)" />
+    <!-- form text of the clickable, wrap biblio target -->
+    <!-- since xref-text outputs just a number          -->
+    <xsl:variable name="text">
+        <xsl:if test="parent::mrow">
+            <xsl:text>\text{</xsl:text>
+        </xsl:if>
+        <xsl:if test="$b-is-biblio-target">
+            <xsl:text>[</xsl:text>
+        </xsl:if>
+        <xsl:apply-templates select="." mode="xref-text" >
             <xsl:with-param name="target" select="$target" />
+            <xsl:with-param name="text-style" select="$text-style" />
+            <!-- pass content as an RTF, test vs. empty string, use copy-of -->
+            <xsl:with-param name="custom-text">
+                <xsl:apply-templates />
+            </xsl:with-param>
         </xsl:apply-templates>
+        <!-- a bibliography citation (only) may have extra @detail          -->
+        <!-- maybe the detail should migrate to content of a xref to biblio -->
+        <xsl:if test="@detail">
+            <xsl:choose>
+                <xsl:when test="$b-is-biblio-target">
+                    <xsl:text>,</xsl:text>
+                    <xsl:apply-templates select="." mode="nbsp"/>
+                    <!-- this info should not be in an attribute! -->
+                    <xsl:apply-templates select="@detail" />
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message>MBX:WARNING: &lt;xref @detail="<xsl:value-of select="@detail" />" /&gt; only implemented for single references to &lt;biblio&gt; elements</xsl:message>
+                    <xsl:apply-templates select="." mode="location-report" />
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:if>
+        <xsl:if test="$b-is-biblio-target">
+            <xsl:text>]</xsl:text>
+        </xsl:if>
+        <xsl:if test="parent::mrow">
+            <xsl:text>}</xsl:text>
+        </xsl:if>
     </xsl:variable>
-    <xsl:choose>
-        <!-- no title, then construct more involved text -->
-        <xsl:when test="not(@autoname='title')">
-            <xsl:if test="not($prefix = '')">
-                <xsl:value-of select="$prefix" />
-                <xsl:apply-templates select="." mode="nbsp"/>
-            </xsl:if>
-            <!-- optionally wrap citations+detail or equations, with formatting -->
-            <xsl:apply-templates select="$target" mode="xref-wrap">
-                <xsl:with-param name="content">
-                    <!-- call an abstract template for the actual number -->
-                    <xsl:apply-templates select="$target" mode="xref-number" />
-                    <!-- provide optional detail on bibliographic reference, only -->
-                    <xsl:if test="@detail != ''">
-                        <xsl:choose>
-                            <xsl:when test="local-name($target) = 'biblio'">
-                                <xsl:text>,</xsl:text>
-                                <xsl:apply-templates select="." mode="nbsp"/>
-                                <xsl:apply-templates select="@detail" />
-                            </xsl:when>
-                            <xsl:otherwise>
-                                <xsl:message>MBX:WARNING: xref attribute detail="<xsl:value-of select="@detail" />" only implemented for single references to biblio elements</xsl:message>
-                                <xsl:apply-templates select="." mode="location-report" />
-                            </xsl:otherwise>
-                        </xsl:choose>
-                    </xsl:if>
-                </xsl:with-param>
-            </xsl:apply-templates>
-        </xsl:when>
-        <!-- as title, simply return it -->
-        <xsl:otherwise>
-            <xsl:value-of select="$prefix" />
-        </xsl:otherwise>
-    </xsl:choose>
+    <!-- Send the target and text representation for link to a    -->
+    <!-- format-specific and target-specific link manufacture.    -->
+    <!-- This depends primarly on the $target, but we also        -->
+    <!-- send the location of the link.  Example: a link in       -->
+    <!-- display mathematics (rendered by MathJax for HTML)       -->
+    <!-- requires radically different constructions as a knowl,   -->
+    <!-- or as a hyperlink.  LaTeX barely cares.  We do wrap the  -->
+    <!-- xref-text in \text{} for receipt in display mathematics. -->
+    <!-- NB: could a xref with title text have math in it and mess-up here? -->
+    <xsl:apply-templates select="$target" mode="xref-link">
+        <xsl:with-param name="content" select="$text" />
+        <xsl:with-param name="xref" select="." />
+    </xsl:apply-templates>
 </xsl:template>
 
-<!-- Some references, or lists of references -->
-<!-- get visual clues as to their nature.    -->
-<!-- Here we wrap those special cases and    -->
-<!-- pass-through the remainder              -->
-<xsl:template match="*" mode="xref-wrap">
-    <xsl:param name="content" />
-    <xsl:copy-of select="$content" />
-</xsl:template>
-<xsl:template match="biblio" mode="xref-wrap">
-    <xsl:param name="content" />
-    <xsl:text>[</xsl:text>
-    <xsl:copy-of select="$content" />
-    <xsl:text>]</xsl:text>
-</xsl:template>
-<xsl:template match="men|mrow" mode="xref-wrap">
-    <xsl:param name="content" />
-    <xsl:text>(</xsl:text>
-    <xsl:copy-of select="$content" />
-    <xsl:text>)</xsl:text>
+<!-- A range given by @first, @last            -->
+<!-- Makes one chunk of text, linked to @first -->
+<!-- Requires same type for targets, since     -->
+<!-- type only occurs once in text             -->
+<!-- Equations look like (4.2)-(4.8)           -->
+<!-- Bibliography looks like [6-14]            -->
+<xsl:template match="xref[@first and @last]">
+    <!-- sanitize, check, and resolve the two references -->
+    <xsl:variable name="ref-one" select="normalize-space(@first)" />
+    <xsl:apply-templates select="." mode="check-ref">
+        <xsl:with-param name="ref" select="$ref-one" />
+    </xsl:apply-templates>
+    <xsl:variable name="target-one" select="id($ref-one)" />
+    <xsl:variable name="ref-two" select="normalize-space(@last)" />
+    <xsl:apply-templates select="." mode="check-ref">
+        <xsl:with-param name="ref" select="$ref-two" />
+    </xsl:apply-templates>
+    <xsl:variable name="target-two" select="id($ref-two)" />
+    <!-- Determine style of visible text in link -->
+    <xsl:variable name="text-style-one">
+        <xsl:apply-templates select="." mode="get-text-style" />
+    </xsl:variable>
+    <!-- Adjust/set style for end of range          -->
+    <!-- Basically supress text manufacture of type -->
+    <!-- Also, no content is passed with @last      -->
+    <xsl:variable name="text-style-two">
+        <xsl:choose>
+            <!-- do not replicate type name -->
+            <xsl:when test="$text-style-one = 'type-global'">
+                <xsl:text>global</xsl:text>
+            </xsl:when>
+            <xsl:when test="$text-style-one = 'type-local'">
+                <xsl:text>local</xsl:text>
+            </xsl:when>
+            <!-- pass through 'global', 'local', 'title', 'phrase-global' -->
+            <xsl:otherwise>
+                <xsl:value-of select="$text-style-one" />
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <!-- enforce @first, @last point to same kind of element, -->
+    <!-- since we implicitly recycle the type-name of @first  -->
+    <!-- Schematron: possible by inserting id() into XPath test? -->
+    <!-- TODO: (2017-07-24) convert to a fatal error after some time? -->
+    <xsl:if test="not(local-name($target-one) = local-name($target-two))">
+        <xsl:message terminate="no">MBX:ERROR:   &lt;xref @first="<xsl:value-of select="$ref-one" />" @last="<xsl:value-of select="$ref-two" />" /&gt; references two elements with different tags (<xsl:value-of select="local-name($target-one)" /> vs. <xsl:value-of select="local-name($target-two)" />), so are incompatible as endpoints of a range.  Rewrite using two &lt;xref&gt; elements</xsl:message>
+    </xsl:if>
+    <!-- courtesy check that range is not out-of-order               -->
+    <!-- NB: different schemes for "exercise" can make this look odd -->
+    <xsl:if test="count($target-one/preceding::*) > count($target-two/preceding::*)">
+        <xsl:message terminate="no">MBX:WARNING: &lt;xref @first="<xsl:value-of select="$ref-one" />" @last="<xsl:value-of select="$ref-two" />" /&gt; references two elements that appear to be in the wrong order</xsl:message>
+    </xsl:if>
+    <!-- Biblio check assumes targets are equal       -->
+    <!-- If target is a bibliography item, generic    -->
+    <!-- text template only makes numbers, we add     -->
+    <!-- brackets and detail before link manufacture  -->
+    <!-- Content passes with @first, not with @second -->
+    <xsl:variable name="b-is-biblio-target" select="boolean($target-one/self::biblio)" />
+    <!-- Compose two text parts with an ndash, perhaps wrappped -->
+    <xsl:variable name="text">
+        <xsl:if test="parent::mrow">
+            <xsl:text>\text{</xsl:text>
+        </xsl:if>
+        <xsl:if test="$b-is-biblio-target">
+            <xsl:text>[</xsl:text>
+        </xsl:if>
+        <xsl:apply-templates select="." mode="xref-text" >
+            <xsl:with-param name="target" select="$target-one" />
+            <xsl:with-param name="text-style" select="$text-style-one" />
+            <!-- pass content as an RTF, test vs. empty string, use copy-of -->
+            <xsl:with-param name="custom-text">
+                <xsl:apply-templates />
+            </xsl:with-param>
+        </xsl:apply-templates>
+        <xsl:apply-templates select="." mode="ndash"/>
+        <xsl:apply-templates select="." mode="xref-text" >
+            <xsl:with-param name="target" select="$target-two" />
+            <xsl:with-param name="text-style" select="$text-style-two" />
+        </xsl:apply-templates>
+        <xsl:if test="$b-is-biblio-target">
+            <xsl:text>]</xsl:text>
+        </xsl:if>
+        <xsl:if test="parent::mrow">
+            <xsl:text>}</xsl:text>
+        </xsl:if>
+    </xsl:variable>
+    <!-- Send the target and text representation for link to a    -->
+    <!-- format-specific and target-specific link manufacture.    -->
+    <!-- This depends primarly on the $target, but we also        -->
+    <!-- send the location of the link.  Example: a link in       -->
+    <!-- display mathematics (rendered by MathJax for HTML)       -->
+    <!-- requires radically different constructions as a knowl,   -->
+    <!-- or as a hyperlink.  LaTeX barely cares.  We do wrap the  -->
+    <!-- xref-text in \text{} for receipt in display mathematics. -->
+    <!-- NB: could a xref with title text have math in it and mess-up here? -->
+    <xsl:apply-templates select="$target-one" mode="xref-link">
+        <xsl:with-param name="content" select="$text" />
+        <xsl:with-param name="xref" select="." />
+    </xsl:apply-templates>
 </xsl:template>
 
-
-<!-- This is an abstract template, to accomodate -->
-<!-- hard-coded HTML numbers and for LaTeX the   -->
-<!-- \ref and \label mechanism                   -->
-<xsl:template match="*" mode="xref-number">
-    <xsl:text>[XREFNUM]</xsl:text>
+<!-- A comma-, or space-separated list is unusual, -->
+<!-- outside of a list of bibliography items.  For -->
+<!-- other items we just mimic this case.          -->
+<xsl:template match="xref[@ref and (contains(normalize-space(@ref), ' ') or contains(normalize-space(@ref), ','))]">
+    <!-- Determine style of visible text in link -->
+    <xsl:variable name="text-style">
+        <xsl:apply-templates select="." mode="get-text-style" />
+    </xsl:variable>
+    <!-- commas to blanks, normalize, add trailing blank for parsing   -->
+    <!-- initialize with empty previous node, recurse through the list -->
+    <xsl:variable name="normalized-ref-list"
+        select="concat(normalize-space(str:replace(@ref,',', ' ')), ' ')" />
+    <xsl:apply-templates select="." mode="process-ref-list">
+        <xsl:with-param name="previous-target" select="/.." />
+        <xsl:with-param name="ref-list" select="$normalized-ref-list" />
+        <xsl:with-param name="text-style" select="$text-style" />
+    </xsl:apply-templates>
 </xsl:template>
-<!-- For an exercisegroup we meld the "xref-number"     -->
-<!-- for the first and last exercise of the group       -->
-<!-- An exercise group is only ever numbered for a xref -->
-<xsl:template match="exercisegroup" mode="xref-number">
-    <xsl:apply-templates select="exercise[1]" mode="xref-number" />
-    <xsl:apply-templates select="." mode="ndash"/>
-    <xsl:apply-templates select="exercise[last()]" mode="xref-number" />
+
+<!-- $ref-list must always have a trailing blank, if non-empty      -->
+<!-- $previous-target serves two purposes:                          -->
+<!--     empty signals start of the list, so no separator           -->
+<!--     type-checking to preserve a consistent list (unimplmented) -->
+<!-- $text-style is set on first call, then just pass-through       -->
+<!-- Wrapping for bibiography list is based on first, last element  -->
+<!-- No content overrides are allowed, since unclear jut how        -->
+<!-- TODO: improve checking to avoid goofy results -->
+<xsl:template match="xref" mode="process-ref-list">
+    <xsl:param name="previous-target" select="/.." />
+    <xsl:param name="ref-list" select="' '" />
+    <xsl:param name="text-style" select="''" />
+    <!-- split list at first blank, later recurse on $trailing -->
+    <xsl:variable name="ref" select="substring-before($ref-list, ' ')" />
+    <xsl:variable name="trailing" select="substring-after($ref-list, ' ')" />
+    <!-- now work with one $ref and the configured $text-style -->
+    <!-- first, error-check and resolve                        -->
+    <xsl:apply-templates select="." mode="check-ref">
+        <xsl:with-param name="ref" select="$ref" />
+    </xsl:apply-templates>
+    <!-- get the target as a node -->
+    <xsl:variable name="target" select="id($ref)" />
+    <!-- bibiographic targets are special -->
+    <xsl:variable name="b-is-biblio-target" select="$target/self::biblio" />
+    <!-- if starting, begin bibliography list wrapping -->
+    <xsl:if test="not($previous-target) and $b-is-biblio-target">
+        <xsl:text>[</xsl:text>
+    </xsl:if>
+    <!-- output a seperator, if not just starting -->
+    <!-- protect text in a math display           -->
+    <xsl:if test="$previous-target">
+        <xsl:if test="parent::mrow">
+            <xsl:text>\text{</xsl:text>
+        </xsl:if>
+        <xsl:text>, </xsl:text>
+        <xsl:if test="parent::mrow">
+            <xsl:text>}</xsl:text>
+        </xsl:if>
+    </xsl:if>
+    <!-- create the visual/clickable/readable text      -->
+    <!-- no content is passed, so no override in effect -->
+    <xsl:variable name="text">
+        <xsl:if test="parent::mrow">
+            <xsl:text>\text{</xsl:text>
+        </xsl:if>
+        <xsl:apply-templates select="." mode="xref-text">
+            <xsl:with-param name="target" select="$target" />
+            <xsl:with-param name="text-style" select="$text-style" />
+        </xsl:apply-templates>
+        <xsl:if test="parent::mrow">
+            <xsl:text>}</xsl:text>
+        </xsl:if>
+    </xsl:variable>
+    <!-- Send the target and text representation for link to a    -->
+    <!-- format-specific and target-specific link manufacture.    -->
+    <!-- This depends primarly on the $target, but we also        -->
+    <!-- send the location of the link.  Example: a link in       -->
+    <!-- display mathematics (rendered by MathJax for HTML)       -->
+    <!-- requires radically different constructions as a knowl,   -->
+    <!-- or as a hyperlink.  LaTeX barely cares.  We do wrap the  -->
+    <!-- xref-text in \text{} for receipt in display mathematics. -->
+    <!-- NB: could a xref with title text have math in it and mess-up here? -->
+    <xsl:apply-templates select="$target" mode="xref-link">
+        <xsl:with-param name="content" select="$text" />
+        <xsl:with-param name="xref" select="." />
+    </xsl:apply-templates>
+    <!-- check if we have exhausted the list, -->
+    <!-- so check bibliography wrapping       -->
+    <xsl:if test="not($trailing) and $b-is-biblio-target">
+        <xsl:text>]</xsl:text>
+    </xsl:if>
+    <!-- recurse into next reference in the list -->
+    <xsl:if test="$trailing">
+        <xsl:apply-templates select="." mode="process-ref-list">
+            <xsl:with-param name="previous-target" select="$target" />
+            <xsl:with-param name="ref-list" select="$trailing" />
+            <xsl:with-param name="text-style" select="$text-style" />
+        </xsl:apply-templates>
+    </xsl:if>
 </xsl:template>
 
 <!-- Provisional cross-references -->
@@ -4719,20 +4784,470 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 </xsl:template>
 
 <!-- Warnings for a high-frequency mistake -->
-<xsl:template match="xref">
-    <xsl:message>MBX:WARNING: Cross-reference (xref) with no ref or provisional attribute, check spelling</xsl:message>
+<xsl:template match="xref[not(@ref) and not(@first and @last) and not(@provisional)]">
+    <xsl:message>MBX:WARNING: A cross-reference (&lt;xref&gt;) must have a @ref attribute, a @first/@last attribute pair, or a @provisional attribute</xsl:message>
     <xsl:apply-templates select="." mode="location-report" />
     <xsl:call-template name="inline-warning">
         <xsl:with-param name="warning">
-            <xsl:text>xref without ref or provisional attribute, check spelling</xsl:text>
+            <xsl:text>xref without ref, first/last, or provisional attribute (check spelling)</xsl:text>
         </xsl:with-param>
     </xsl:call-template>
     <xsl:call-template name="margin-warning">
         <xsl:with-param name="warning">
-            <xsl:text>xref, no attribute</xsl:text>
+            <xsl:text>xref, no recognized attribute</xsl:text>
         </xsl:with-param>
     </xsl:call-template>
 </xsl:template>
+
+<!-- ######################### -->
+<!-- Cross-Reference Utilities -->
+<!-- ######################### -->
+
+<!-- Any cross-reference can be checked to see if     -->
+<!-- it points to something legitimate, since this is -->
+<!-- a common mistake and often hard to detect/locate -->
+<!-- http://www.stylusstudio.com/xsllist/200412/post20720.html -->
+<xsl:template match="xref" mode="check-ref">
+    <xsl:param name="ref" />
+    <xsl:variable name="target" select="id($ref)" />
+    <xsl:if test="not(exsl:node-set($target))">
+        <xsl:message>MBX:WARNING: unresolved &lt;xref&gt; due to unknown reference "<xsl:value-of select="$ref"/>"</xsl:message>
+        <xsl:apply-templates select="." mode="location-report" />
+        <xsl:variable name="inline-warning">
+            <xsl:text>Unresolved xref, reference "</xsl:text>
+            <xsl:value-of select="$ref"/>
+            <xsl:text>"; check spelling or use "provisional" attribute</xsl:text>
+        </xsl:variable>
+        <xsl:variable name="margin-warning">
+            <xsl:text>Unresolved xref</xsl:text>
+        </xsl:variable>
+        <xsl:call-template name="inline-warning">
+            <xsl:with-param name="warning" select="$inline-warning" />
+        </xsl:call-template>
+        <xsl:call-template name="margin-warning">
+            <xsl:with-param name="warning" select="$margin-warning" />
+        </xsl:call-template>
+    </xsl:if>
+</xsl:template>
+
+<!-- Parse, analyze switches, attributes -->
+<!--   global:      5.2                  -->
+<!--   type-global: Theorem 5.2          -->
+<!--   title:       Smith's Theorem      -->
+<xsl:template match="xref" mode="get-text-style">
+    <xsl:choose>
+        <!-- local specification is override of global  -->
+        <!-- new @text attribute first, and if so, bail -->
+        <xsl:when test="@text='global'">
+            <xsl:text>global</xsl:text>
+        </xsl:when>
+        <xsl:when test="@text='local'">
+            <xsl:text>local</xsl:text>
+        </xsl:when>
+        <xsl:when test="@text='hybrid'">
+            <xsl:text>hybrid</xsl:text>
+        </xsl:when>
+        <xsl:when test="@text='type-global'">
+            <xsl:text>type-global</xsl:text>
+        </xsl:when>
+        <xsl:when test="@text='type-local'">
+            <xsl:text>type-local</xsl:text>
+        </xsl:when>
+        <xsl:when test="@text='type-hybrid'">
+            <xsl:text>type-hybrid</xsl:text>
+        </xsl:when>
+        <xsl:when test="@text='phrase-global'">
+            <xsl:text>phrase-global</xsl:text>
+        </xsl:when>
+        <xsl:when test="@text='phrase-hybrid'">
+            <xsl:text>phrase-hybrid</xsl:text>
+        </xsl:when>
+        <xsl:when test="@text='title'">
+            <xsl:text>title</xsl:text>
+        </xsl:when>
+        <!-- old (deprecated, 2017-07-25) autoname attribute -->
+        <xsl:when test="@autoname='no'">
+            <xsl:text>global</xsl:text>
+        </xsl:when>
+        <xsl:when test="@autoname='yes'">
+            <xsl:text>type-global</xsl:text>
+        </xsl:when>
+        <xsl:when test="@autoname='title'">
+            <xsl:text>title</xsl:text>
+        </xsl:when>
+        <!-- otherwise, global setting via attribute/switch  -->
+        <!-- New scheme is set from docinfo attribute        -->
+        <!-- No setting in docinfo yields empty string for   -->
+        <!-- $xref-text-style, so we drop into legacy scheme -->
+        <!-- for the default, which is 'yes'/'type-global'   -->
+        <xsl:when test="$xref-text-style='global'">
+            <xsl:text>global</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xref-text-style='local'">
+            <xsl:text>local</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xref-text-style='hybrid'">
+            <xsl:text>hybrid</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xref-text-style='type-global'">
+            <xsl:text>type-global</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xref-text-style='type-local'">
+            <xsl:text>type-local</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xref-text-style='type-hybrid'">
+            <xsl:text>type-hybrid</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xref-text-style='phrase-global'">
+            <xsl:text>phrase-global</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xref-text-style='phrase-hybrid'">
+            <xsl:text>phrase-hybrid</xsl:text>
+        </xsl:when>
+        <xsl:when test="$xref-text-style='title'">
+            <xsl:text>title</xsl:text>
+        </xsl:when>
+        <!-- use this when choose goes away
+        <xsl:if test="not($xref-text-style = '')">
+            <xsl:value-of select="$xref-text-style" />
+        </xsl:if>
+        -->
+        <!-- legacy-autoname is a pass-thru of old autoname  -->
+        <!-- except with no command-line, no docinfo, then   -->
+        <!-- a 'unset' will appear here to activate new      -->
+        <!-- default this could move later to the "otherwise"-->
+        <xsl:when test="$legacy-autoname='unset'">
+            <xsl:text>type-hybrid</xsl:text>
+        </xsl:when>
+        <xsl:when test="$legacy-autoname='no'">
+            <xsl:text>global</xsl:text>
+        </xsl:when>
+        <xsl:when test="$legacy-autoname='yes'">
+            <xsl:text>type-global</xsl:text>
+        </xsl:when>
+        <xsl:when test="$legacy-autoname='title'">
+            <xsl:text>title</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message>MBX:BUG:    NO TEXT STYLE DETERMINED</xsl:message>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- The text that will be visible and clickable    -->
+<!-- Bibliography items return a naked number,      -->
+<!-- caller is responsible for adjusting text with  -->
+<!-- brackets prior to shipping to link manufacture -->
+<xsl:template match="xref" mode="xref-text">
+    <xsl:param name="target" />
+    <xsl:param name="text-style" />
+    <xsl:param name="custom-text" select="''" />
+    <!-- an equation target is exceptional -->
+    <xsl:variable name="b-is-equation-target" select="$target/self::mrow or $target/self::men" />
+    <!-- a bibliography target is exceptional -->
+    <xsl:variable name="b-is-biblio-target" select="boolean($target/self::biblio)" />
+    <!-- recognize content s potential override -->
+    <xsl:variable name="b-has-content" select="not($custom-text = '')" />
+    <xsl:choose>
+        <!-- equation override -->
+        <xsl:when test="$b-is-equation-target">
+            <xsl:if test="$b-has-content">
+                <xsl:copy-of select="$custom-text" />
+                <xsl:apply-templates select="." mode="nbsp"/>
+            </xsl:if>
+            <xsl:text>(</xsl:text>
+            <xsl:apply-templates select="$target" mode="xref-number" />
+            <xsl:text>)</xsl:text>
+        </xsl:when>
+        <!-- bibliography override       -->
+        <!-- number only, consumer wraps -->
+        <!-- warn about useless content override (use as @detail?) -->
+        <xsl:when test="$b-is-biblio-target">
+            <xsl:apply-templates select="$target" mode="xref-number" />
+        </xsl:when>
+        <!-- now not an equation or bibliography target -->
+        <!-- custom text is additional, as prefix, with no type -->
+        <xsl:when test="$text-style = 'global'">
+            <xsl:if test="$b-has-content">
+                <xsl:copy-of select="$custom-text" />
+                <xsl:apply-templates select="." mode="nbsp"/>
+            </xsl:if>
+            <xsl:apply-templates select="$target" mode="xref-number" />
+        </xsl:when>
+        <!-- custom text is additional, as prefix, with no type -->
+        <xsl:when test="$text-style = 'local'">
+            <xsl:if test="$b-has-content">
+                <xsl:copy-of select="$custom-text" />
+                <xsl:apply-templates select="." mode="nbsp"/>
+            </xsl:if>
+            <xsl:apply-templates select="$target" mode="serial-number" />
+        </xsl:when>
+        <xsl:when test="$text-style = 'type-global'">
+            <xsl:choose>
+                <!-- content override of type-prefix -->
+                <xsl:when test="$b-has-content">
+                    <xsl:copy-of select="$custom-text" />
+                    <xsl:apply-templates select="." mode="nbsp"/>
+                    <xsl:apply-templates select="$target" mode="xref-number" />
+                </xsl:when>
+                <!-- usual, default case -->
+                <xsl:otherwise>
+                    <xsl:apply-templates select="$target" mode="type-name" />
+                    <xsl:apply-templates select="." mode="nbsp"/>
+                    <xsl:apply-templates select="$target" mode="xref-number" />
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+        <xsl:when test="$text-style = 'type-local'">
+            <xsl:choose>
+                <!-- content override of type-prefix -->
+                <xsl:when test="$b-has-content">
+                    <xsl:copy-of select="$custom-text" />
+                    <xsl:apply-templates select="." mode="nbsp"/>
+                    <xsl:apply-templates select="$target" mode="serial-number" />
+                </xsl:when>
+                <!-- usual, default case -->
+                <xsl:otherwise>
+                    <xsl:apply-templates select="$target" mode="type-name" />
+                    <xsl:apply-templates select="." mode="nbsp"/>
+                    <xsl:apply-templates select="$target" mode="serial-number" />
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+        <xsl:when test="$text-style = 'phrase-global' or $text-style = 'phrase-hybrid'">
+            <!-- no content override in this case -->
+            <!-- maybe we can relax this somehow? -->
+            <xsl:if test="$b-has-content">
+                <xsl:message>MBX:WARNING: providing content ("<xsl:value-of select="." />") for an "xref" element is ignored for 'phrase-global' and 'phrase-hybrid' styles for xref text</xsl:message>
+                <xsl:apply-templates select="." mode="location-report" />
+            </xsl:if>
+            <!-- type-local first, no matter what    -->
+            <!-- for each of the two phrase styles   -->
+            <xsl:apply-templates select="$target" mode="type-name" />
+            <xsl:apply-templates select="." mode="nbsp"/>
+            <xsl:apply-templates select="$target" mode="serial-number" />
+            <!-- climb up tree to find highest matching structure numbers -->
+            <!-- we pass through the two styles so reaction can occur     -->
+            <!-- For example for the target Theorem 37.8 of an article,   -->
+            <!-- phrase-global: "of Section 37" always                    -->
+            <!-- phrase-hybrid: "of Section 37" only if necessary         -->
+            <xsl:apply-templates select="$target" mode="smart-xref-text">
+                <xsl:with-param name="text-style" select="$text-style" />
+                <xsl:with-param name="xref" select="." />
+                <xsl:with-param name="target" select="$target"/>
+                <xsl:with-param name="highest-match" select="/.." />
+                <xsl:with-param name="target-structure-number">
+                    <xsl:apply-templates select="$target" mode="structure-number" />
+                </xsl:with-param>
+            </xsl:apply-templates>
+        </xsl:when>
+        <xsl:when test="($text-style = 'hybrid') or ($text-style = 'type-hybrid')">
+            <xsl:choose>
+                <!-- content override of type-prefix -->
+                <!-- or addtion to plain number      -->
+                <xsl:when test="$b-has-content">
+                    <xsl:copy-of select="$custom-text" />
+                    <xsl:apply-templates select="." mode="nbsp"/>
+                </xsl:when>
+                <!-- no override, use type as prefix -->
+                <xsl:when test="$text-style = 'type-hybrid'">
+                    <xsl:apply-templates select="$target" mode="type-name" />
+                    <xsl:apply-templates select="." mode="nbsp"/>
+                </xsl:when>
+                <!-- just a plain number, do nothing at all -->
+                <xsl:otherwise />
+            </xsl:choose>
+            <!-- For example for the target Theorem 37.8 of an article, -->
+            <!-- hybrid: 8 or if necessary, 37.8                        -->
+            <!-- type-hybrid: Theorem 8 or if necessary, Theorem 37.8   -->
+            <xsl:apply-templates select="$target" mode="smart-xref-text">
+                <xsl:with-param name="text-style" select="$text-style" />
+                <xsl:with-param name="xref" select="." />
+                <xsl:with-param name="target" select="$target"/>
+                <xsl:with-param name="highest-match" select="/.." />
+                <xsl:with-param name="target-structure-number">
+                    <xsl:apply-templates select="$target" mode="structure-number" />
+                </xsl:with-param>
+            </xsl:apply-templates>
+        </xsl:when>
+        <xsl:when test="$text-style = 'title'">
+            <xsl:choose>
+                <!-- content override of title -->
+                <xsl:when test="$b-has-content">
+                    <xsl:copy-of select="$custom-text" />
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:apply-templates select="$target" mode="title-full" />
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message>MBX:BUG:  NO XREF TEXT GENERATED</xsl:message>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+
+<!-- ###################### -->
+<!-- Smart Cross-References -->
+<!-- ###################### -->
+
+<!-- We climb the tree upward (ancestors) until we hit    -->
+<!-- the "mathbook" element, and then quit and assess.    -->
+<!-- The "xref" that started all this is used for the     -->
+<!-- eventual "hybrid" schemes, to see how close it is.   -->
+<!-- We record the oldest ancestor (highest) with a       -->
+<!-- *number* that is the *structure number* of the       -->
+<!-- target of the cross-reference.  So we know the       -->
+<!-- element (and its type) that originates the bulk      -->
+<!-- of the target's number.                              -->
+<!--                                                      -->
+<!-- There is one subtlety.  Usually one, and only one,   -->
+<!-- ancestor has the matching number, so we could halt   -->
+<!-- once found.  However, the immediately older ancestor -->
+<!-- can have the same number.  The "objective" element   -->
+<!-- is this way, it shares numbering with its containing -->
+<!-- division.  So we track through all the ancestors.    -->
+<!--                                                      -->
+<!-- To see if a xref is close to its target, we add the  -->
+<!-- *single* xref node to the subtree of the (highest)   -->
+<!-- node that provides the target's structure number.    -->
+<!-- By comparing the sizes of these node-sets, we can    -->
+<!-- determine if the xref lies outside the subtree and   -->
+<!-- then stick with global numbers.                      -->
+<!--                                                      -->
+<!-- $text-style                                          -->
+<!--   gets passed through, in order to consolidate       -->
+<!-- $xref                                                -->
+<!--   gets passed through for eventual membership test   -->
+<!-- $target                                              -->
+<!--   gets passed through for producing hybrid numbers   -->
+<!-- $highest-match                                       -->
+<!--   starts empty and is updated, if it finishes        -->
+<!--   empty then the target is high in the tree          -->
+<!--   or a match is a root for the structure number      -->
+<!-- $target-structure-number                             -->
+<!--   is produced once as a string, and passed through   -->
+<!--                                                      -->
+<!-- Result is a string that completes the xref text      -->
+<!--                                                      -->
+<xsl:template match="*" mode="smart-xref-text">
+    <xsl:param name="text-style" />
+    <xsl:param name="xref" />
+    <xsl:param name="target" />
+    <xsl:param name="highest-match" select="/.." />
+    <xsl:param name="target-structure-number" />
+    <!-- step up immediately, else test on  -->
+    <!-- structure numbers is vacuous       -->
+    <xsl:variable name="parent" select="parent::*" />
+    <xsl:variable name="parent-number">
+        <xsl:apply-templates select="$parent" mode="number" />
+    </xsl:variable>
+    <xsl:choose>
+        <!-- quit at the top, and examine highest-match,    -->
+        <!-- and for phrase-hybrid, we do a membership test -->
+        <xsl:when test="$parent/self::mathbook">
+            <xsl:variable name="requires-global">
+                <xsl:choose>
+                    <!-- no match, already high up tree, so no  -->
+                    <!-- qualification is needed in either case -->
+                    <xsl:when test="not($highest-match)">
+                        <xsl:text>false</xsl:text>
+                    </xsl:when>
+                    <!-- now have a match, so for phrase-global -->
+                    <!-- we will always print the global info   -->
+                    <xsl:when test="$text-style='phrase-global'">
+                        <xsl:text>true</xsl:text>
+                    </xsl:when>
+                    <!-- now have a match, so for all other styles -->
+                    <!-- we check to see if xref is in subtree     -->
+                    <xsl:otherwise>
+                        <xsl:variable name="target-tree-size" select="count($highest-match/descendant-or-self::*)" />
+                        <xsl:variable name="xref-union-tree-size" select="count(($xref | $highest-match/descendant-or-self::*))" />
+                        <xsl:value-of select="$xref-union-tree-size = $target-tree-size + 1" />
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:variable>
+            <!-- now know local/global, write trailing portion of text -->
+            <!-- here based on the style and the global requirement    -->
+            <xsl:choose>
+                <!-- phrase styles may need remainder of phrase -->
+                <xsl:when test="(($text-style='phrase-global') or ($text-style='phrase-hybrid')) and ($requires-global = 'true')">
+                    <!-- connector, internationalize -->
+                    <xsl:text> of </xsl:text>
+                    <xsl:apply-templates select="$highest-match" mode="type-name" />
+                    <xsl:apply-templates select="." mode="nbsp" />
+                    <xsl:apply-templates select="$highest-match" mode="xref-number" />
+                </xsl:when>
+                <!-- hybrid styles need number for remainder -->
+                <xsl:when test="($text-style='hybrid') or ($text-style='type-hybrid')">
+                    <xsl:choose>
+                        <xsl:when test="$requires-global = 'true'">
+                            <xsl:apply-templates select="$target" mode="xref-number" />
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:apply-templates select="$target" mode="serial-number" />
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:when>
+            </xsl:choose>
+        </xsl:when>
+        <!-- possible missing implementation bug in numbering -->
+        <xsl:when test="$parent-number = '[NUM]'">
+            <xsl:message>MBX:BUG:     Looks like a [<xsl:value-of select="local-name($parent)" />] element has an ambiguous number, found while making cross-reference text</xsl:message>
+        </xsl:when>
+        <!-- no match, just recurse, and preserve $highest-match -->
+        <xsl:when test="not(concat($parent-number, '.') = $target-structure-number)">
+            <xsl:apply-templates select="$parent" mode="smart-xref-text">
+                <xsl:with-param name="text-style" select="$text-style" />
+                <xsl:with-param name="xref" select="$xref" />
+                <xsl:with-param name="target" select="$target"/>
+                <xsl:with-param name="highest-match" select="$highest-match" />
+                <xsl:with-param name="target-structure-number" select="$target-structure-number" />
+            </xsl:apply-templates>
+        </xsl:when>
+        <!-- a match, record in updated $highest-match -->
+        <xsl:when test="concat($parent-number, '.') = $target-structure-number">
+            <xsl:apply-templates select="$parent" mode="smart-xref-text">
+                <xsl:with-param name="text-style" select="$text-style" />
+                <xsl:with-param name="xref" select="$xref" />
+                <xsl:with-param name="target" select="$target"/>
+                <xsl:with-param name="highest-match" select="$parent" />
+                <xsl:with-param name="target-structure-number" select="$target-structure-number" />
+            </xsl:apply-templates>
+        </xsl:when>
+        <!-- impossible to get here -->
+    </xsl:choose>
+</xsl:template>
+
+<!-- This is an abstract template, to accomodate -->
+<!-- hard-coded HTML numbers and for LaTeX the   -->
+<!-- \ref and \label mechanism                   -->
+<xsl:template match="*" mode="xref-number">
+    <xsl:text>[XREFNUM]</xsl:text>
+</xsl:template>
+
+<!-- This is a base implementation for the xref-link -->
+<!-- template, which just repeats the content, with  -->
+<!-- an indication that this needs to be overridden  -->
+<!--   context -                                     -->
+<!--     the target of the link, so the right        -->
+<!--     identification can be produced              -->
+<!--   content -                                     -->
+<!--     an RTF of the visual text,                  -->
+<!--     suitable for location of the link           -->
+<!--   xref -                                        -->
+<!--     the link node itself, typically             -->
+<!--     its parent is inspected to vary             -->
+<!--   implementation based on location              -->
+<xsl:template match="*" mode="xref-link">
+    <xsl:param name="content" />
+    <xsl:param name="xref" />
+    <xsl:text>[LINK: </xsl:text>
+    <xsl:apply-templates select="$content" />
+    <xsl:text>]</xsl:text>
+</xsl:template>
+
 
 <!-- #################### -->
 <!-- Common Constructions -->
@@ -4743,7 +5258,6 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <xsl:template match="pretext">
     <xsl:text>PreTeXt</xsl:text>
 </xsl:template>
-
 
 <!-- ################## -->
 <!-- Special Characters -->
@@ -5155,11 +5669,27 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- if done repeatedly, so a pre-processing step   -->
 <!-- Calling context should be "mathbook" element   -->
 <xsl:template match="mathbook" mode="generic-warnings">
+    <xsl:apply-templates select="." mode="literate-programming-warning" />
     <xsl:apply-templates select="." mode="xinclude-warnings" />
     <xsl:apply-templates select="." mode="xmlid-warning" />
     <xsl:apply-templates select="." mode="webwork-warnings" />
     <xsl:apply-templates select="." mode="text-element-warning" />
     <xsl:apply-templates select="." mode="subdivision-structure-warning" />
+</xsl:template>
+
+<!-- Literate Programming support is half-baked, 2017-07-21 -->
+<xsl:template match="mathbook" mode="literate-programming-warning">
+    <xsl:if test="$document-root//fragment">
+        <xsl:call-template name="banner-warning">
+            <xsl:with-param name="warning">
+                <xsl:text>  Literate Programming support is experimental&#xa;</xsl:text>
+                <xsl:text>&#xa;</xsl:text>
+                <xsl:text>    1.  Code generation is functional, but does not respect indentation&#xa;</xsl:text>
+                <xsl:text>    2.  LaTeX generation is in development, 2017-07-20&#xa;</xsl:text>
+                <xsl:text>    3.  MTML generation has not begun&#xa;</xsl:text>
+            </xsl:with-param>
+        </xsl:call-template>
+    </xsl:if>
 </xsl:template>
 
 <!-- Using the modular  xinclude  scheme at the top level,      -->
@@ -5534,6 +6064,50 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
         <xsl:with-param name="message" select="'the &quot;tex_size&quot; attribute is deprecated, replaced by functional equivalent &quot;tex-size&quot;'" />
     </xsl:call-template>
     <!--  -->
+    <!-- 2017-07-25  replacement of three xref/@autoname attributes by @text -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//xref[@autoname='no']" />
+        <xsl:with-param name="date-string" select="'2017-07-25'" />
+        <xsl:with-param name="message" select="'the &quot;xref/autoname&quot; attribute is deprecated, replace  autoname=&quot;no&quot;  by functional equivalent  text=&quot;global&quot;'" />
+    </xsl:call-template>
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//xref[@autoname='yes']" />
+        <xsl:with-param name="date-string" select="'2017-07-25'" />
+        <xsl:with-param name="message" select="'the &quot;xref/autoname&quot; attribute is deprecated, replace  autoname=&quot;yes&quot;  by functional equivalent  text=&quot;type-global&quot;'" />
+    </xsl:call-template>
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//xref[@autoname='title']" />
+        <xsl:with-param name="date-string" select="'2017-07-25'" />
+        <xsl:with-param name="message" select="'the &quot;xref/autoname&quot; attribute is deprecated, replace  autoname=&quot;title&quot;  by functional equivalent  text=&quot;title&quot;'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2017-07-25  deprecate null autoname, and warn about switch of default -->
+    <!-- We include the existence of "docinfo" as a marker of a mature, non-beginner project -->
+    <xsl:if test="($autoname = '') and $docinfo and not(//docinfo/cross-references)">
+    <xsl:call-template name="parameter-deprecation-message">
+        <xsl:with-param name="date-string" select="'2017-07-25'" />
+        <xsl:with-param name="message" select="'the default version of text for cross-references has changed.  Rather than simply numbers, they will be prefixed by type-names as well.  So you could see duplicates like &quot;Theorem Theorem 5.2&quot;.  Set  &quot;docinfo/cross-references/@text&quot;  to  &quot;global&quot;  to restore old behavior'" />
+            <xsl:with-param name="incorrect-use" select="($autoname = '') and $docinfo and not(//docinfo/cross-references)" />
+        </xsl:call-template>
+    </xsl:if>
+    <!--  -->
+    <!-- 2017-07-25  deprecate intentional autoname without new setting -->
+    <xsl:if test="not($autoname = '') and not(//docinfo/cross-references)">
+        <xsl:call-template name="parameter-deprecation-message">
+            <xsl:with-param name="date-string" select="'2017-07-25'" />
+            <xsl:with-param name="message" select="'the  autoname  parameter is deprecated, but is still effective since  &quot;docinfo/cross-references/@text&quot;  has not been set.  The following parameter values equate to the attribute values: &quot;no&quot; is &quot;global&quot;, &quot;yes&quot; is &quot;type-global&quot;, &quot;title&quot; is &quot;title&quot;'" />
+            <xsl:with-param name="incorrect-use" select="not($autoname = '') and not(//docinfo/cross-references)" />
+        </xsl:call-template>
+    </xsl:if>
+    <!--  -->
+    <!-- 2017-07-25  deprecate intentional autoname also with new setting -->
+    <xsl:if test="not($autoname = '') and //docinfo/cross-references">
+        <xsl:call-template name="parameter-deprecation-message">
+            <xsl:with-param name="date-string" select="'2017-07-25'" />
+            <xsl:with-param name="message" select="'the  autoname  parameter is deprecated, and is being overidden by a  &quot;docinfo/cross-references/@text&quot;  and so is totally ineffective and can be removed'" />
+                <xsl:with-param name="incorrect-use" select="not($autoname = '') and //docinfo/cross-references" />
+        </xsl:call-template>
+    </xsl:if>
 </xsl:template>
 
 <!-- Miscellaneous -->

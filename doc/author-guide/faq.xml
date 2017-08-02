@@ -15,12 +15,12 @@
     <dl>
         <li>
             <title>Why is there no tag for bold?</title>
-            <p>That would be presentation, not content.  I will answer that question with a question: <em>why</em> do you want to print something in bold?  Is it emphasis? (See <tag>em</tag>.)  Is it the volume number of a journal? (See <tag>journal</tag>.)  Do you want to SHOUT?  Try <tag>alert</tag>.  And so on. There are lots of good answers, some of which are not yet implemented.  We would love to hear about elements you need that are about expressing content, and not about altering presentation.  See <xref ref="principle-markup" /> in the <xref ref="list-principles" autoname="title" />.</p>
+            <p>That would be presentation, not content.  I will answer that question with a question: <em>why</em> do you want to print something in bold?  Is it emphasis? (See <tag>em</tag>.)  Is it the volume number of a journal? (See <tag>journal</tag>.)  Do you want to SHOUT?  Try <tag>alert</tag>.  And so on. There are lots of good answers, some of which are not yet implemented.  We would love to hear about elements you need that are about expressing content, and not about altering presentation.  See <xref ref="principle-markup" /> in the <xref ref="list-principles" text="title" />.</p>
         </li>
 
         <li>
             <title>Why does your conversion to HTML use a fixed width for the text?</title>
-            <p>There is an optimal number of characters per line for human readers, based on research and centuries of book design.  So we set a fixed width such that that the default font comes close to achieving this optimal value.  We also use responsive design to accomodate the constraints of a small screen as best as possible.  A reader will not want to have to carefully resize a browser window to achieve the optimal width, nor should a line of text spread to many, many characters across a very expansive screen.  See <xref ref="principle-good-design" /> in the <xref ref="list-principles" autoname="title" />.</p>
+            <p>There is an optimal number of characters per line for human readers, based on research and centuries of book design.  So we set a fixed width such that that the default font comes close to achieving this optimal value.  We also use responsive design to accomodate the constraints of a small screen as best as possible.  A reader will not want to have to carefully resize a browser window to achieve the optimal width, nor should a line of text spread to many, many characters across a very expansive screen.  See <xref ref="principle-good-design" /> in the <xref ref="list-principles" text="title" />.</p>
         </li>
 
         <li>
@@ -56,6 +56,16 @@
             <p>We plan to allow figures and tables to use different counters, since they look obviously different, so you can quickly distinguish the previous, or next, item as you scan a page.  Notice that it is their <em>distinctive appearance</em> that is the criteria for an independent counter.  For example, numbers for displayed equations meet this criteria.  They have their own counter, they are displayed distinctively when originlly formatted, and a cross-reference emphasizes their distinctive type through the use of parentheses (<eg />, Equation (2.4.7)).</p>
 
             <p>Also, as an author, recognize that there is a very flexible mechanism for making lists of objects that may be included in the <tag>backmatter</tag>.  To continue the example here, you could make a list of all the theorems in the book, and a separate list of all the examples.  Each list would be in the order of appearance, include the number (and a title if you provide one).  In HTML output, each is a knowl which will quickly provide the content (independent of location), and also provides an <q>in-context</q> link to take you to the location for surrounding material.  This useful feature requires very little additional effort, especially if you title your blocks as you author them.</p>
+        </li>
+
+        <li>
+            <title>I do not want my examples in knowls.</title>
+            <p>You can change that!  Read <xref ref="conversions" />.</p>
+        </li>
+
+        <li>
+            <title>Why are my knowls empty?</title>
+            <p>When viewing the HTML version on your laptop or local computer, do not expect knowls to render properly.  This is a known bug/feature, and there is nothing to be done about it. Think of it this way: the knowl content comes from a server, but on your laptop there is no web server.  You are just looking at files.</p>
         </li>
     </dl>
 </appendix>

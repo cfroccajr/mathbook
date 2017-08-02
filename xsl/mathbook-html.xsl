@@ -2508,7 +2508,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:apply-templates select="*[not(self::caption)]">
                     <xsl:with-param name="b-original" select="$b-original" />
                 </xsl:apply-templates>
-                <xsl:apply-templates select="caption"/>
+                <xsl:apply-templates select="caption" />
             </xsl:when>
             <xsl:when test="self::hint or self::answer or self::solution or self::note">
                 <xsl:apply-templates select="*|text()">
@@ -2947,23 +2947,19 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- isolate some routines in "xsl/mathbook-common.xsl". -->
 
 <!-- Numbering -->
-<!-- We manually "tag" numbered equations in HTML output,       -->
-<!-- with the exact same numbers that LaTeX would provide       -->
-<!-- automatically.  We also "\label{}" the equations where     -->
-<!-- they are born, and then the MathJax configuration          -->
-<!-- provides a predictable HTML anchor so our cross-reference  -->
-<!-- scheme can point to the right place.  The implies that we  -->
-<!-- do not need/want to "\label{}" equations in knowl files    -->
-<!-- serving as cross-references.  And indeed, including        -->
-<!-- labels in cross-reference knowls led to a serious bug.     -->
-<!-- https://github.com/rbeezer/mathbook/issues/143             -->
+<!-- We manually "tag" numbered equations in HTML output,    -->
+<!-- with the exact same numbers that LaTeX would provide    -->
+<!-- automatically.  MathJax allows for custom labels, but   -->
+<!-- we handle cross-references with knowls.  So no need to  -->
+<!-- \label{} equations even, and indeed it once was a real  -->
+<!-- problem: https://github.com/rbeezer/mathbook/issues/143 -->
+
 
 <!-- NOTE -->
 <!-- The remainder should look very similar to that   -->
 <!-- of the LaTeX/MathJax version in terms of result. -->
 <!-- Notably, "intertext" elements are implemented    -->
-<!-- differently, and we need to be careful not to    -->
-<!-- place LaTeX "\label{}" in know'ed content.       -->
+<!-- differently.                                     -->
 
 <!-- Inline Math ("m") -->
 <!-- Never labeled, so not ever knowled,        -->
@@ -3084,10 +3080,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:if test="$b-original or not($b-top-level)">
             <xsl:apply-templates select="." mode="get-clause-punctuation" />
         </xsl:if>
-        <!-- label original -->
-        <xsl:if test="$b-original">
-            <xsl:apply-templates select="." mode="label" />
-        </xsl:if>
         <xsl:apply-templates select="." mode="tag" />
     </xsl:variable>
     <!-- we provide a newline for visual appeal -->
@@ -3174,10 +3166,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:if>
     </xsl:if>
     <xsl:if test="@number='yes'">
-        <!-- label original -->
-        <xsl:if test="$b-original">
-            <xsl:apply-templates select="." mode="label" />
-        </xsl:if>
         <xsl:apply-templates select="." mode="tag"/>
     </xsl:if>
     <xsl:if test="following-sibling::mrow">
@@ -3208,10 +3196,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>\notag</xsl:text>
         </xsl:when>
         <xsl:otherwise>
-            <!-- label original -->
-            <xsl:if test="$b-original">
-                <xsl:apply-templates select="." mode="label" />
-            </xsl:if>
             <xsl:apply-templates select="." mode="tag"/>
         </xsl:otherwise>
     </xsl:choose>
@@ -3658,18 +3642,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- ################## -->
 
 <!-- See xsl/mathbook-common.xsl for descriptions of the  -->
-<!-- five modal templates which must be implemented here -->
-
-<!-- We begin the chain of events by calling the            -->
-<!-- "common-setup" modal template in mathbook-common.xsl,  -->
-<!-- which isolates analysis of the widths, etc.  As a pure -->
-<!-- container, we pass the original flag down into content -->
-<xsl:template match="sidebyside">
-    <xsl:param name="b-original" select="true()" />
-    <xsl:apply-templates select="." mode="common-setup">
-        <xsl:with-param name="b-original" select="$b-original" />
-    </xsl:apply-templates>
-</xsl:template>
+<!-- five modal templates which must be implemented here  -->
+<!-- The main templates for "sidebyside" and "sbsgroup"   -->
+<!-- are in xsl/mathbook-common.xsl, as befits containers -->
 
 <!-- When we use CSS margins (or padding), then percentage        -->
 <!-- widths are relative to the remaining space.  This utility    -->
@@ -3775,54 +3750,69 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:element>
 </xsl:template>
 
-<!-- If an object carries a caption, we add it to the -->
-<!-- row of captions across the bottom of the table   -->
-<!-- else we write an empty div to occupy the space   -->
+<!-- If an object carries a caption, we add it to the    -->
+<!-- row of captions across the bottom of the table else -->
+<!-- we write an empty figcaption to occupy the space    -->
+<!-- See more at utility template immediately following  -->
 <xsl:template match="*" mode="panel-caption">
     <xsl:param name="width" />
     <xsl:param name="margins" />
-    <xsl:element name="figcaption">
-        <xsl:attribute name="class">
-            <xsl:text>sbscaption</xsl:text>
-        </xsl:attribute>
-        <xsl:attribute name="style">
-            <xsl:text>width:</xsl:text>
-            <xsl:call-template name="relative-width">
+
+    <xsl:choose>
+        <!-- interior to a figure'd sidebyside        -->
+        <!-- width and margins are sentinels from sbs -->
+        <xsl:when test="caption and (parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)">
+            <xsl:apply-templates select="caption" mode="subcaption">
                 <xsl:with-param name="width" select="$width" />
                 <xsl:with-param name="margins" select="$margins" />
-            </xsl:call-template>
-            <xsl:text>;</xsl:text>
-            <xsl:if test="$sbsdebug">
-                <xsl:text>box-sizing: border-box;</xsl:text>
-                <xsl:text>-moz-box-sizing: border-box;</xsl:text>
-                <xsl:text>-webkit-box-sizing: border-box;</xsl:text>
-                <xsl:text>border: 2px solid Chocolate;</xsl:text>
-            </xsl:if>
-        </xsl:attribute>
-        <!-- we add lots of class information on "figcaption" above, -->
-        <!-- so must manage contents independent of other templates -->
-        <xsl:if test="caption">
-            <xsl:choose>
-                <xsl:when test="parent::sidebyside/parent::figure">
-                    <span class="codenumber">
-                        <xsl:apply-templates select="." mode="serial-number"/>
-                    </span>
-                    <xsl:apply-templates select="caption/*|caption/text()" />
-                </xsl:when>
-                <xsl:otherwise>
-                    <span class="heading">
-                        <xsl:apply-templates select="." mode="type-name"/>
-                    </span>
-                    <span class="codenumber">
-                        <xsl:apply-templates select="." mode="number"/>
-                    </span>
-                    <xsl:apply-templates select="caption/*|caption/text()" />
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:if>
-    </xsl:element>
+            </xsl:apply-templates>
+        </xsl:when>
+        <!-- a caption'ed item, normal numbering      -->
+        <!-- width and margins are sentinels from sbs -->
+        <xsl:when test="caption">
+            <xsl:apply-templates select="caption" >
+                <xsl:with-param name="width" select="$width" />
+                <xsl:with-param name="margins" select="$margins" />
+            </xsl:apply-templates>
+        </xsl:when>
+        <!-- fill the space (properly) -->
+        <xsl:otherwise>
+            <figcaption>
+                <xsl:call-template name="sbs-caption-attributes">
+                    <xsl:with-param name="width" select="$width" />
+                    <xsl:with-param name="margins" select="$margins" />
+                </xsl:call-template>
+            </figcaption>
+        </xsl:otherwise>
+    </xsl:choose>
 </xsl:template>
 
+<!-- this utility template provides extra class, width   -->
+<!-- and degugging information on a "figcaption" element -->
+<!-- when employed on a panel of a sidebyside            -->
+<!-- It is used above on an empty caption, and by the    -->
+<!-- two modal templates for a caption when signaled     -->
+<xsl:template name="sbs-caption-attributes">
+    <xsl:param name="width" />
+    <xsl:param name="margins" />
+    <xsl:attribute name="class">
+        <xsl:text>sbscaption</xsl:text>
+    </xsl:attribute>
+    <xsl:attribute name="style">
+        <xsl:text>width:</xsl:text>
+        <xsl:call-template name="relative-width">
+            <xsl:with-param name="width" select="$width" />
+            <xsl:with-param name="margins" select="$margins" />
+        </xsl:call-template>
+        <xsl:text>;</xsl:text>
+        <xsl:if test="$sbsdebug">
+            <xsl:text>box-sizing: border-box;</xsl:text>
+            <xsl:text>-moz-box-sizing: border-box;</xsl:text>
+            <xsl:text>-webkit-box-sizing: border-box;</xsl:text>
+            <xsl:text>border: 2px solid Chocolate;</xsl:text>
+        </xsl:if>
+    </xsl:attribute>
+</xsl:template>
 
 <!-- We take in all three rows and package  -->
 <!-- them up inside an overriding "sidebyside" -->
@@ -3830,12 +3820,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="sidebyside" mode="compose-panels">
     <xsl:param name="b-original" select="true()" />
 
-    <xsl:param name="margins" />
+    <xsl:param name="layout" />
     <xsl:param name="has-headings" />
     <xsl:param name="has-captions" />
     <xsl:param name="headings" />
     <xsl:param name="panels" />
     <xsl:param name="captions" />
+
+    <xsl:variable name="margins" select="$layout/margins" />
 
     <!-- A "sidebyside" div, to contain headings,  -->
     <!-- panels, captions rows as "sbsrow" divs -->
@@ -3932,12 +3924,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 </xsl:attribute>
                 <xsl:copy-of select="$captions" />
             </xsl:element>
-        </xsl:if>
-
-        <!-- Global caption on sidebyside, always numbered -->
-        <!-- TODO: apply margins if ever unequal (left/right) -->
-        <xsl:if test="caption and not(parent::sbsgroup)">
-            <xsl:apply-templates select="caption" />
         </xsl:if>
 
     </xsl:element>
@@ -4579,7 +4565,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Caption of a numbered figure, table or listing -->
 <!-- All the relevant information is in the parent  -->
 <xsl:template match="caption">
+    <xsl:param name="width" />
+    <xsl:param name="margins" />
     <figcaption>
+        <!-- $width and $margins are sentinels for -->
+        <!-- sidebyside width control attributes   -->
+        <xsl:if test="$width or $margins">
+            <xsl:call-template name="sbs-caption-attributes">
+                <xsl:with-param name="width" select="$width" />
+                <xsl:with-param name="margins" select="$margins" />
+            </xsl:call-template>
+        </xsl:if>
         <span class="heading">
             <xsl:apply-templates select="parent::*" mode="type-name"/>
         </span>
@@ -4590,21 +4586,21 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </figcaption>
 </xsl:template>
 
-<!-- Caption'ed sidebyside indicate subfigures and subtables are subsidiary -->
-<!-- so we number with just their serial number, a formatted (a), (b), (c), -->
-<!-- <xsl:template match="sidebyside-foobar[caption]/figure/caption|sidebyside-foobar[caption]/table/caption">
-    <figcaption>
-        <span class="codenumber">
-            <xsl:apply-templates select="parent::*" mode="serial-number"/>
-        </span>
-        <xsl:apply-templates />
-    </figcaption>
-</xsl:template>
- -->
 <!-- sub caption is numbered by the serial number -->
 <!-- which is a formatted  (a), (b), (c),...      -->
 <xsl:template match="caption" mode="subcaption">
+    <xsl:param name="width" />
+    <xsl:param name="margins" />
     <figcaption>
+        <!-- $width and $margins are sentinels for -->
+        <!-- sidebyside width control attributes   -->
+        <xsl:if test="$width or $margins">
+            <xsl:call-template name="sbs-caption-attributes">
+                <xsl:with-param name="width" select="$width" />
+                <xsl:with-param name="margins" select="$margins" />
+            </xsl:call-template>
+        </xsl:if>
+        <!-- no heading info in subcaption -->
         <span class="codenumber">
             <xsl:apply-templates select="parent::*" mode="serial-number"/>
         </span>
@@ -4657,85 +4653,82 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates select="." mode="number" />
 </xsl:template>
 
-<!-- In common template, but have to point -->
-<!-- to it since it is a modal template    -->
-<xsl:template match="exercisegroup" mode="xref-number">
-    <xsl:apply-imports />
-</xsl:template>
-
 <!-- The second abstract template, we condition   -->
 <!-- on if the link is rendered as a knowl or not -->
+<!-- and then condition on the location of the    -->
+<!-- actual link, which is sensitive to display   -->
+<!-- math in particular                           -->
+<!-- See xsl/mathbook-common.xsl for more info    -->
 <xsl:template match="*" mode="xref-link">
-    <xsl:param name="content" />
+    <xsl:param name="content" select="'MISSING LINK CONTENT'"/>
+    <xsl:param name="xref" select="/.." />
     <xsl:variable name="knowl">
         <xsl:apply-templates select="." mode="xref-as-knowl" />
     </xsl:variable>
-    <xsl:element name="a">
-        <xsl:choose>
-            <xsl:when test="$knowl='true'">
-                <!-- build a modern knowl -->
-                <xsl:attribute name="knowl">
-                    <xsl:apply-templates select="." mode="xref-knowl-filename" />
-                </xsl:attribute>
-                <!-- TODO: check if this "knowl-id" is needed, knowl.js implies it is -->
-                <xsl:attribute name="knowl-id">
-                    <xsl:text>xref-</xsl:text>
-                    <xsl:apply-templates select="." mode="internal-id" />
-                </xsl:attribute>
-            </xsl:when>
-            <xsl:otherwise>
-                <!-- build traditional hyperlink -->
-                <xsl:attribute name="href">
-                    <xsl:apply-templates select="." mode="url" />
-                </xsl:attribute>
-            </xsl:otherwise>
-        </xsl:choose>
-        <!-- add HTML title and alt attributes to the link -->
-        <xsl:attribute name="alt">
-            <xsl:apply-templates select="." mode="tooltip-text" />
-        </xsl:attribute>
-        <xsl:attribute name="title">
-            <xsl:apply-templates select="." mode="tooltip-text" />
-        </xsl:attribute>
-        <!-- link content from common template -->
-        <!-- For a contributor we bypass autonaming, etc -->
-        <xsl:choose>
-            <xsl:when test="self::contributor">
-                <xsl:apply-templates select="personname" />
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="$content" />
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:element>
-</xsl:template>
-
-<!-- This is a third abstract template, which creates a    -->
-<!-- hyperlink or knowl (as possible) that can be realized -->
-<!-- as MathJax processes display math. It requires        -->
-<!-- http://aimath.org/mathbook/mathjaxknowl.js be loaded  -->
-<!-- as a MathJax extension for knowls to render           -->
-<xsl:template match="*" mode="xref-link-md">
-    <xsl:param name="content" />
-    <xsl:variable name="knowl">
-        <xsl:apply-templates select="." mode="xref-as-knowl" />
-    </xsl:variable>
-    <!-- MathJax expects similar constructions, variation is here -->
     <xsl:choose>
-        <xsl:when test="$knowl='true'">
-            <xsl:text>\knowl{</xsl:text>
-            <xsl:apply-templates select="." mode="xref-knowl-filename" />
+        <!-- exceptional case, xref in mrow of display math      -->
+        <!-- Requires http://aimath.org/mathbook/mathjaxknowl.js -->
+        <!-- loaded as a MathJax extension for knowls to render  -->
+        <xsl:when test="$xref/parent::mrow">
+            <!-- MathJax expects similar constructions, variation is here -->
+            <xsl:choose>
+                <xsl:when test="$knowl='true'">
+                    <xsl:text>\knowl{</xsl:text>
+                    <xsl:apply-templates select="." mode="xref-knowl-filename" />
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:text>\href{</xsl:text>
+                    <xsl:apply-templates select="." mode="url" />
+                </xsl:otherwise>
+            </xsl:choose>
+            <xsl:text>}{</xsl:text>
+            <xsl:value-of select="$content" />
+            <xsl:text>}</xsl:text>
         </xsl:when>
+        <!-- usual case, always an "a" element (anchor) -->
         <xsl:otherwise>
-            <xsl:text>\href{</xsl:text>
-            <xsl:apply-templates select="." mode="url" />
+            <xsl:element name="a">
+                <!-- knowl/hyperlink variability here -->
+                <xsl:choose>
+                    <xsl:when test="$knowl='true'">
+                        <!-- build a modern knowl -->
+                        <xsl:attribute name="knowl">
+                            <xsl:apply-templates select="." mode="xref-knowl-filename" />
+                        </xsl:attribute>
+                        <!-- TODO: check if this "knowl-id" is needed, knowl.js implies it is -->
+                        <xsl:attribute name="knowl-id">
+                            <xsl:text>xref-</xsl:text>
+                            <xsl:apply-templates select="." mode="internal-id" />
+                        </xsl:attribute>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <!-- build traditional hyperlink -->
+                        <xsl:attribute name="href">
+                            <xsl:apply-templates select="." mode="url" />
+                        </xsl:attribute>
+                    </xsl:otherwise>
+                </xsl:choose>
+                <!-- add HTML title and alt attributes to the link -->
+                <xsl:attribute name="alt">
+                    <xsl:apply-templates select="." mode="tooltip-text" />
+                </xsl:attribute>
+                <xsl:attribute name="title">
+                    <xsl:apply-templates select="." mode="tooltip-text" />
+                </xsl:attribute>
+                <!-- link content from common template -->
+                <!-- For a contributor we bypass autonaming, etc -->
+                <xsl:choose>
+                    <xsl:when test="self::contributor">
+                        <xsl:apply-templates select="personname" />
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="$content" />
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:element>
         </xsl:otherwise>
     </xsl:choose>
-    <xsl:text>}{\text{</xsl:text>
-    <xsl:value-of select="$content" />
-    <xsl:text>}}</xsl:text>
 </xsl:template>
-
 
 <!-- Numbers, units, quantities                     -->
 <!-- quantity                                       -->
@@ -5610,7 +5603,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Sage Cells -->
 <!-- TODO: make hidden autoeval cells link against sage-compute cells -->
 
-<!-- Never an @id or a \label, so just repeat -->
+<!-- Never an @id , so just repeat -->
 <xsl:template match="sage" mode="duplicate">
     <xsl:apply-templates select="." />
 </xsl:template>
@@ -6884,14 +6877,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
         <xsl:text>        extensions: ["extpfeil.js", "autobold.js", "https://aimath.org/mathbook/mathjaxknowl.js", ],&#xa;</xsl:text>
         <xsl:text>        // scrolling to fragment identifiers is controlled by other Javascript&#xa;</xsl:text>
         <xsl:text>        positionToHash: false,&#xa;</xsl:text>
-        <xsl:text>        equationNumbers: { autoNumber: "none",&#xa;</xsl:text>
-        <xsl:text>                           useLabelIds: true,&#xa;</xsl:text>
-        <xsl:text>                           // JS comment, XML CDATA protect XHTML quality of file&#xa;</xsl:text>
-        <xsl:text>                           // if removed in XSL, use entities&#xa;</xsl:text>
-        <xsl:text>                           //&lt;![CDATA[&#xa;</xsl:text>
-        <xsl:text>                           formatID: function (n) {return String(n).replace(/[:'"&lt;&gt;&amp;]/g,"")},&#xa;</xsl:text>
-        <xsl:text>                           //]]&gt;&#xa;</xsl:text>
-        <xsl:text>                         },&#xa;</xsl:text>
+        <xsl:text>        equationNumbers: { autoNumber: "none", },&#xa;</xsl:text>
         <xsl:text>        TagSide: "right",&#xa;</xsl:text>
         <xsl:text>        TagIndent: ".8em",&#xa;</xsl:text>
         <xsl:text>    },&#xa;</xsl:text>

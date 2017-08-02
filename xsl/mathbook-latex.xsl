@@ -1024,7 +1024,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- New names are necessary to make "within" numbering possible -->
     <!-- http://tex.stackexchange.com/questions/127914/custom-counter-steps-twice-when-invoked-from-caption-using-caption-package -->
     <!-- http://tex.stackexchange.com/questions/160207/side-effect-of-caption-package-with-custom-counter                         -->
-    <xsl:if test="//figure or //table or //listing or //sidebyside">
+    <xsl:if test="//figure or //table or //listing">
         <xsl:text>%% Figures, Tables, Listings, Floats&#xa;</xsl:text>
         <xsl:text>%% The [H]ere option of the float package fixes floats in-place,&#xa;</xsl:text>
         <xsl:text>%% in deference to web usage, where floats are totally irrelevant&#xa;</xsl:text>
@@ -1052,7 +1052,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>\@addtoreset{subtable}{figure}&#xa;</xsl:text>
             <xsl:text>\makeatother&#xa;</xsl:text>
         </xsl:if>
-        <xsl:if test="//figure or //sidebyside">
+        <xsl:if test="//figure">
             <xsl:text>% Figure environment setup so that it no longer floats&#xa;</xsl:text>
             <xsl:text>\SetupFloatingEnvironment{figure}{fileext=lof,placement={H},within=</xsl:text>
             <!-- See numbering-theorems variable being set in mathbook-common.xsl -->
@@ -3596,7 +3596,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- TODO: maybe we could look backward at the end of a paragraph       -->
 <!-- to see if the above scenario happens, and we could end gracefully. -->
 <xsl:template match="p">
-    <xsl:if test="preceding-sibling::*[not(&SUBDIVISION-METADATA-FILTER;)][1][self::p or self::paragraphs]">
+    <xsl:if test="preceding-sibling::*[not(&SUBDIVISION-METADATA-FILTER;)][1][self::p or self::paragraphs or self::sidebyside]">
         <xsl:text>\par&#xa;</xsl:text>
     </xsl:if>
     <xsl:apply-templates />
@@ -5194,28 +5194,29 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\par\smallskip\centerline{A JSXGraph interactive demonstration goes here in interactive output.}\smallskip&#xa;</xsl:text>
 </xsl:template>
 
-<!-- Captions for Figures and Tables -->
+<!-- Captions for Figures, Tables, Listings -->
 <!-- xml:id is on parent, but LaTeX generates number with caption -->
 <xsl:template match="caption">
     <xsl:choose>
-      <xsl:when test="ancestor::sidebyside and ancestor::table and not(ancestor::sidebyside/caption)">
+      <xsl:when test="parent::table/parent::sidebyside">
             <xsl:text>\captionof{table}{</xsl:text>
       </xsl:when>
-      <xsl:when test="ancestor::sidebyside and ancestor::figure and not(ancestor::sidebyside/caption)">
+      <xsl:when test="parent::figure/parent::sidebyside">
             <xsl:text>\captionof{figure}{</xsl:text>
       </xsl:when>
+      <xsl:when test="parent::listing">
+            <xsl:text>\captionof{listingcaption}{</xsl:text>
+        </xsl:when>
       <xsl:otherwise>
           <xsl:text>\caption{</xsl:text>
       </xsl:otherwise>
     </xsl:choose>
     <xsl:apply-templates />
-    <xsl:apply-templates select=".." mode="label" />
+    <xsl:apply-templates select="parent::*" mode="label" />
     <xsl:text>}&#xa;</xsl:text>
 </xsl:template>
 
-<!-- Subcaptions showup in side-by-side, we try    -->
-<!-- something minimal, but similar to above, and  -->
-<!-- will experiment later                         -->
+<!-- Subcaptions showup in side-by-side -->
 <xsl:template match="caption" mode="subcaption">
     <xsl:text>\subcaption{</xsl:text>
     <xsl:apply-templates />
@@ -5224,7 +5225,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 
-<!-- Figures, (SideBySide), Tables and Listings are floats            -->
+<!-- Figures, Tables and Listings are floats                          -->
 <!-- We try to fix their location with the [H] specifier, but         -->
 <!-- if the first item of an AMS environment, they may float up       -->
 <!-- Seems LaTeX is stacking boxes vertically, and we need to go to   -->
@@ -5263,10 +5264,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\begin{listing}&#xa;</xsl:text>
     <xsl:apply-templates select="*[not(self::caption)]"/>
     <xsl:text>\par&#xa;</xsl:text>
-    <xsl:text>\captionof{listingcaption}{</xsl:text>
-    <xsl:apply-templates select="caption/text()|caption/*" />
-    <xsl:text>}</xsl:text>
-    <xsl:apply-templates select="." mode="label" />
+    <xsl:apply-templates select="caption" />
     <xsl:text>&#xa;</xsl:text>
     <xsl:text>\end{listing}&#xa;</xsl:text>
 </xsl:template>
@@ -5277,7 +5275,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- ################## -->
 
 <!-- See xsl/mathbook-common.xsl for descriptions of the  -->
-<!-- five modal templates which must be implemented here -->
+<!-- five modal templates which must be implemented here  -->
+<!-- The main templates for "sidebyside" and "sbsgroup"   -->
+<!-- are in xsl/mathbook-common.xsl, as befits containers -->
 
 <!-- cut/paste, remove fbox end/begin in dual placement
     <xsl:if test="$sbsdebug">
@@ -5286,12 +5286,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:text>}</xsl:text>
     </xsl:if>
  -->
-
-<!-- We call a common template, which in turn calls -->
-<!-- the modal templates implemented below          -->
-<xsl:template match="sidebyside">
-    <xsl:apply-templates select="." mode="common-setup" />
-</xsl:template>
 
 <!-- Utility template to make a name for a LaTeX box -->
 <!-- Unique (element + count), all letters for LaTeX -->
@@ -5427,7 +5421,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- a figure or table must have a caption,         -->
 <!-- and is a subcaption if sbs parent is captioned -->
-<xsl:template match="figure|table" mode="panel-caption">
+<xsl:template match="figure|table|listing" mode="panel-caption">
     <xsl:param name="width" />
     <xsl:if test="$sbsdebug">
         <xsl:text>\fbox{</xsl:text>
@@ -5437,7 +5431,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:value-of select="substring-before($width,'%') div 100" />
     <xsl:text>\textwidth}{</xsl:text>
     <xsl:choose>
-        <xsl:when test="parent::sidebyside/parent::figure">
+        <xsl:when test="parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure">
             <xsl:apply-templates select="caption" mode="subcaption" />
         </xsl:when>
         <xsl:otherwise>
@@ -5465,15 +5459,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- We take in all three rows of a LaTeX    -->
 <!-- table and package them up appropriately -->
 <xsl:template match="sidebyside" mode="compose-panels">
-    <xsl:param name="number-panels" />
-    <xsl:param name="margins" />
-    <xsl:param name="space-width" />
+    <xsl:param name="layout" />
     <xsl:param name="has-headings" />
     <xsl:param name="has-captions" />
     <xsl:param name="setup" />
     <xsl:param name="headings" />
     <xsl:param name="panels" />
     <xsl:param name="captions" />
+
+    <xsl:variable name="number-panels" select="$layout/number-panels" />
+    <xsl:variable name="margins" select="$layout/margins" />
+    <xsl:variable name="space-width" select="$layout/space-width" />
 
     <!-- protect a single side-by-side -->
     <!-- Local/global newsavebox: http://tex.stackexchange.com/questions/18170 -->
@@ -5484,23 +5480,24 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:value-of select="$setup" />
 
     <xsl:call-template name="leave-vertical-mode" />
-    <xsl:text>% begin: side-by-side as figure/tabular&#xa;</xsl:text>
+    <xsl:text>% begin: side-by-side as tabular&#xa;</xsl:text>
     <xsl:text>% \tabcolsep change local to group&#xa;</xsl:text>
     <xsl:text>\setlength{\tabcolsep}{</xsl:text>
     <xsl:value-of select="0.5 * substring-before($space-width, '%') div 100" />
     <xsl:text>\textwidth}&#xa;</xsl:text>
-    <!-- figure environment, for spacing, etc      -->
-    <!-- @{} strips extreme left, right colsep and -->
-    <!-- allows us to get flush left (zero margin) -->
     <xsl:text>% @{} suppress \tabcolsep at extremes, so margins behave as intended&#xa;</xsl:text>
-    <xsl:text>\begin{figure}&#xa;</xsl:text>
     <!-- set spacing, centering provide half at each end -->
     <!-- LaTeX parameter is half of the column space     -->
+    <xsl:if test="not(parent::figure) or not(parent::sbsgroup and preceding-sibling::sidebyside)">
+        <xsl:text>\par\medskip\noindent&#xa;</xsl:text>
+    </xsl:if>
     <xsl:if test="not($margins = '0%')">
         <xsl:text>\hspace*{</xsl:text>
         <xsl:value-of select="substring-before($margins, '%') div 100" />
         <xsl:text>\textwidth}%&#xa;</xsl:text>
     </xsl:if>
+    <!-- @{} strips extreme left, right colsep and -->
+    <!-- allows us to get flush left (zero margin) -->
     <xsl:text>\begin{tabular}{@{}*{</xsl:text>
     <xsl:value-of select="$number-panels" />
     <xsl:text>}{c}@{}}&#xa;</xsl:text>
@@ -5516,14 +5513,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:text>\tabularnewline&#xa;</xsl:text>
         <xsl:value-of select="$captions" />
     </xsl:if>
-    <xsl:text>\end{tabular}&#xa;</xsl:text>
-    <!-- global caption               -->
-    <!-- but ignore it in a sbs group -->
-    <xsl:if test="not(parent::sbsgroup)">
-        <xsl:apply-templates select="caption" />
-    </xsl:if>
-    <xsl:text>\end{figure}&#xa;</xsl:text>
-    <xsl:text>% end: side-by-side as tabular/figure&#xa;</xsl:text>
+    <!-- end on a newline, ready for resumption of text  -->
+    <!-- or perhaps a follow-on sidebyside in a sbsgroup -->
+    <xsl:text>\end{tabular}\\&#xa;</xsl:text>
+    <xsl:text>% end: side-by-side as tabular&#xa;</xsl:text>
     <xsl:text>}% end: group for a single side-by-side&#xa;</xsl:text>
 </xsl:template>
 
@@ -5587,6 +5580,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- is made into a LaTeX box with the  fancyvrb "BVerbatim" -->
 <!-- environment, which is then saved in an LR box above     -->
 <!-- We cannot see an easy way to get the debugging wrapper  -->
+<!-- NOTE: adjust panel-setup to produce an LR box           -->
 <xsl:template match="pre" mode="panel-latex-box">
     <xsl:param name="width" />
     <xsl:variable name="percent" select="substring-before($width,'%') div 100" />
@@ -6660,7 +6654,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- (See also modal templates for "label" and "xref-link") -->
 <!-- Exercises in sets may have hard-coded numbers, -->
 <!-- so we provide a hard-coded number              -->
-<xsl:template match="exercises//exercise|biblio|biblio/note|proof|ol/li|hint|answer|solution" mode="xref-number">
+<xsl:template match="exercises//exercise|biblio|biblio/note|proof|exercisegroup|ol/li|hint|answer|solution" mode="xref-number">
     <xsl:apply-templates select="." mode="number" />
 </xsl:template>
 
@@ -6678,35 +6672,22 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates select="." mode="number" />
 </xsl:template>
 
-<!-- In common template, but have to point to it -->
-<xsl:template match="exercisegroup" mode="xref-number">
-    <xsl:apply-imports />
-</xsl:template>
-
-
-<!-- We implement every cross-reference with hyperref. -->
-<!-- For pure print, we can turn off the actual links  -->
-<!-- in the PDF (and/or control color etc)             -->
-<!-- Mostly this is for consistency in the source      -->
+<!-- This is the second abstract template                -->
+<!-- We implement every cross-reference with hyperref.   -->
+<!-- For pure print, we can turn off the actual links    -->
+<!-- in the PDF (and/or control color etc)               -->
+<!-- Mostly this is for consistency in the source        -->
+<!-- LaTeX linking is not sensitive to being located     -->
+<!-- in display mathematics, and so $location is ignored -->
+<!-- See xsl/mathbook-common.xsl for more info           -->
 <xsl:template match="*" mode="xref-link">
-    <xsl:param name="content" />
+    <xsl:param name="content" select="'MISSING LINK CONTENT'"/>
+    <xsl:param name="xref" select="/.." />
     <xsl:text>\hyperref[</xsl:text>
     <xsl:apply-templates select="." mode="internal-id" />
     <xsl:text>]{</xsl:text>
     <xsl:value-of select="$content" />
     <xsl:text>}</xsl:text>
-</xsl:template>
-
-<!-- This is a nearly exact duplicate, which we could remove if we -->
-<!-- reorganized xref-link to match on the xref and not its target -->
-<!-- We wrap link text ($content) in \text{} since in math-mode    -->
-<xsl:template match="*" mode="xref-link-md">
-    <xsl:param name="content" />
-    <xsl:text>\hyperref[</xsl:text>
-    <xsl:apply-templates select="." mode="internal-id" />
-    <xsl:text>]{\text{</xsl:text>
-    <xsl:value-of select="$content" />
-    <xsl:text>}}</xsl:text>
 </xsl:template>
 
 
@@ -6756,16 +6737,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- vertical space when used in list items and it seems          -->
 <!-- to now behave well without it  (2015-12-12)                  -->
 <!-- (See also modal templates for "xref-link" and "xref-number") -->
-<xsl:template match="paragraphs|blockquote|exercises//exercise|biblio|biblio/note|proof|case|ol/li|dl/li|hint|answer|solution|contributor" mode="label">
-    <xsl:text>\hypertarget{</xsl:text>
-    <xsl:apply-templates select="." mode="internal-id" />
-    <xsl:text>}{}</xsl:text>
-</xsl:template>
-
-<!-- Exercise groups are not even really numbered.   -->
-<!-- (They inherit from their first/last exercises.) -->
-<!-- We want to point to their introductions.        -->
-<xsl:template match="exercisegroup" mode="label">
+<xsl:template match="paragraphs|blockquote|exercises//exercise|biblio|biblio/note|proof|exercisegroup|case|ol/li|dl/li|hint|answer|solution|contributor" mode="label">
     <xsl:text>\hypertarget{</xsl:text>
     <xsl:apply-templates select="." mode="internal-id" />
     <xsl:text>}{}</xsl:text>

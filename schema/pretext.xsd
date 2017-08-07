@@ -350,7 +350,7 @@
   </xs:element>
   <xs:element name="shortlicense">
     <xs:complexType mixed="true">
-      <xs:group ref="TextShort"/>
+      <xs:group ref="TextLong"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="biography">
@@ -946,10 +946,12 @@
     <xs:choice>
       <xs:element ref="example"/>
       <xs:element ref="question"/>
+      <xs:element ref="problem"/>
     </xs:choice>
   </xs:group>
   <xs:element name="example" type="ExampleLike"/>
   <xs:element name="question" type="ExampleLike"/>
+  <xs:element name="problem" type="ExampleLike"/>
   <xs:complexType name="ProjectLike">
     <xs:sequence>
       <xs:group ref="MetaDataTitleOptional"/>

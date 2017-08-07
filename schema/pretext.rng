@@ -361,7 +361,7 @@
           </optional>
           <optional>
             <element name="shortlicense">
-              <ref name="TextShort"/>
+              <ref name="TextLong"/>
             </element>
           </optional>
         </element>
@@ -975,6 +975,9 @@
         <ref name="ExampleLike"/>
       </element>
       <element name="question">
+        <ref name="ExampleLike"/>
+      </element>
+      <element name="problem">
         <ref name="ExampleLike"/>
       </element>
     </choice>

@@ -69,6 +69,8 @@
 
         <p>A document is typically divided into sections.  But we reserve the word <c>section</c> for one very specific type of division.  To avoid confusion, we speak generically of <term>divisions</term>.  So, for example, a <c>section</c> is a division of a <c>chapter</c>.  Here we list all of the possible divisions, even if they are not available in each document type.</p>
 
+        <p>An <c>appendix</c> looks like a chapter of a <c>book</c>, with the option to have a <c>notation-list</c> or a <c>solution-list</c> as its entire contents.  It is possible this is not the best structure for an <c>article</c>, which might best be divided by <c>subsection</c>.</p>
+
         <p>There are several things to note (expand this): always a title, dead-end with blocks, or subdivide with optional intro and conclusion.</p>
 
         <fragment xml:id="divisions">
@@ -129,7 +131,18 @@
         Appendix =
             element appendix {
                 MetaDataTitle,
-                (BlockDivision | Paragraphs | NotationList | SolutionList )+
+                (
+                    (BlockDivision | Paragraphs | NotationList | SolutionList )+ |
+                    (
+                        IntroductionDivision?,
+                        (
+                            Section+ &amp;
+                            Exercises* &amp;
+                            References*
+                        ),
+                        ConclusionDivision?)
+                    )
+                )
             }
         IndexDivision =
             element index {
@@ -1407,6 +1420,8 @@
             element example {ExampleLike}
         |
             element question {ExampleLike}
+        |
+            element problem {ExampleLike}
         </fragment>
     </section>
 
@@ -1623,7 +1638,7 @@
     <section>
         <title>Front Matter</title>
 
-        <p>Articles and books have material at the start, which gets organized in interesting ways.</p>
+        <p>Articles and books have material at the start, which gets organized in interesting ways. <c>minilicense</c> is very restrictive, <c>shortlicense</c> allows references (<eg /> <init>URL</init>s).</p>
 
         <fragment xml:id="frontmatter">
         ArticleFrontMatter = 
@@ -1679,7 +1694,7 @@
                     element year {TextShort},
                     element holder {text},
                     element minilicense {TextShort}?,
-                    element shortlicense {TextShort}?
+                    element shortlicense {TextLong}?
                 }?
             }
         Biography = 

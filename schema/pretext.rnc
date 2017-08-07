@@ -87,7 +87,18 @@
         Appendix =
             element appendix {
                 MetaDataTitle,
-                (BlockDivision | Paragraphs | NotationList | SolutionList )+
+                (
+                    (BlockDivision | Paragraphs | NotationList | SolutionList )+ |
+                    (
+                        IntroductionDivision?,
+                        (
+                            Section+ &
+                            Exercises* &
+                            References*
+                        ),
+                        ConclusionDivision?)
+                    )
+                )
             }
         IndexDivision =
             element index {
@@ -159,7 +170,7 @@
                     element year {TextShort},
                     element holder {text},
                     element minilicense {TextShort}?,
-                    element shortlicense {TextShort}?
+                    element shortlicense {TextLong}?
                 }?
             }
         Biography = 
@@ -429,6 +440,8 @@
             element example {ExampleLike}
         |
             element question {ExampleLike}
+        |
+            element problem {ExampleLike}
         
         
         ProjectLike =

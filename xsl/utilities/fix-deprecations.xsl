@@ -34,6 +34,51 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Deprecations that can be fixed with a transformation -->
 <!-- In reverse chronological order, with dates           -->
 
+<!-- 2017-08-25  deprecate named lists to be captioned lists -->
+<xsl:template match="list[not(caption)]/title">
+    <caption>
+        <xsl:apply-templates select="@* | node()" />
+    </caption>
+    <xsl:call-template name="deprecation-fix-report">
+        <xsl:with-param name="date">2017-08-25</xsl:with-param>
+        <xsl:with-param name="message">Converting a &lt;list&gt;/&lt;title&gt; to a &lt;list&gt;/&lt;caption&gt;</xsl:with-param>
+    </xsl:call-template>
+</xsl:template>
+
+<!-- 2017-08-06  wrap "program" and "console" in "sidebyside" at full width -->
+<xsl:template match="program[not(parent::sidebyside or parent::listing)]">
+    <sidebyside width="100%">
+        <program>
+            <xsl:apply-templates select="@* | node()" />
+        </program>
+    </sidebyside>
+    <xsl:call-template name="deprecation-fix-report">
+        <xsl:with-param name="date">2017-08-06</xsl:with-param>
+        <xsl:with-param name="message">Wrapping top-level &lt;program&gt; with full-width &lt;sidebyside&gt;</xsl:with-param>
+    </xsl:call-template>
+</xsl:template>
+<xsl:template match="console[not(parent::sidebyside or parent::listing)]">
+    <sidebyside width="100%">
+        <console>
+            <xsl:apply-templates select="@* | node()" />
+        </console>
+    </sidebyside>
+    <xsl:call-template name="deprecation-fix-report">
+        <xsl:with-param name="date">2017-08-06</xsl:with-param>
+        <xsl:with-param name="message">Wrapping top-level &lt;console&gt; with full-width &lt;sidebyside&gt;</xsl:with-param>
+    </xsl:call-template>
+</xsl:template>
+
+<!-- 2017-08-04  top-level "task" become "exploration" -->
+<xsl:template match="task[parent::chapter or parent::appendix or parent::section or parent::subsection or parent::subsubsection or parent::paragraphs or parent::introduction or parent::conclusion]">
+    <exploration>
+        <xsl:apply-templates select="@* | node()" />
+    </exploration>
+    <xsl:call-template name="deprecation-fix-report">
+        <xsl:with-param name="date">2017-08-04</xsl:with-param>
+        <xsl:with-param name="message">Replacing &lt;task&gt; by &lt;exploration&gt;</xsl:with-param>
+    </xsl:call-template>
+</xsl:template>
 
 <!-- 2017-07-25  replacement of three xref/@autoname attributes by @text -->
 <xsl:template match="@autoname">

@@ -61,25 +61,17 @@
     <section xml:id="processing-dtd">
         <title>Verifying your Source</title>
 
-        <p>A <term>Document Type Definition</term>, usually known as a <term>DTD</term> is a formal specification of an XML vocabulary (the allowed tags and attributes), and how they relate to each other.  So, for example, the restrictions that say you cannot nest a <tag>book</tag> inside of a <tag>chapter</tag>, nor can you nest a <tag>subsection</tag> in a <tag>chapter</tag> without an intervening <tag>section</tag>, are expressed and enforced by the DTD.  One of the beauties of the DTD is that it is written using a specific syntax and tools exist that use a DTD as input.  In particular, a source MathBook XML file that conforms to the MathBook XML DTD is said to be <term>valid</term>.  You should strive to always have valid source files and so you want to regularly verify that this is the case.</p>
+        <p>A <term>schema</term>, in our case a <init>RELAX-NG</init> schema,  is a formal specification of an <init>XML</init> vocabulary (the allowed tags and attributes), and how they relate to each other.  So, for example, the restrictions that say you cannot nest a <tag>book</tag> inside of a <tag>chapter</tag>, nor can you nest a <tag>subsection</tag> in a <tag>chapter</tag> without an intervening <tag>section</tag>, are expressed and enforced by the schema.  One of the beauties of the schema is that it is written using a very specific syntax and then there are tools that use a schema as input.  In particular, a <pretext /> source file that conforms to the <pretext /> schema is said to be <term>valid</term>.  You should strive to always, always, always have valid source files, and therefore you want to regularly verify that this is the case.</p>
 
-        <p>You can find the MathBook XML DTD in <pre>
-        schema/dtd/mathbook.dtd
-        </pre>  You can read this file, and may eventually become adept at translating the syntax.  (We plan to also create something very similar in the RELAX NG syntax, which is more expressive.)  Better is to use the <c>xmllint</c> program to validate a source XML file against a DTD.  If you have <c>xsltproc</c> on your system, then almost certainly you have <c>xmllint</c>, since they use the same underlying core library, <url href="http://xmlsoft.org/"><c>libxml2</c></url>.  Here is the command you want to use to validate a source file.  (The <c>--xinclude</c> switch is optional if you do not have modular files, <xref ref="processing-modular" />.)</p>
+        <p>You can find the <pretext /> schema in the <c>schema</c> directory.  The version we author and maintain is <c>pretext.xml</c>, which is used to create <c>pretext.rnc</c>, which uses the compact syntax of the RELAX-NG specification.  By providing the schema and your source to a program called a <term>validator</term> you can check if your source is valid, and if not, why.  See <xref ref="schema" /> for the details on doing this.</p>
 
-        <console>
-            <prompt>$ </prompt>
-            <input>xmllint --xinclude --postvalid --noout --dtdvalid</input>
-            <input>   /path/to/schema/dtd/mathbook.dtd ~/books/aota/animals.xml 2> dtd-errors.txt</input>
-        </console>
+        <p>If you author source that is valid <pretext />, then a conversion of your source to another format should succeed.  And maybe in the future, somebody will create a new conversion to a new output format, and your source should still produce faithful output, with no extra effort from you.  Think of the schema as a contract between authors of source files and developers of converters.  This is different than performing a conversion and getting good-looking output<ndash />that can just be a happy accident and your source may not succeed with some other conversion.</p>
 
-        <p>You will need to use a pager (<c>more</c>, or <c>less</c>), or your editor, to review the results in <c>dtd-errors.txt</c> (or whatever you choose to call that file).  Your goal is to have this output file always turn up empty.  But if not, you will eventually become skilled at interpreting the error output and fixing your source.</p>
+        <p>We cannot stress enough the importance of setting up and performing regular validation and preventing many consistent errors of the same type.  You will learn what elements are allowed where, and which are not, from the messages produced by validation errors.  And when a conversion fails, or produces spectacularly incorrect output, validating your source should be your first reaction.  Always.</p>
 
-        <p>The other beauty of a DTD is that you can supply it to a text editor (<xref ref="introduction-to-source-formatting" />) and then you will get context-sensitive help that greatly assists you in using only the tags and attributes that are allowed in a given location of your source.  <url href="http://xml-copy-editor.sourceforge.net/">XML Copy Editor</url> is the one editor like this we have tried, but we do not have extensive experience.</p>
+        <p>The other beauty of a schema is that you can supply it to a text editor (<xref ref="introduction-to-source-formatting" />) and then you will get context-sensitive help that greatly assists you in using only the tags and attributes that are allowed in a given location of your source.  <url href="http://xml-copy-editor.sourceforge.net/">XML Copy Editor</url> is the one editor like this we have tried, but we do not have extensive experience.</p>
 
-        <p>Two caveats for your use of <c>xmllint</c>.  First, the filenames in the error messages are not always accurate, especially if you are using the <c>xinclude</c> mechanism and your files are organized in subdirectories.  In this case, or in the case of modular files and many, many errors, you can apply <c>xmllint</c> to just one file at a time and begin cleaning up errors that way.  Second, a DTD is not quite as expressive as we would like, and so it is not a perfect description of the ideal MathBook XML source file.  But if the DTD says something is <em>not</em> valid, than it almost certainly is.</p>
-
-        <p>You should regularly check that your source is valid (script the command above), and whenever <c>xsltproc</c> fails, or your output is not what you were expecting, check against the DTD first.</p>
+        <p>We have devoted an entire chapter (<xref ref="schema" />) to amplifying this introduction and providing more details, such as where to find details on installing a validator.</p>
     </section>
 
     <section xml:id="processing-stringparam">
@@ -244,6 +236,24 @@
 
             <p>We did not say it would be easy, but we feel much of this sort of project management is outside the scope of the MathBook XML project itself, while in its initial stages, and existing tools to manage the complexity are available and documented.  (We <em>have</em> been encouraged to create sample scripts, which we may do.)  Just remember the strategy: stage necessary components in a temporary directory, build output in that directory, copy out desired semi-permanent results, and limit additions to the source directory to that which is original, or mature and time-consuming to reproduce.</p>
         </paragraphs>
+    </section>
+
+    <section xml:id="processing-testing-html">
+        <title>Testing <init>HTML</init> Output Locally</title>
+
+        <p>Certain complicated parts of <init>HTML</init> output will not always function when you look at <pretext /> output by just opening files in your web browser.  These include knowls, Sage cells, and YouTube videos.  This is a consequence of security policies and so will vary from browser to browser.  A solution is to run a web server on your own machine, which is much easier than it sounds.  The one prerequisite is that you have Python installed, as is normally the case on any Linux or Mac computer.  On Windows, you may need to install Python yourself, but you may eventually need it for the <c>mbx</c> script anyway (<xref ref="mbx-script" />).  The following has been tested on Ubuntu Linux 16.10 and MacOS 10.12 (2017-08-06).</p>
+
+        <p>Python 2 and Python 3 are different in some regards, and that is the case here.  Your system may have commands <c>python2</c>, <c>python3</c>, and/or plain <c>python</c>.  Experiment with variants of the following two commands.  First, at a command-line, set your working directory to be the location of a directory containing the <init>HTML</init> files you want to test.<cd>
+            <cline>python3 -m http.server</cline>
+            <cline />
+            <cline>python2 -m SimpleHTTPServer </cline>
+        </cd>Use <c>--help</c> if you want to see the (limited) options for configuration.  Then go to the address bar of your browser and use<cd>
+            <cline>http://0.0.0.0:8000/index.html</cline>
+        </cd>to actually view the files from a web server.  Running the Python command should tell you which address to use (the <c>0.0.0.0</c>) and your project might not have an <c>index.html</c> file, so adjust accordingly.</p>
+
+        <p>Official documentation: <url href="https://docs.python.org/3/library/http.server.html">Python 3</url> and <url href="https://docs.python.org/2/library/simplehttpserver.html">Python 2</url>.</p>
+
+        <p>You may also be able to configure your <c>hosts</c> file so that this webserver looks like it lives somewhere else.  Clues at <url href="https://bowerwebsolutions.com/how-to-edit-your-local-host-file-for-testing-web-sites/"><c>bowerwebsolutions.com</c></url>.</p>
     </section>
 
     <section xml:id="processing-doctest-sage">

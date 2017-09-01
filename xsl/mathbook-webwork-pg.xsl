@@ -326,6 +326,10 @@
         <xsl:if test=".//image[@pg-name]">
             <xsl:text>  "PGgraphmacros.pl",&#xa;</xsl:text>
         </xsl:if>
+        <!-- instructions for entering answers into HTML forms -->
+        <xsl:if test=".//instruction">
+            <xsl:text>  "PCCmacros.pl",&#xa;</xsl:text>
+        </xsl:if>
         <!-- ################### -->
         <!-- Parser Enhancements -->
         <!-- ################### -->
@@ -685,6 +689,15 @@
     </xsl:choose>
 </xsl:template>
 
+<!-- Sidebyside in a WeBWorK expects only one child        -->
+<!-- It should be in the captionless family                -->
+<!-- Just applies its templates                            -->
+<!-- NB: this may need improvements, such as positioning   -->
+<!-- NB: a Schematron rule should enforce the single child -->
+<xsl:template match="webwork//sidebyside">
+    <xsl:apply-templates />
+</xsl:template>
+
 <!-- ####################### -->
 <!-- PGML Image Construction -->
 <!-- ####################### -->
@@ -771,6 +784,17 @@
     </xsl:if>
 </xsl:template>
 
+<xsl:template match="webwork//instruction">
+    <xsl:if test="preceding-sibling::p|preceding-sibling::image|preceding-sibling::tabular and not(child::*[1][self::ol] or child::*[1][self::ul])">
+        <xsl:call-template name="potential-list-indent" />
+    </xsl:if>
+    <xsl:text>[@KeyboardInstructions(q?</xsl:text>
+    <xsl:apply-templates />
+    <xsl:text>?)@]**</xsl:text>
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
 <!-- ######### -->
 <!-- Numbering -->
 <!-- ######### -->
@@ -778,8 +802,9 @@
 <!-- The cross-reference numbering scheme uses \ref, \hyperref -->
 <!-- for LaTeX and numbers elsewhere, so it is unimplmented in -->
 <!-- mathbook-common.xsl, hence we implement it here           -->
+<!-- This is identical to mathbook-html.xsl                    -->
 
-<xsl:template match="webwork//*" mode="xref-number">
+<xsl:template match="*" mode="xref-number">
     <xsl:apply-templates select="." mode="number" />
 </xsl:template>
 
@@ -918,6 +943,26 @@
         </xsl:call-template>
     </xsl:if>
 </xsl:template>
+
+<!-- ################ -->
+<!-- Cross-References -->
+<!-- ################ -->
+
+<!-- The visual text of a cross-reference is         -->
+<!-- formed in the xsl/mathbook-common.xsl routines. -->
+<!-- But we in the WW source we can't really form    -->
+<!-- a link to a target outside the problem.         -->
+<!-- So we just duplicate the text.                  -->
+<!-- HACK: low-priority, so                             -->
+<!--   (a) for problem extraction it is only version    -->
+<!--   (b) for HTML it is low, so see "xref-link" there -->
+<!-- Solution: reconsider import/override mechanism     -->
+<xsl:template match="*" mode="xref-link" priority="-1">
+    <xsl:param name="content" />
+    <xsl:param name="xref" />
+    <xsl:copy-of select="$content" />
+</xsl:template>
+
 
 <!-- ############## -->
 <!-- Various Markup -->

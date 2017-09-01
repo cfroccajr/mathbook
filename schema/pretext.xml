@@ -46,7 +46,8 @@
             element article {
                 MetaDataSubtitle,
                 ArticleFrontMatter,
-                (Section+ &amp; Exercises* &amp; References*),
+                Section,
+                (Section | Exercises | References)*,
                 BackMatter?
             }
         Book =
@@ -54,7 +55,8 @@
             element book {
                 MetaDataSubtitle,
                 BookFrontMatter,
-                (Chapter+ &amp; Exercises* &amp; References*),
+                Chapter,
+                (Chapter | Exercises | References)*,
                 BackMatter?
             }
         Letter =
@@ -82,11 +84,12 @@
                     (BlockDivision | Paragraphs)+ |
                     (
                         IntroductionDivision?,
+                        Section,
                         (
-                            Section+ &amp;
-                            Exercises* &amp;
-                            References*
-                        ),
+                            Section |
+                            Exercises |
+                            References
+                        )*,
                         ConclusionDivision?)
                 )
             }
@@ -98,11 +101,12 @@
                     (BlockDivision | Paragraphs)+ |
                     (
                         IntroductionDivision?,
+                        Subsection,
                         (
-                            Subsection+ &amp;
-                            Exercises* &amp;
-                            References*
-                        ),
+                            Subsection |
+                            Exercises |
+                            References
+                        )*,
                         ConclusionDivision?)
                 )
             }
@@ -114,11 +118,12 @@
                     (BlockDivision | Paragraphs)+ |
                     (
                         IntroductionDivision?,
+                        Subsubsection,
                         (
-                            Subsubsection+ &amp;
-                            Exercises* &amp;
-                            References*
-                        ),
+                            Subsubsection |
+                            Exercises |
+                            References
+                        )*,
                         ConclusionDivision?)
                 )
             }
@@ -135,12 +140,13 @@
                     (BlockDivision | Paragraphs | NotationList | SolutionList )+ |
                     (
                         IntroductionDivision?,
+                        Section,
                         (
-                            Section+ &amp;
-                            Exercises* &amp;
-                            References*
-                        ),
-                        ConclusionDivision?)
+                            Section |
+                            Exercises |
+                            References
+                        )*,
+                        ConclusionDivision?
                     )
                 )
             }
@@ -148,16 +154,6 @@
             element index {
                 MetaDataTitleOptional,
                 IndexList
-            }
-        IntroductionDivision =
-            element introduction {
-                MetaDataTitleOptional,
-                BlockDivision+
-            }
-        ConclusionDivision =
-            element conclusion {
-                MetaDataTitleOptional?,
-                BlockDivision+
             }
         </fragment>
     </section>
@@ -494,11 +490,28 @@
             element stale {TextLong}
         </fragment>
 
+        <p>An empty <c>taxon</c> will match either version.</p>
+
+        <fragment xml:id="scientific-name-group">
+        Group |=
+            element taxon {
+                attribute ncbi {xsd:integer}?,
+                (
+                    TextSimple |
+                    (
+                        element genus {TextSimple}?,
+                        element species {TextSimple}?
+                    )
+                )
+            }
+        </fragment>
+
         <fragment xml:id="group">
             <fragment ref="abbreviation-group" />
             <fragment ref="delimiter-group" />
             <fragment ref="highlight-group" />
             <fragment ref="editing-group" />
+            <fragment ref="scientific-name-group" />
         </fragment>
     </section>
 
@@ -592,29 +605,29 @@
     <section>
         <title>Blocks</title>
 
-        <p>A <term>text block</term> is very similar to a paragraph.  It can be a paragraph, a sequence of paragraphs enclosed as a block quote (with attribution, perhaps), or a large chunk of unformatted text presented typically in a monospace font.  A <c>todo</c> is text that is never printed in your output, unless you explicitly request that it be printed or inventoried.  Yu can put it anywhere you might put a paragraph, as a peer, but do not use it within a paragraph (or other places where you are authoring text, it can gum up processing).</p>
+        <p>A <term>text block</term> is very similar to a paragraph.  It can be an actual paragraph, a sequence of paragraphs enclosed as a block quote (with attribution, perhaps), or a large chunk of unformatted text presented typically in a monospace font.  A <c>todo</c> is text that is never printed in your output, unless you explicitly request that it be printed or inventoried.  You can put it anywhere you might put a paragraph, as a peer, but do not use it within a paragraph (or other places where you are authoring text, it can gum up processing).</p>
 
-        <p>A <term>division block</term> includes text blocks, plus topical chunks of text that can have numbered headings or numbered captions, with optional titles, and are set apart slightly from the surrounding narrative.  These are placed mostly as children of divisions, and so one cannot contain another, with captioned items being the exception.  They certainly contain paragraphs, and all that goes into them, such as mathematics (inline and display) and figures (and other captioned items).  The <c>sidebyside</c> element can be used to illustrate a division block with a variety of images and displayed text in flexible layouts.</p>
+        <p>A <term>statement block</term> is used in statements.  What are those?  Theorems have statements, exercises have statements, questions have statements.  Some of these blocks with statements also have proofs, hints, and solutions.  In statements, and their peers, we include text blocks, captioned items, asides, side-by-side layouts, and Sage computations, but exclude many of the numbered and titled division blocks.</p>
 
-        <p>Division blocks contain items which do not meet the strict definition of the paragraph above, but still can be used in the same places in similar ways.  <c>poem</c>, <c>aside</c>, and <c>assemblage</c> are never numbered, but can have titles.  The <c>list-of</c> mechanism is a convenience device to automatically create lists of contents, and so we leave surrounding divisional structure to the author.  A <c>sidebyside</c>, and its cousin, <c>sbsgroup</c>, are strictly layout devices.  The <c>sage</c> element is unique for its possibilities in certain electronic formats.</p>
+        <p>A <term>division block</term> includes text blocks, statement blocks, plus topical chunks of text that can have numbered headings or numbered captions, with optional titles, and are set apart slightly from the surrounding narrative.  These are placed mostly as children of divisions, and so one cannot contain another.  They certainly contain paragraphs, and all that goes into them, such as mathematics (inline and display) and figures (and other captioned items).  The <c>sidebyside</c> element can be used to illustrate a division block with a variety of images and displayed text in flexible layouts.</p>
 
-        <p>A <term>statement block</term> is used in statements.  What are those?  Theorems have statements, exercises have statements, questions have statements.  Some of these blocks also have proofs, hints, and solutions.  In statements, and their peers, we include text blocks, captioned items, asides, side-by-side layouts, and Sage computations, but exclude many of the numbered and titled division blocks.</p>
+        <p>Other division blocks include <c>poem</c>, <c>aside</c>, and <c>assemblage</c>.  These are never numbered, but can have titles.  The <c>list-of</c> mechanism is a convenience device to automatically create lists of contents, and so we leave surrounding divisional structure to the author.  A <c>sidebyside</c>, and its cousin, <c>sbsgroup</c>, are strictly layout devices.  The <c>sage</c> element is unique for its possibilities in certain electronic formats.</p>
 
         <p><c>geogebra-applet</c> and <c>demonstration</c> are slated for removal or an overhaul, and so are in the <xref ref="badbank" text="title" />.  Avoid using them for now.</p>
 
         <fragment xml:id="block">
         BlockText =
             Paragraph | BlockQuote | Preformatted | ToDo
-        BlockDivision =
-            BlockText | Figure |
-            Remark | Theorem | Proof | Definition | Axiom |
-            Example | Exercise | NamedList | Project |
-            Poem | Aside | Assemblage | ListGenerator |
-            SideBySide | SideBySideGroup | Sage |
-            Console | Program |
-            GGB | Demonstration
         BlockStatement =
-            BlockText | Figure | Aside | SideBySide | SideBySideGroup | Sage
+            BlockText |
+            Figure | Aside |
+            SideBySide | SideBySideGroup | Sage
+        BlockDivision =
+            BlockStatement |
+            Remark | Theorem | Proof | Definition |
+            Axiom | Example | Exercise | Project |
+            Poem | Assemblage | ListGenerator |
+            GGB | Demonstration
         </fragment>
 
         <p>Blocks are often structured, in a light way.  Hints, answers, and solutions adorn exercises, examples, and projects.  A simple introduction or conclusion is sometimes useful.  A <c>prelude</c> or <c>postlude</c> are authored inside a block and so are associated with it.  But they are presented before and after the block visually.  An <c>interlude</c> will be used between the statment of a theorem and its proof.</p>
@@ -622,10 +635,6 @@
         <p>When a block is structured to allow some of the ancillary parts, a <c>statement</c> element is used to structure the main part.  Hints, answers, and solutions can be the target of cross-references, but do not get author-supplied titles.</p>
 
         <fragment xml:id="block-component">
-        IntroductionBlock =
-            element introduction {BlockText+}
-        ConclusionBlock =
-            element conclusion {BlockText+}
         Prelude =
             element prelude {BlockText+}
         Interlude =
@@ -650,6 +659,33 @@
             element solution {
                 MetaDataTarget,
                 BlockStatement+
+            }
+        </fragment>
+    </section>
+
+    <section>
+        <title>Introductions and Conclusions</title>
+
+        <p>The <c>introduction</c> and <c>conclusion</c> containers can be used in a variety of other structured elements.  They come in three levels, according to what they can contain, and are meant to be consonant with their surroundings.  As children of a division, they may carry a <c>title</c>, which in turn allows them to be cross-referenced by that text.</p>
+
+        <fragment xml:id="introduction-conclusion">
+        IntroductionText =
+            element introduction {BlockText+}
+        ConclusionText =
+            element conclusion {BlockText+}
+        IntroductionStatement =
+            element introduction {BlockStatement+}
+        ConclusionStatement =
+            element conclusion {BlockStatement+}
+        IntroductionDivision =
+            element introduction {
+                MetaDataTitleOptional,
+                BlockDivision+
+            }
+        ConclusionDivision =
+            element conclusion {
+                MetaDataTitleOptional?,
+                BlockDivision+
             }
         </fragment>
     </section>
@@ -742,9 +778,9 @@
         Objectives =
             element objectives {
                 MetaDataTitleOptional,
-                IntroductionBlock?, 
+                IntroductionText?,
                 List,
-                ConclusionBlock?
+                ConclusionText?
             }
         </fragment>
     </section>
@@ -767,11 +803,9 @@
     </section>
 
     <section>
-        <title>Verbatim Display</title>
+        <title>Verbatim Text</title>
 
-        <p>Large blocks of verbatim material, rather than just little bits in a sentence.  A code display, <c>cd</c>, is an analog of a math display, and meant to be used within a paragraph, either as a single line of text, or optionally structured as several lines by using code lines, <c>cline</c>.   <c>pre</c> is a block, which preserves line breaks and sanitizes whitespace to the left.  It can be optionally structured as code lines.</p>
-
-        <p>A <c>program</c> is a block right now, but perhaps it should become something to go inside a <c>listing</c> or inside of a side-by-side panel?</p>
+        <p>Large blocks of verbatim material, rather than just little bits in a sentence.  A code display, <c>cd</c>, is an analog of a math display, and meant to be used <em>within</em> a paragraph, either as a single line of text, or optionally structured as several lines by using code lines, <c>cline</c>.   <c>pre</c> is a block, which preserves line breaks and sanitizes whitespace to the left.  It can be optionally structured as code lines.  It should be thought of as a monospace analogue of a <q>regular</q> paragraph, minus indentation and automatic line-breaking.</p>
 
         <fragment xml:id="verbatimdisplay">
         CodeLine =
@@ -864,22 +898,6 @@
     </section>
 
     <section>
-        <title>Named Lists</title>
-
-        <p>If you want to have a list standalone and be referenced later, then build a block that is a <term>named list</term>.</p>
-
-        <fragment xml:id="namedlist">
-        NamedList =
-            element list {
-                MetaDataTitleOptional,
-                IntroductionBlock?, 
-                List,
-                ConclusionBlock?
-            }
-        </fragment>
-    </section>
-
-    <section>
         <title>Definitions</title>
 
         <p>Definitions are special, there is nothing else quite like them.  A statement, no proof, and also a natural place for notation entries.</p>
@@ -926,6 +944,10 @@
             element proposition {TheoremLike}
         |
             element algorithm {TheoremLike}
+        |
+            element fact {TheoremLike}
+        |
+            element identity {TheoremLike}
         </fragment>
     </section>
 
@@ -944,29 +966,45 @@
             element principle {AxiomLike}
         |
             element conjecture {AxiomLike}
+        |
+            element heuristic {AxiomLike}
+        |
+            element hypothesis {AxiomLike}
+        |
+            element assumption {AxiomLike}
         </fragment>
     </section>
 
     <section>
         <title>Projects and Activities</title>
 
-        <p>A favorite of Inquiry-Based Learning textbooks.  Numbered independently.  Will be semi-structured by the <c>task</c> element soon, so avoid that element for now.</p>
+        <p>A favorite of Inquiry-Based Learning textbooks.  Numbered independently.  Possibly structured with <c>task</c>.</p>
 
         <fragment xml:id="project-like">
         ProjectLike =
             MetaDataTitleOptional,
             (
                 (BlockStatement+) |
-                (Prelude*, Statement, Hint*, Answer*, Solution*, Postlude*)
+                (Prelude?, Statement, Hint*, Answer*, Solution*, Postlude?) |
+                (Prelude?, IntroductionStatement?, Task+, ConclusionStatement?, Postlude?)
             )
         Project =
             element activity {ProjectLike}
         |
+            element investigation {ProjectLike}
+        |
             element exploration {ProjectLike}
         |
             element project {ProjectLike}
-        |
-            element task {ProjectLike}
+        Task =
+            element task {
+                MetaDataTarget,
+                (
+                    BlockStatement+ |
+                    (Statement, Hint*, Answer*, Solution*) |
+                    (IntroductionText?, Task+, ConclusionText?)
+                )
+            }
         </fragment>
     </section>
 
@@ -982,22 +1020,47 @@
         Remark = 
             element remark {RemarkLike}
         |
+            element convention {RemarkLike}
+        |
             element note {RemarkLike}
+        |
+            element observation {RemarkLike}
+        |
+            element warning {RemarkLike}
+        |
+            element insight {RemarkLike}
+        |
+            element computation {RemarkLike}
+        |
+            element technology {RemarkLike}
         </fragment>
     </section>
 
 
     <section>
-        <title>Asides and Assemblages</title>
+        <title>Asides</title>
 
-        <p>An aside is a deviation from the narrative, and might physically move in the presentation (say, to a margin, or to a knowl).  Since an <c>assemblage</c> is meant to accumulate significant content (as a review or summary, or for initial presentation) lists are allowed here, an exception to their restriction to paragraphs.  We are also mildly restrictive about what can be content here<mdash />in particular blocks are excluded, despite not strictly being blocks themselves.</p>
+        <p>An aside is a deviation from the narrative, and might physically move in the presentation (say, to a margin, or to a knowl).  <c>biographical</c> and <c>historical</c> may be further developed.</p>
 
         <fragment xml:id="aside">
+        AsideLike =
+            MetaDataTitleOptional,
+            BlockStatement+
         Aside =
-            element aside {
-                MetaDataTitleOptional,
-                BlockStatement+
-            }
+            element aside {AsideLike}
+            |
+            element biographical {AsideLike}
+            |
+            element historical {AsideLike}
+        </fragment>
+    </section>
+
+    <section>
+        <title>Assemblages</title>
+
+        <p>Since an <c>assemblage</c> is meant to accumulate significant content (as a review or summary, or for initial presentation) lists are allowed here, an exception to their restriction to paragraphs.  We are also mildly restrictive about what can be content here<mdash />in particular blocks are excluded, despite not strictly being blocks themselves.</p>
+
+        <fragment xml:id="assemblage">
         Assemblage =
             element assemblage {
                 MetaDataTitleOptional,
@@ -1007,7 +1070,7 @@
     </section>
 
     <section>
-        <title>Figures, Tables, and Listings</title>
+        <title>Figures, Tables, Listings and Named Lists</title>
 
         <p>These are containers that carry titles, captions, and numbers and need to be filled with other (indivisable) items.  They have a mandatory <c>caption</c> (which can have no text, but will still produce a numbered caption), and may have a <c>title</c>, which could more appropriately be called a <term>heading</term>.  These are also called <term>captioned items</term>.</p>
 
@@ -1038,6 +1101,13 @@
                     Program |
                     Console
                 )
+            }
+        |
+            element list {
+                MetaDataCaption,
+                IntroductionText?,
+                List,
+                ConclusionText?
             }
         </fragment>
 
@@ -1144,20 +1214,22 @@
 
         <p>A group of side-by-sides is designed to stack vertically with common controls on widths, etc.  Its implementation is entirely experimental right now, even if we are relatively confident of the markup.</p>
 
-        <p>The <webwork /> variant allows only a single tabular or image.  The <q>NoNumber</q> variant prohibits captioned or numbered items as panels.</p>
+        <p>The <webwork /> variant allows only a single tabular or image.  The <q>NoCaption</q> variants prohibits captioned or numbered items as panels.</p>
 
         <fragment xml:id="sidebyside">
+        SidebySideAttributes =
+            attribute margins {text}?,
+            (attribute width {text} | attribute widths {text})?,
+            (AlignmentVertical | attribute valigns {text})?
         SideBySide =
             element sidebyside {
-                attribute margins {text}?,
-                (attribute width {text} | attribute widths {text})?,
-                (AlignmentVertical | attribute valigns {text})?,
+                SidebySideAttributes,
                 (
                     Figure |
-                    NamedList |
                     Poem |
                     Tabular |
                     Image |
+                    Video |
                     Program |
                     Console |
                     Paragraph |
@@ -1166,15 +1238,14 @@
                     List
                 )+
             }
-        SideBySideNoNumber =
+        SideBySideNoCaption =
             element sidebyside {
-                attribute margins {text}?,
-                (attribute width {text} | attribute widths {text})?,
-                (AlignmentVertical | attribute valigns {text})?,
+                SidebySideAttributes,
                 (
                     Poem |
                     Tabular |
                     Image |
+                    Video |
                     Program |
                     Console |
                     Paragraph |
@@ -1185,16 +1256,17 @@
             }
         SideBySideGroup =
             element sbsgroup {
-                attribute margins {text}?,
-                (attribute width {text} | attribute widths {text})?,
-                (attribute valign {text} | attribute valigns {text})?,
+                SidebySideAttributes,
                 SideBySide+
             }
-        SideBySideWW = 
+        SideBySideGroupNoCaption =
+            element sbsgroup {
+                SidebySideAttributes,
+                SideBySideNoCaption+
+            }
+        SideBySideWW =
             element sidebyside {
-                attribute margins {text}?,
-                (attribute width {text} | attribute widths {text})?,
-                (attribute valign {text} | attribute valigns {text})?,
+                SidebySideAttributes,
                 (
                     TabularWW |
                     ImageWW
@@ -1241,7 +1313,7 @@
                 attribute width {xsd:integer}?,
                 attribute height {xsd:integer}?,
                 attribute tex-size {xsd:integer}?,
-                element description {TextShort &amp; WWVariableUse*}?
+                element description {(TextShort | WWVariableUse)*}?
             }
         </fragment>
     </section>
@@ -1288,21 +1360,24 @@
     <section>
         <title>Audio and Video</title>
 
-        <p>Well, just video right now.  The <c>xml:id</c> is not used as a target, but rather as a name for an associated thumbnail file, hence optional.</p>
+        <p>Well, just video right now.  The <c>xml:id</c> is not used as a target, but rather as a name for an associated thumbnail file, hence optional.  <c>preview="custom"</c> is a possible future addition.  Vimeo video could be a third source of embedded content.</p>
 
         <fragment xml:id="audiovideo">
         Video = 
             element video {
                 UniqueID?,
                 attribute width {text}?,
+                attribute aspect {text}?,
+                attribute start {xsd:integer}?,
+                attribute end {xsd:integer}?,
+                attribute play-at {"embed" | "popout" | "select"}?,
+                attribute preview {"default" | "generic" }?,
                 (AttributesSourceFile | AttributesYouTube)
             }
         AttributesSourceFile =
             attribute source {text}
         AttributesYouTube =
-            attribute youtube {text},
-            attribute start {text}?,
-            attribute end {text}?
+            attribute youtube {text}
         </fragment>
     </section>
 
@@ -1364,16 +1439,16 @@
                 attribute number {text}?,
                 (
                 (StatementExercise, Hint*, Answer*, Solution*) |
-                (IntroductionBlock?, WebWork, ConclusionBlock?)
+                (IntroductionText?, WebWork, ConclusionText?)
                 )
             }
         ExerciseGroup =
             element exercisegroup {
                 MetaDataTarget,
                 attribute cols {"2"|"3"|"4"|"5"|"6"}?,
-                IntroductionBlock?,
+                IntroductionText?,
                 Exercise+,
-                ConclusionBlock?
+                ConclusionText?
             }
         </fragment>
     </section>
@@ -1388,14 +1463,14 @@
             element biblio {
                 UniqueID?,
                 attribute type {"raw"}?,
-                (TextShort* &amp;
-                Ibid* &amp;
-                BibTitle* &amp;
-                BibYear* &amp;
-                BibJournal* &amp;
-                BibNumber* &amp;
-                BibVolume* &amp;
-                BibNote*)
+                (TextLong |
+                Ibid |
+                BibTitle |
+                BibYear |
+                BibJournal |
+                BibNumber |
+                BibVolume |
+                BibNote)*
             }
         Ibid = element ibid {empty}
         BibYear = element year {text}
@@ -1465,6 +1540,7 @@
             element statement {
                 (
                     ParagraphWW |
+                    WWInstruction |
                     Preformatted |
                     SideBySideWW |
                     ImageWW |
@@ -1501,6 +1577,8 @@
                 (attribute form {"essay"},
                 attribute width {text}?)
             }
+        WWInstruction =
+            element instruction {TextShort}
         HintWW =
             element hint {
                 (
@@ -1659,7 +1737,7 @@
         TitlePage =
             element titlepage {
                 Author+,
-                Credit?,
+                Credit*,
                 Date?
             }
         Author =
@@ -1672,11 +1750,11 @@
         Credit =
             element credit {
                 element title {TextShort},
-                Author
+                Author+
             }
         Date = 
             element date {
-                text &amp; Character* &amp; Generator*
+                mixed {(Character | Generator)*}
             }
         Abstract =
             element abstract {
@@ -1685,6 +1763,10 @@
             }
         ColophonFront =
             element colophon {
+                element credit {
+                    element role {TextShort},
+                    element entity {TextLong}
+                }*,
                 element edition {text}?,
                 element website {
                     element name {TextShort},
@@ -1700,7 +1782,7 @@
         Biography = 
             element biography {
                 MetaDataTitleOptional,
-                BlockText+
+                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
             }
         Dedication = 
             element dedication {
@@ -1710,14 +1792,14 @@
         Acknowledgement = 
             element acknowledgement {
                 MetaDataTitleOptional,
-                BlockText+
+                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
             }
         Preface =
             element preface {
                 MetaDataTitleOptional,
                 (
-                    ((BlockText | SideBySideNoNumber)+, Attribution*) |
-                    Contributors
+                    ((BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+, Attribution*) |
+                    ((BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)*, Contributors, (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)*)
                 )
             }
         </fragment>
@@ -1726,7 +1808,7 @@
     <section>
         <title>Contributors</title>
 
-        <p>The <c>contributors</c> element may be the sole content of a <c>preface</c> and is a list of <c>contributor</c>.</p>
+        <p>A single <c>contributors</c> element may be placed into a <c>preface</c> and is a list of <c>contributor</c>.  It can be optionally preceded, or followed, by all the usual things that can go into any preface.</p>
 
         <fragment xml:id="contributor">
         Contributor =
@@ -1735,6 +1817,7 @@
                 element personname {TextSimple},
                 element department {TextSimple}?,
                 element institution {TextSimple}?,
+                element location {TextSimple}?,
                 element email {text}?
             }
         Contributors =
@@ -1760,7 +1843,7 @@
                 ColophonBack?
             }
         ColophonBack = 
-            element colophon {(BlockText | SideBySideNoNumber)+}
+            element colophon {(BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+}
         </fragment>
     </section>
 
@@ -1921,11 +2004,11 @@
         <fragment ref="universal" />
         <fragment ref="block" />
         <fragment ref="block-component" />
+        <fragment ref="introduction-conclusion" />
         <fragment ref="objectives" />
         <fragment ref="blockquote" />
         <fragment ref="verbatimdisplay" />
         <fragment ref="list" />
-        <fragment ref="namedlist" />
         <fragment ref="definition-like" />
         <fragment ref="theorem-like" />
         <fragment ref="axiom-like" />
@@ -1933,6 +2016,7 @@
         <fragment ref="project-like" />
         <fragment ref="remark-like" />
         <fragment ref="aside" />
+        <fragment ref="assemblage" />
         <fragment ref="table-figure" />
         <fragment ref="sidebyside" />
         <fragment ref="image" />

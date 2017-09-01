@@ -800,6 +800,108 @@ the xsltproc executable.
                         <p>An <c>&lt;aside&gt;</c> is similar to a remark, but is not as critical to the narrative.  It is not numbered, and so requires a title.  It can be the target of a cross-reference.  They are meant to be short, and so are not knowlized at their first appearance.  If the content is appropriate, these can be marked as <c>&lt;historical&gt;</c> or <c>&lt;biographical&gt;</c>, though longer items should use subdivisions (<eg /> sections, subsections) instead.</p>
                     </aside>
 
+                    <project xml:id="project-structured">
+                        <title>A very structured project</title>
+
+                        <prelude>
+                            <p>The next block is a project, demonstrating the use of the <c>task</c> element to structure its parts.  You are reading the <c>prelude</c> now.  The project has lots of nonsense words, so we can test spacing the nested items.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                        </prelude>
+
+                        <introduction>
+                            <p>This is an over-arching introduction to the whole project.  We follow with some tasks.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                        </introduction>
+
+                        <task>
+                            <p>This first task is very simple, just a paragraph.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                        </task>
+
+                        <task>
+                            <p>Now three paragraphs.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                        </task>
+
+                        <task>
+                            <introduction>
+                                <p>This second task is further divided by more tasks.  This is its introduction.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            </introduction>
+                            <task>
+                                <statement>
+                                    <p>A really simple subtask.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                    <p>A short paragraph, before an answer.</p>
+                                </statement>
+                                <answer>
+                                    <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                </answer>
+                            </task>
+                            <task>
+                                <statement>
+                                    <p>A subtask with an answer.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                </statement>
+                                <answer>
+                                    <p>Right!  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                </answer>
+                            </task>
+                            <task xml:id="project-task-level-two">
+                                <introduction>
+                                    <p>Two simple sub-sub-tasks.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                </introduction>
+                                <task>
+                                    <p>First subsubtask.  Short paragraph.</p>
+                                </task>
+                                <task>
+                                    <p>Second subsubtask.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                    <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                </task>
+                                <task>
+                                    <p>Third subsubtask.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                    <p>In interdum suscipit ullamcorper</p>
+                                    <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                </task>
+                                <conclusion>
+                                    <p>The conclusion of the structured subtask.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                </conclusion>
+                            </task>
+                            <task>
+                                <p>A simple task as the last subtask.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            </task>
+                            <conclusion>
+                                <p>This concludes our structured second task.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            </conclusion>
+                        </task>
+
+                        <task>
+                            <statement>
+                                <p>This third top-level task is intermediate in complexity, you are reading the <c>statement</c>, which is followed by more items. In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            </statement>
+                            <hint>
+                                <p>One hint.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            </hint>
+                            <answer>
+                                <p>First answer.  In interdum suscipit ullamcorper.</p>
+                            </answer>
+                            <answer>
+                                <p>Second answer.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                                <p>In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            </answer>
+                            <solution>
+                                <p>At last, the solution.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                            </solution>
+                        </task>
+
+                        <conclusion>
+                            <p>This is a conclusion where you could summarize the project.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                        </conclusion>
+
+                        <postlude>
+                            <p>This postlude appears visually outside the project, but is authored within, to make clear its attachment to the project.  In interdum suscipit ullamcorper. Morbi sit amet malesuada augue, id vestibulum magna. Nulla blandit dui metus, malesuada mollis sapien ullamcorper sit amet. Nulla at neque nisi. Integer vel porta felis.</p>
+                        </postlude>
+                    </project>
+
                 </subsubsection>
 
                 <exercises>
@@ -1540,6 +1642,14 @@ the xsltproc executable.
                 <title>Groupings</title>
 
                 <p>It is possible to make some other groupings like quotations, such as <braces>some <em>emphasized text</em> grouped within braces</braces>, or <brackets>a <booktitle>Book Title</booktitle> inside brackets</brackets>, <angles>some <foreign>foreign words</foreign> inside angle brackets</angles>, or <dblbrackets>just a bit of text within double brackets</dblbrackets>.  Some of these are used extensively by scholars who study texts to note various restorations or deletions.</p>
+            </subsection>
+
+            <subsection>
+                <title>Biological Names</title>
+
+                <p>The <c>taxon</c> element can be used all by itself to get an italicized scientific name, as in <taxon>Escherichia coli</taxon>.  It can also be structured with the elements <c>genus</c> and <c>species</c>, as in using both together in <taxon><genus>Cyclops</genus><species>kolensis</species></taxon>.  Or the subelements can be used individually.  Rules for capitalization are presently your responsibility as an author.  Possible improvements include new subelements, attributes for database identifiers, and checks on capitalization.  Also, we might automatically abbreviate the genus after first use.</p>
+
+                <p>There is an attribute, <c>@ncbi</c> that you can use on the <c>taxon</c> element to precisely identify the organism you are discussing using an identification number from the <url href="https://www.ncbi.nlm.nih.gov/">National Center for Biotechnology Information</url>.  Their <url href="https://www.ncbi.nlm.nih.gov/taxonomy">taxonomy</url> is at <c>www.ncbi.nlm.nih.gov/taxonomy</c>.  Right now, we do not do anything with this attribute, but things like links are certainly possible.  See the source of this document to see it in use with <taxon ncbi="7229"><genus>Drosophila</genus><species>miranda</species></taxon> which could be used to construct a link to <url href="https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=7229">further information via id number</url> or even <url href="https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?name=Drosophila+miranda">further information via just the name</url>.</p>
             </subsection>
 
             <subsection>
@@ -2617,7 +2727,7 @@ the xsltproc executable.
                 <p>A list can be wrapped with a <c>&lt;list&gt;</c> element, so that it earns a number, can be given a title and have an introduction and conclusion.  Cross-references to individual list items get a bit absurd as they are prefixed with the number of the list and then the number of the item, so conceivably you could get a number like <c>4.5.3:2.a.ii</c>.</p>
 
                 <list xml:id="list-colors-rainbow">
-                    <title>Colors of the Rainbow</title>
+                    <caption>Colors of the Rainbow</caption>
 
                     <introduction>
                         <p>Because the colors are always in the same order, an ordered list is natural here.  The colors change continuously, but are often divided up into large ranges that human perception can easily distinguish.</p>
@@ -3547,10 +3657,249 @@ the xsltproc executable.
                         </input>
                     </jsxgraph>
                 </figure>
+
+
+                <p>Here are the two new examples, but the first has been given an extreme aspect ratio, and both are smaller overall.  They have been included in a <c>sidebyside</c> layout element (see <xref ref="section-side-by-side" text="type-global" />) so they can be placed horizontally across the page.  (Note: placement in a <c>sidebyside</c> is not yet reflected in the <pretext /> schema.)  These are again from the <url href="http://jsxgraph.uni-bayreuth.de/wiki/index.php/Category:Examples">example wiki</url>, the left being Fermat's Spiral and the right being a demonstration of B-splines.</p>
+
+                <sidebyside widths="35% 55%">
+                    <jsxgraph xml:id="jsxgraph-fermats-spiral" aspect="5:8">
+                        <!-- https://jsxgraph.uni-bayreuth.de/wiki/index.php/Fermat%27s_spiral -->
+                        <input>
+                        var board = JXG.JSXGraph.initBoard('jsxgraph-fermats-spiral', {boundingbox: [-10, 10, 10, -10]});
+                        var aa = board.create('slider', [[1,9],[5,9],[0,1,4]],{name:'a'});
+                        var c1 = board.create('curve', [function(phi){return aa.Value()*Math.sqrt(phi); }, [0, 0],0, 8*Math.PI],
+                                     {curveType:'polar', strokewidth:4});        
+                        var c2 = board.create('curve', [function(phi){return -aa.Value()*Math.sqrt(phi); }, [0, 0],0, 8*Math.PI],
+                                     {curveType:'polar', strokewidth:4});
+                        </input>
+                    </jsxgraph>
+                    <jsxgraph xml:id="jsxgraph-bspline">
+                        <!-- https://jsxgraph.uni-bayreuth.de/wiki/index.php/B-splines -->
+                        <input><![CDATA[
+                        var brd = JXG.JSXGraph.initBoard('jsxgraph-bspline',
+                        {boundingbox:[-4,4,4,-4],keepaspectratio:true,axis:true});
+
+                        var p = [], col = 'red'; 
+                        p.push(brd.create('point',[2,1],{strokeColor:col,fillColor:col})); 
+                        p.push(brd.create('point',[0.75,2.5],{strokeColor:col,fillColor:col})); 
+                        p.push(brd.create('point',[-0.3,0.3],{strokeColor:col,fillColor:col})); 
+                        p.push(brd.create('point',[-3,1],{strokeColor:col,fillColor:col}));      
+                        p.push(brd.create('point',[-0.75,-2.5],{strokeColor:col,fillColor:col}));
+                        p.push(brd.create('point',[1.5,-2.8],{strokeColor:col,fillColor:col}));  
+                        p.push(brd.create('point',[2,-0.5],{strokeColor:col,fillColor:col})); 
+
+                        var c = brd.create('curve', JXG.Math.Numerics.bspline(p,4), 
+                                       {strokecolor:'blue', strokeOpacity:0.6, strokeWidth:5}); 
+
+                        var addSegment = function() {
+                           brd.suspendUpdate();
+                           p.push(brd.create('point',[Math.random()*8-4,Math.random()*8-4],
+                                   {strokeColor:col,fillColor:col})); 
+                           brd.unsuspendUpdate();
+                        };
+
+                        var removeSegment = function() {
+                           brd.suspendUpdate();
+
+                           if (p.length>2) {
+                               brd.removeObject(p[p.length-1]);  // remove the last point from the list of objects
+                               p.splice(p.length-1,1);           // remove the last point from the point array.
+                           }
+                           brd.unsuspendUpdate();
+                        };
+                        ]]>
+                        </input>
+                    </jsxgraph>
+                </sidebyside>
+
+
+                <p>Now, a piecewise function you can control, with traces of the domain values and range values in two separate JSXGraph boards, laid out using the <c>sidebyside</c> layout element.</p>
+
+                <figure>
+                    <caption>Piecewise Function</caption>
+                    <jsxgraph xml:id="box_p3" width="40%">
+
+                        <controls>
+                            <input type="button" value="Animate On/Off" onkeypress="animate_p3(s_p3,75,100);" onclick="animate_p3(s_p3,75,100);" style="font-size:16px;"/>
+                            <input type="button" value="Clear Traces" onkeypress="clearTraces_p3();" onclick="clearTraces_p3();" style="font-size:16px;"/>
+                        </controls>
+                    </jsxgraph>
+                </figure>
+
+                <sidebyside widths="40% 40%" margins="auto">
+                    <figure>
+                        <caption>Domain</caption>
+                        <jsxgraph xml:id="box2_p3" />
+                    </figure>
+
+                    <figure>
+                        <caption>Range</caption>
+                        <jsxgraph xml:id="box3_p3">
+                            <input><![CDATA[
+                            var board_p3 = JXG.JSXGraph.initBoard('box_p3', {boundingbox: [-6, 8, 4, -8], axis: true,grid:true,showCopyright:false,showNavigation:false});
+                            var board2_p3 = JXG.JSXGraph.initBoard('box2_p3', {boundingbox: [-6, 8, 4, -8],axis:true,grid:true,showCopyright:false,showNavigation:false});
+                            var board3_p3 = JXG.JSXGraph.initBoard('box3_p3', {boundingbox: [-6, 8, 4, -8],axis:true,grid:true,showCopyright:false,showNavigation:false});
+                            board_p3.renderer.container.style.backgroundColor = '#ffcc99';          // background color board
+                            board2_p3.renderer.container.style.backgroundColor = '#ffcc99';
+                            board3_p3.renderer.container.style.backgroundColor = '#ffcc99';
+                            var xax1_p3 = board_p3.create('axis', [[0,0], [0,1]]);
+                            var yax1_p3 = board_p3.create('axis', [[0,0], [1,0]]);
+                            var xax2_p3 = board2_p3.create('axis', [[0,0], [0,1]]);
+                            var yax2_p3 = board2_p3.create('axis',[[0,0],[1,0]]);
+                            var xax3_p3 = board3_p3.create('axis',[[0,0], [0,1]]);
+                            var yax3_p3 = board3_p3.create('axis',[[0,0],[1,0]]);
+                            board_p3.create('ticks',[xax1_p3,[-6,-5,-4,-3,-2,-1,0,1,2,3,4]]);
+                            board_p3.create('ticks',[yax1_p3,[-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8]]);
+                            board2_p3.create('axis', [[0,0], [0,1]]);
+                            board2_p3.create('ticks',[xax2_p3,[-6,-5,-4,-3,-2,-1,0,1,2,3,4]]);
+                            board2_p3.create('ticks',[yax2_p3,[-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8]]);
+                            board3_p3.create('axis',[[0,0],[0,1]]);
+                            board3_p3.create('ticks',[xax3_p3,[-6,-5,-4,-3,-2,-1,0,1,2,3,4]]);
+                            board3_p3.create('ticks',[yax3_p3,[-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8]]);
+
+                            var f_p3 = function(x) {
+                                if (x >=-4 && x < 1) {
+                                    return -(x+2)*(x+2) + 2;
+                                }
+                                else if (x >= 1 && x <= 3) {
+                                    return x*x-x;
+                                }
+                                else {return -1000;
+                                }
+                            };
+
+                            var dfun_p3 = function(x) {
+                                if (x>=-4 && x<0.7) {
+                                    return x;
+                                }
+                                else if (x> 1.3 && x <= 3) {
+                                    return x;
+                                }
+                                else {return -1000;
+                                }
+                            };
+
+                            graph_p3=board_p3.create('functiongraph',[f_p3,-4,3],{strokeColor:'#000000'});
+                            var ep1_p3=board_p3.create('point',[-4,-2],{strokeColor:'#000000',fillColor:'#000000',name:''});
+                            var ep2_p3=board_p3.create('point',[1,-7],{strokeColor:'#000000',fillColor:'#FFFFFF',name:''});
+                            var ep3_p3=board_p3.create('point',[1,0],{strokeColor:'#000000',fillColor:'#FFFFFF',name:''});
+                            var ep4_p3=board_p3.create('point',[3,6],{strokeColor:'#000000',fillColor:'#000000',name:''});
+                            ep1_p3.setAttribute({fixed:true});
+                            ep2_p3.setAttribute({fixed:true});
+                            ep3_p3.setAttribute({fixed:true});
+                            ep4_p3.setAttribute({fixed:true});
+
+                            var s_p3 = board_p3.create('slider',[[-4.5,-7],[-1,-7],[-4,-4,3]]);
+                            var tracepoint_p3=board_p3.create('point',[function() {return dfun_p3(s_p3.Value());},function() {return f_p3(s_p3.Value());}],{name:''});
+                            // domain:
+                            var b2p1_p3 = board2_p3.create('point', [function(){return tracepoint_p3.X()},0], 
+                                        {fixed: true, trace: true, strokeColor: '#ff0000', name: 'D'});
+                            // cosine:
+                            var b2p2_p3 = board3_p3.create('point', [
+                                        0, function(){return tracepoint_p3.Y();}], 
+                                        {fixed: true, trace: true, strokeColor: '#0000ff', fillColor:'#0000ff',name: 'R'});
+                            // Dependencies (only necessary if b2p1 or b2p2 is deleted)
+
+                            board_p3.addChild(board2_p3);
+                            board_p3.addChild(board3_p3);
+
+                            function clearTraces_p3() {
+                            JXG.JSXGraph.freeBoard(board_p3);
+                            JXG.JSXGraph.freeBoard(board2_p3);
+                            JXG.JSXGraph.freeBoard(board3_p3);
+                            board_p3 = JXG.JSXGraph.initBoard('box_p3', {boundingbox: [-6, 8, 4, -8],axis: true,grid:true,showCopyright:false,showNavigation:false});
+                            board2_p3 = JXG.JSXGraph.initBoard('box2_p3', {boundingbox: [-6, 8, 4, -8],axis:true,grid:true,showCopyright:false,showNavigation:false});
+                            board3_p3 = JXG.JSXGraph.initBoard('box3_p3', {boundingbox: [-6, 8, 4, -8],axis:true,grid:true,showCopyright:false,showNavigation:false});
+                            xax1_p3 = board_p3.create('axis', [[0,0], [0,1]]);
+                            yax1_p3 = board_p3.create('axis', [[0,0], [1,0]]);
+                            xax2_p3 = board2_p3.create('axis', [[0,0], [0,1]]);
+                            yax2_p3 = board2_p3.create('axis',[[0,0],[1,0]]);
+                            xax3_p3 = board3_p3.create('axis',[[0,0], [0,1]]);
+                            yax3_p3 = board3_p3.create('axis',[[0,0],[1,0]]);
+                            board_p3.create('ticks',[xax1_p3,[-6,-5,-4,-3,-2,-1,0,1,2,3,4]]);
+                            board_p3.create('ticks',[yax1_p3,[-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8]]);
+                            board2_p3.create('axis', [[0,0], [0,1]]);
+                            board2_p3.create('ticks',[xax2_p3,[-6,-5,-4,-3,-2,-1,0,1,2,3,4]]);
+                            board2_p3.create('ticks',[yax2_p3,[-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8]]);
+                            board3_p3.create('axis',[[0,0],[0,1]]);
+                            board3_p3.create('ticks',[xax3_p3,[-6,-5,-4,-3,-2,-1,0,1,2,3,4]]);
+                            board3_p3.create('ticks',[yax3_p3,[-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8]]);
+
+                            f_p3 = function(x) {
+                                if (x >=-4 && x < 1) {
+                                    return -(x+2)*(x+2) + 2;
+                                }
+                                else if (x >= 1 && x <= 3) {
+                                    return x*x-x;
+                                }
+                                else {return -1000;
+                                }
+                            };
+
+                            dfun_p3 = function(x) {
+                                if (x>=-4 && x<0.7) {
+                                    return x;
+                                }
+                                else if (x> 1.3 && x <= 3) {
+                                    return x;
+                                }
+                                else {return -1000;
+                                }
+                            };
+
+                            graph_p3=board_p3.create('functiongraph',[f_p3,-4,3],{strokeColor:'#000000'});
+                            ep1_p3=board_p3.create('point',[-4,-2],{strokeColor:'#000000',fillColor:'#000000',name:''});
+                            ep2_p3=board_p3.create('point',[1,-7],{strokeColor:'#000000',fillColor:'#FFFFFF',name:''});
+                            ep3_p3=board_p3.create('point',[1,0],{strokeColor:'#000000',fillColor:'#FFFFFF',name:''});
+                            ep4_p3=board_p3.create('point',[3,6],{strokeColor:'#000000',fillColor:'#000000',name:''});
+                            ep1_p3.setAttribute({fixed:true});
+                            ep2_p3.setAttribute({fixed:true});
+                            ep3_p3.setAttribute({fixed:true});
+                            ep4_p3.setAttribute({fixed:true});
+                            s_p3 = board_p3.create('slider',[[-4.5,-7],[-1,-7],[-4,-4,3]]);
+                            tracepoint_p3=board_p3.create('point',[function() {return dfun_p3(s_p3.Value());},function() {return f_p3(s_p3.Value());}],{name:''});// domain:
+                            b2p1_p3 = board2_p3.create('point', [function(){return tracepoint_p3.X()},0], 
+                                         {fixed: true, trace: true, strokeColor: '#ff0000', name: 'D'});
+                            // cosine:
+                            b2p2_p3 = board3_p3.create('point', [
+                                         0, function(){return tracepoint_p3.Y();}], 
+                                         {fixed: true, trace: true, strokeColor: '#0000ff', fillColor:'#0000ff',name: 'R'});
+                            // Dependencies (only necessary if b2p1 or b2p2 is deleted)
+
+                            board_p3.addChild(board2_p3);
+                            board_p3.addChild(board3_p3);
+                            }
+                            // Animation
+                            var animated = false;
+                            function animate_p3(point, direction, count) {
+                               if(animated) {
+                                  point.stopAnimation();
+                                  animated = false;
+                               } else {
+                                  point.startAnimation(direction, count);
+                                  animated = true;
+                               }
+                            }
+                            // Generic Hide/Show
+                            function toggle(id) {
+                                    var state = document.getElementById(id).style.display;
+                                        if (state == 'block') {
+                                            document.getElementById(id).style.display = 'none';
+                                        } else {
+                                            document.getElementById(id).style.display = 'block';
+                                        }
+                                    }
+                            ]]>
+                            </input>
+                        </jsxgraph>
+                    </figure>
+                </sidebyside>
+
+                <p>Be careful about the Javascript code when there are several on the same page, as duplicate variables may affect one another's performance adversely.</p>
             </subsection>
         </section>
 
-        <section>
+        <section xml:id="section-video">
             <title>Video</title>
 
             <p>First, a gratuitous reference to Exercise<nbsp /><xref ref="exercises-cosine-derivative" /> about the derivative of a cosine.</p>
@@ -3564,7 +3913,7 @@ the xsltproc executable.
 
             <p>YouTube<idx><h>YouTube videos</h></idx><idx><h>videos</h><h>YouTube</h></idx> videos may be embedded with only knowledge of the <q>ID</q>.  This a string of eleven seemingly random characters that show up in the URL when you watch a video.  For the Led Zeppelin performance below, the ID is <c>hAzdgU_kpGo</c>, which you might normally watch directly from the URL <url href="https://www.youtube.com/watch?v=hAzdgU_kpGo" />.  Screen real estate is determined by specifying an optional <c>@width</c> attribute as a percentage, and aspect ratio is preserved on the assumption of HD video (16:9).</p>
 
-            <p>Enhancements could include other aspect ratios, and attributes for a start and stop time.</p>
+            <p>Enhancements will include other aspect ratios.</p>
 
             <p>These may be placed <q>standalone</q> in a <c>&lt;sidebyside&gt;</c>, but are designed mostly on the assumption that they are wrapped in a <c>figure</c> with a <c>title</c> (which is distinct from a <c>caption</c>).</p>
 
@@ -3592,6 +3941,107 @@ the xsltproc executable.
                 <video youtube="VsHMjWORFvI" start="54" end="72" />
             </figure>
 
+            <p>We can pack two videos side-by-side, with a lot of horizontal control, using two panels in the <c>sidebyside</c> element.  We have simply chose not to provide a caption (overall, or separately) as an illustration.  The sizes are purposely a bit odd.  See <xref ref="section-side-by-side" text="type-global" /> for much more on side-by-side panels.  These videos come from the <q>Topic</q> and <q>VEVO</q> areas of YouTube (respectively) and both have start/end times.</p>
+
+            <sidebyside margins="auto" widths="20% 40%" valign="middle">
+                <!-- Liza Minelli -->
+                <video xml:id="minelli-newyork-newyork" youtube="5-pyc_z7WbY" start="16" end="35" />
+                <!-- Sara Bareilles -->
+                <video xml:id="bareilles-love-song" youtube="qi7Yh16dA0w" start="60" end="120" />
+            </sidebyside>
+
+            <p>These next two videos are evenly spaced, one from YouTube, one from a source file hosted by the author.  Now with separate captions, but identical margins (through very different choices of layout parameters).</p>
+
+            <sidebyside margins="10%" widths="35% 35%">
+                <!-- drone flight again-->
+                <figure>
+                    <caption>Drone Flight</caption>
+                    <video xml:id="drone-flight-sbs" youtube="VsHMjWORFvI" />
+                </figure>
+                <!-- UPS promo -->
+                <figure>
+                    <caption>UPS Promo</caption>
+                    <video xml:id="ups-promo-sbs" source="images/ups-visitor-guide-360" />
+                </figure>
+            </sidebyside>
+
+            <p>Videos may be embedded, or popped-out to play in a new window or tab (at greater width), or a link will give the reader the option to choose either style of playback.  The automatic pop-out option requires a static thumbnail image is available.  (For YouTube, these iamges can be obtained automatically with the <c>mbx</c> script.)</p>
+
+            <figure>
+                <caption>YouTube Play Location Options (<c>play-at</c> attribute)</caption>
+                <sidebyside margins="0%" width="30%">
+                    <figure>
+                        <caption>Embedded Only</caption>
+                        <video xml:id="pre-roll-countdown-1" youtube="gFHQ6Y0nxWs" play-at="embed" />
+                    </figure>
+                    <figure>
+                        <caption>Pop-Out Only, w/ Start/End</caption>
+                        <video xml:id="pre-roll-countdown-2" youtube="gFHQ6Y0nxWs" start="2" end="4" play-at="popout" />
+                    </figure>
+                    <figure>
+                        <caption>User Selection</caption>
+                        <video xml:id="pre-roll-countdown-3" youtube="gFHQ6Y0nxWs" play-at="select" />
+                    </figure>
+                </sidebyside>
+            </figure>
+
+            <p>Each of the three options above may have a generic play button placed over the one provided by the video.</p>
+
+            <figure>
+                <caption>YouTube with Generic Preview</caption>
+                <sidebyside margins="0%" width="30%">
+                    <figure>
+                        <caption>Embedded Only</caption>
+                        <video xml:id="pre-roll-countdown-4" youtube="gFHQ6Y0nxWs" play-at="embed" preview="generic" />
+                    </figure>
+                    <figure>
+                        <caption>Pop-Out Only, w/ Start/End</caption>
+                        <video xml:id="pre-roll-countdown-5" youtube="gFHQ6Y0nxWs" start="2" end="4" play-at="popout" preview="generic" />
+                    </figure>
+                    <figure>
+                        <caption>User Selection</caption>
+                        <video xml:id="pre-roll-countdown-6" youtube="gFHQ6Y0nxWs" play-at="select" preview="generic" />
+                    </figure>
+                </sidebyside>
+            </figure>
+
+            <p>Now, the six combinations above with an author-hosted video.</p>
+
+            <figure>
+                <caption>Author-Hosted Play Location Options (<c>play-at</c> attribute)</caption>
+                <sidebyside margins="0%" width="30%">
+                    <figure>
+                        <caption>Embedded Only</caption>
+                        <video xml:id="ups-promo-1" source="images/ups-visitor-guide-360" play-at="embed" />
+                    </figure>
+                    <figure>
+                        <caption>Pop-Out Only, w/ Start/End</caption>
+                        <video xml:id="ups-promo-2" source="images/ups-visitor-guide-360" start="15" end="21" play-at="popout" />
+                    </figure>
+                    <figure>
+                        <caption>User Selection</caption>
+                        <video xml:id="ups-promo-3" source="images/ups-visitor-guide-360" play-at="select" />
+                    </figure>
+                </sidebyside>
+            </figure>
+
+            <figure>
+                <caption>Author-Hosted, Generic Preview, Experimental Aspect Ratios</caption>
+                <sidebyside margins="0%" width="30%">
+                    <figure>
+                        <caption>Embedded Only</caption>
+                        <video xml:id="ups-promo-4" source="images/ups-visitor-guide-360" play-at="embed" preview="generic" aspect="4:3"/>
+                    </figure>
+                    <figure>
+                        <caption>Pop-Out Only, w/ Start/End</caption>
+                        <video xml:id="ups-promo-5" source="images/ups-visitor-guide-360" start="15" end="21" play-at="popout" preview="generic" aspect=".40"/>
+                    </figure>
+                    <figure>
+                        <caption>User Selection</caption>
+                        <video xml:id="ups-promo-6" source="images/ups-visitor-guide-360" play-at="select" preview="generic" aspect="1.05" />
+                    </figure>
+                </sidebyside>
+            </figure>
         </section>
 
         <exercises xml:id="exercises">
@@ -3729,6 +4179,7 @@ the xsltproc executable.
                 <li><p>An activity with full details following: <xref ref="activity-with-hint-answer-solution" /></p></li>
                 <li><p>An interactive program inside a program listing, to test if the Javascript will execute properly within a knowl: <xref ref="program-interactive" /></p></li>
                 <li><p>A cross-reference to a block quotation (which is never numbered): <xref ref="blockquote-seuss" text="title">Quote by Dr Seuss</xref></p></li>
+                <li><p>A <c>type-global</c> cross-reference to a second-level <c>task</c> within a project: <xref ref="project-task-level-two" text="type-global" />, the encompassing <c>project</c>: <xref ref="project-structured" />, and a <c>local</c> reference <xref ref="project-task-level-two" text="local" />.</p></li>
                 <!-- <li><p>: <xref ref="" /></p></li> -->
             </ul></p>
 
@@ -3979,7 +4430,7 @@ the xsltproc executable.
                 <pre>
                     <cline>  &#x00A1; &#x00A2; &#x00A3; &#x00A4; &#x00A5; &#x00A6; &#x00A7; &#x00A8; &#x00A9; &#x00AA; &#x00AB; &#x00AC;   &#x00AE; &#x00AF;</cline>
                     <cline>&#x00B0; &#x00B1; &#x00B2; &#x00B3; &#x00B4; &#x00B5; &#x00B6; &#x00B7; &#x00B8; &#x00B9; &#x00BA; &#x00BB; &#x00BC; &#x00BD; &#x00BE; &#x00BF;</cline>
-                    <cline>&#x0040; &#x0041; &#x0042; &#x0043; &#x0044; &#x0045; &#x0046; &#x0047; &#x0048; &#x0049; &#x004A; &#x004B; &#x004C; &#x004D; &#x004E; &#x004F;</cline>
+                    <cline>&#x00C0; &#x00C1; &#x00C2; &#x00C3; &#x00C4; &#x00C5; &#x00C6; &#x00C7; &#x00C8; &#x00C9; &#x00CA; &#x00CB; &#x00CC; &#x00CD; &#x00CE; &#x00CF;</cline>
                     <cline>&#x00D0; &#x00D1; &#x00D2; &#x00D3; &#x00D4; &#x00D5; &#x00D6; &#x00D7; &#x00D8; &#x00D9; &#x00DA; &#x00DB; &#x00DC; &#x00DD; &#x00DE; &#x00DF;</cline>
                     <cline>&#x00E0; &#x00E1; &#x00E2; &#x00E3; &#x00E4; &#x00E5; &#x00E6; &#x00E7; &#x00E8; &#x00E9; &#x00EA; &#x00EB; &#x00EC; &#x00ED; &#x00EE; &#x00EF;</cline>
                     <cline>&#x00F0; &#x00F1; &#x00F2; &#x00F3; &#x00F4; &#x00F5; &#x00F6; &#x00F7; &#x00F8; &#x00F9; &#x00FA; &#x00FB; &#x00FC; &#x00FD; &#x00FE; &#x00FF;</cline>
@@ -3987,14 +4438,16 @@ the xsltproc executable.
 
                 <p>The <c>console</c> tag is also implemented with <c>fancyvrb</c>, with adjustments for the input lines.  It will not look like it, but these are 8 such inputs, with similar results to above, but now bolded.</p>
 
-                <console>
-                    <input>  &#x00A1; &#x00A2; &#x00A3; &#x00A4; &#x00A5; &#x00A6; &#x00A7; &#x00A8; &#x00A9; &#x00AA; &#x00AB; &#x00AC;   &#x00AE; &#x00AF;</input>
-                    <input>&#x00B0; &#x00B1; &#x00B2; &#x00B3; &#x00B4; &#x00B5; &#x00B6; &#x00B7; &#x00B8; &#x00B9; &#x00BA; &#x00BB; &#x00BC; &#x00BD; &#x00BE; &#x00BF;</input>
-                    <input>&#x0040; &#x0041; &#x0042; &#x0043; &#x0044; &#x0045; &#x0046; &#x0047; &#x0048; &#x0049; &#x004A; &#x004B; &#x004C; &#x004D; &#x004E; &#x004F;</input>
-                    <input>&#x00D0; &#x00D1; &#x00D2; &#x00D3; &#x00D4; &#x00D5; &#x00D6; &#x00D7; &#x00D8; &#x00D9; &#x00DA; &#x00DB; &#x00DC; &#x00DD; &#x00DE; &#x00DF;</input>
-                    <input>&#x00E0; &#x00E1; &#x00E2; &#x00E3; &#x00E4; &#x00E5; &#x00E6; &#x00E7; &#x00E8; &#x00E9; &#x00EA; &#x00EB; &#x00EC; &#x00ED; &#x00EE; &#x00EF;</input>
-                    <input>&#x00F0; &#x00F1; &#x00F2; &#x00F3; &#x00F4; &#x00F5; &#x00F6; &#x00F7; &#x00F8; &#x00F9; &#x00FA; &#x00FB; &#x00FC; &#x00FD; &#x00FE; &#x00FF;</input>
-                </console>
+                <sidebyside margins="0%">
+                    <console>
+                        <input>  &#x00A1; &#x00A2; &#x00A3; &#x00A4; &#x00A5; &#x00A6; &#x00A7; &#x00A8; &#x00A9; &#x00AA; &#x00AB; &#x00AC;   &#x00AE; &#x00AF;</input>
+                        <input>&#x00B0; &#x00B1; &#x00B2; &#x00B3; &#x00B4; &#x00B5; &#x00B6; &#x00B7; &#x00B8; &#x00B9; &#x00BA; &#x00BB; &#x00BC; &#x00BD; &#x00BE; &#x00BF;</input>
+                        <input>&#x00C0; &#x00C1; &#x00C2; &#x00C3; &#x00C4; &#x00C5; &#x00C6; &#x00C7; &#x00C8; &#x00C9; &#x00CA; &#x00CB; &#x00CC; &#x00CD; &#x00CE; &#x00CF;</input>
+                        <input>&#x00D0; &#x00D1; &#x00D2; &#x00D3; &#x00D4; &#x00D5; &#x00D6; &#x00D7; &#x00D8; &#x00D9; &#x00DA; &#x00DB; &#x00DC; &#x00DD; &#x00DE; &#x00DF;</input>
+                        <input>&#x00E0; &#x00E1; &#x00E2; &#x00E3; &#x00E4; &#x00E5; &#x00E6; &#x00E7; &#x00E8; &#x00E9; &#x00EA; &#x00EB; &#x00EC; &#x00ED; &#x00EE; &#x00EF;</input>
+                        <input>&#x00F0; &#x00F1; &#x00F2; &#x00F3; &#x00F4; &#x00F5; &#x00F6; &#x00F7; &#x00F8; &#x00F9; &#x00FA; &#x00FB; &#x00FC; &#x00FD; &#x00FE; &#x00FF;</input>
+                    </console>
+                </sidebyside>
 
             </paragraphs>
 
@@ -4067,59 +4520,67 @@ the xsltproc executable.
 
             <p>Sage cells can be used for Python examples, but Sage uses a mild amount of pre-parsing, so that might not be a wise decision, especially in instructional settings.  We might implement Skulpt or Brython (in-browser Python) or the Python language argument to the Sage Cell Server.  To see examples of authoring Sage cells, have a look at Section<nbsp /><xref ref="section-sage-cells" />.</p>
 
-            <p>In the meantime, program listings,<idx><h>listing</h></idx><idx><h>program listing</h></idx> especially with syntax highlighting, is useful all by itself.  The <q>R</q> language might not be a bad stand-in for pseudo-code, as it supports assignment with a left arrow and has fairly generic procedural syntax for control structures and data structures.  Or maybe Pascal would be a good choice?  Here is an example of R.  Note in the source that the entire block of code is wrapped in a CDATA section due to the four left angle brackets.</p>
+            <p>In the meantime, program listings,<idx><h>listing</h></idx><idx><h>program listing</h></idx> especially with syntax highlighting, is useful all by itself.  The <q>R</q> language might not be a bad stand-in for pseudo-code, as it supports assignment with a left arrow and has fairly generic procedural syntax for control structures and data structures.  Or maybe Pascal would be a good choice?  Here is an example of R.  Note in the source that the entire block of code is wrapped in a CDATA section due to the four left angle brackets.  We do not recommend this technique for isolated problem characters, but it is a life-saver for situations like the <init>XSLT</init> code just following.</p>
 
             <!-- Output in knowls?? -->
 
             <!-- Comments edited for length                                                         -->
             <!-- http://connectmv.com/tutorials/r-tutorial/programming-in-r-loops-and-flow-control/ -->
-            <program language="r">
-                <input>
-                <![CDATA[n_loops <- 10
-                x.means <- numeric(n_loops)  # create a vector of zeros for results
-                for (i in 1:n_loops){
-                    x <- as.integer(runif(100, 1, 7))  # 1 to 6, uniformly
-                    x.means[i] <- mean(x)
-                }
-                x.means]]>
-                </input>
-            </program>
+            <sidebyside width="100%">
+                <program language="r">
+                    <input>
+                    <![CDATA[n_loops <- 10
+                    x.means <- numeric(n_loops)  # create a vector of zeros for results
+                    for (i in 1:n_loops){
+                        x <- as.integer(runif(100, 1, 7))  # 1 to 6, uniformly
+                        x.means[i] <- mean(x)
+                    }
+                    x.means]]>
+                    </input>
+                </program>
+            </sidebyside>
 
             <p>And some self-referential XSL:</p>
 
-            <program language="xslt">
-                <input>
-                <![CDATA[<xsl:template match="biblio" mode="number">
-                    <xsl:apply-templates select="." mode="structural-number" />
-                    <xsl:text>.</xsl:text>
-                    <xsl:number from="references" level="any" count="biblio" />
-                </xsl:template>]]>
-                </input>
-            </program>
+            <sidebyside margins="15%">
+                <program language="xslt">
+                    <input>
+                    <![CDATA[<xsl:template match="biblio" mode="number">
+                        <xsl:apply-templates select="." mode="structural-number" />
+                        <xsl:text>.</xsl:text>
+                        <xsl:number from="references" level="any" count="biblio" />
+                    </xsl:template>]]>
+                    </input>
+                </program>
+            </sidebyside>
 
             <p>You can write made-up pseudo-code and get reasonable syntax highlighting, but you might explain to a reader what your symbols all mean.  This routine takes the <m>m\times n</m> marix <m>A</m> to reduced row-echelon form.  Note in the source the use of escaped characters for the four angle brackets.</p>
 
-            <program>
-                <input>
-                input m, n and A
-                r := 0
-                for j := 1 to n
-                   i := r+1
-                   while i &lt;= m and A[i,j] == 0
-                       i := i+1
-                   if i &lt; m+1
-                       r := r+1
-                       swap rows i and r of A (row op 1)
-                       scale A[r,j] to a leading 1 (row op 2)
-                       for k := 1 to m, k &lt;&gt; r
-                           make A[k,j] zero (row op 3, employing row r)
-                output r and A
-                </input>
-            </program>
+            <sidebyside margins="5%">
+                <program>
+                    <input>
+                    input m, n and A
+                    r := 0
+                    for j := 1 to n
+                       i := r+1
+                       while i &lt;= m and A[i,j] == 0
+                           i := i+1
+                       if i &lt; m+1
+                           r := r+1
+                           swap rows i and r of A (row op 1)
+                           scale A[r,j] to a leading 1 (row op 2)
+                           for k := 1 to m, k &lt;&gt; r
+                               make A[k,j] zero (row op 3, employing row r)
+                    output r and A
+                    </input>
+                </program>
+            </sidebyside>
 
             <p>Look in the <c>mathbook-common.xsl</c> file to see the strings to use to identify languages.  Always all-lowercase, no symbols, no punctuation.</p>
 
-            <p>A <c>program</c> may be nested inside a <c>listing</c>, which behaves similar to a <c>figure</c>.  You can provide a <c>caption</c>, and the listing will be numbered along with tables and figures.  This then makes it possible to cross-reference the listing, such as <xref ref="listing-c-hello" text="type-global" />.</p>
+            <p>Note that the above examples all have slightly different widths (theser are very evident in print with the frames).  As 2-D atomic objects, to place them in the narrative requires the layout features of a <c>sidebyside</c> element.  Then <c>width</c> and/or <c>margin</c> attributes will influence the width of the panel.</p>
+
+            <p>A <c>program</c> may also be nested inside a <c>listing</c>, which behaves similar to a <c>figure</c>.  You can provide a <c>caption</c>, and the listing will be numbered along with tables and figures.  This then makes it possible to cross-reference the listing, such as <xref ref="listing-c-hello" text="type-global" />.  It also removes the requirement of wrapping the <c>program</c> in a <c>sidebyside</c>.  For technical reasons, the three examples above will not split across a page break in PDF output, but the placement inside a <c>listing</c> will allow splits, as you should see in at least one example following.</p>
 
             <listing xml:id="listing-c-hello">
                 <caption>C Version of <q>Hello, World!</q></caption>
@@ -4175,7 +4636,7 @@ the xsltproc executable.
                 <p>This is a proof that is authored <q>detached.</q>  It is not associated with the theorem above in a way other than simply following it.</p>
             </proof>
 
-            <p>A specialized version of a program listing is an interactive command/response session at a command-line, where differing fonts are used to differentiate the system prompt, the user's commands, and the system's reaction.  A   <c>console</c> session may be used by itself, or it can be wrapped in a listing to get a number and a caption.  As elsewhere, you will need to escape ampersands and angle brackets (such as if you have a command using redirection), using <c>&amp;amp;</c>, <c>&amp;lt;</c>, and <c>&amp;gt;</c> in your source.</p>
+            <p>A specialized version of a program listing is an interactive command/response session at a command-line, where differing fonts are used to differentiate the system prompt, the user's commands, and the system's reaction.  A   <c>console</c> session may be used by itself inside a <c>sidebyside</c>, or it can be wrapped in a listing to get a number and a caption.  As elsewhere, you will need to escape ampersands and angle brackets (such as if you have a command using redirection), using <c>&amp;amp;</c>, <c>&amp;lt;</c>, and <c>&amp;gt;</c> in your source.</p>
 
             <listing xml:id="console-raspberry-pi">
                 <caption>Console Session: <c>int</c> and <c>float</c></caption>
@@ -4191,6 +4652,22 @@ the xsltproc executable.
                     <input />
                 </console>
             </listing>
+
+            <p>Here is the plain version, placed inside a <c>sidebyside</c> for layout control.  We simply place a small margin on the left (at 4<percent />).</p>
+
+            <sidebyside margins="4%">
+                <console>
+                    <prompt>pi@raspberrypi ~/progs/chap02 $ </prompt>
+                    <input>gcc -Wall -o intAndFloat intAndFloat.c</input>
+                    <prompt>pi@raspberrypi ~/progs/chap02 $ </prompt>
+                    <input>./intAndFloat</input>
+                    <output>
+                    The integer is 19088743 and the float is 19088.742188
+                    </output>
+                    <prompt>pi@raspberrypi ~/progs/chap02 $ </prompt>
+                    <input />
+                </console>
+            </sidebyside>
 
             <p>If your console input exceeds more than one line, you can author it across several lines and your choice of line breaks will be reflected in the rendering.  You can decide to indent lines after the first one for clarity, if desired.  You can also decide if your audience needs line-continuation characters or not.  (But be careful, a backslash, <q><c>\</c>,</q> will require you to define the <c>latex.console.macro-char</c> xsltproc stringparam to something else, as explained below.)</p>
 
@@ -4519,7 +4996,43 @@ the xsltproc executable.
                     </tabular>
                 </table>
             </subsection>
+            
+            <subsection>
+                <title>A Single Captionless Image</title>
 
+                <p>Sometimes you may want to include a single <c>image</c> or <c>table</c> in an example or exercise without a caption. You can also achieve this using <c>sidebyside</c>. The first has width <c>10%</c>, and the second has width <c>10%</c> and margins <c>25%</c>.</p>
+                    
+                <sidebyside width="10%">
+                    <image source="images/cross-square.png"/>
+                </sidebyside>
+
+                <p>A paragraph, just to show where the first stops and the second ends.</p> 
+
+                <sidebyside width="10%" margins="25%">
+                    <image source="images/cross-square.png"/>
+                </sidebyside>
+
+                <p>You might wish to place a single image flush-left, or flush-right.  You can specify the <c>margins</c> attribute as a pair of percentages for different left and right margins.  The following are laid out with two margins, with a 0<percent /> left margin and right margin (respectively). </p>
+
+                <sidebyside width="10%" margins="0% 90%">
+                    <image source="images/cross-square.png"/>
+                </sidebyside>
+
+                <sidebyside width="10%" margins="90% 0%">
+                    <image source="images/cross-square.png"/>
+                </sidebyside>
+
+                <p>Results will be incorrect for the latter if the widths of the left margin and the panel do not add to 100<percent />.</p>
+
+                <p>Of course, asymmetric margins may be used with several panels.  The following is designed to leave a 25<percent /> gap between the two panels.</p>
+
+                <sidebyside width="10%" margins="45% 10%">
+                    <image source="images/cross-square.png"/>
+                    <image source="images/cross-square.png"/>
+                </sidebyside>
+
+            </subsection>
+            
             <subsection>
                 <title>Vertical Alignment</title>
                 <p>Vertical alignment can be specified using the <c>valign</c> attribute which admits a space-separated list of <c>top</c>, <c>middle</c>, and <c>bottom</c>; the default is <c>top</c>.</p>
@@ -5023,7 +5536,7 @@ the xsltproc executable.
                     <caption>Two named lists</caption>
                     <sidebyside widths="30% 60%" valign="top">
                         <list>
-                            <title>Sea Life</title>
+                            <caption>Sea Life</caption>
                             <introduction>
                                 <p>Dr. Seuss again.</p>
                             </introduction>
@@ -5035,7 +5548,7 @@ the xsltproc executable.
                             </ul>
                         </list>
                         <list xml:id="color-list-as-panel">
-                            <title>Color Shades</title>
+                            <caption>Color Shades</caption>
                             <idx><h>colors</h><h>shades</h></idx>
                             <ol>
                                 <li><p>Blue<ol>
@@ -5055,6 +5568,20 @@ the xsltproc executable.
                         </list>
                     </sidebyside>
                 </figure>
+
+                <p>We also need to test a <c>sidebyside</c> in a list.  The widths are now relative to the space given over to an indented item.  Here we nest and nest and nest and nest to get a big, obvious indentation, and then include an image at 100<percent /> width and no margin.  In your mind's eye, or with a ruler, check that the image spans all the way over to the right margin.<ol>
+                    <li><p>This is<ol>
+                        <li><p>a very<ol>
+                            <li><p>wide<ol>
+                                    <li><p>rectangle</p>
+                                        <sidebyside margins="0%" width="100%" >
+                                            <image source="images/cross-rectangle.png" />
+                                        </sidebyside>
+                                    </li>
+                            </ol></p></li>
+                        </ol></p></li>
+                    </ol></p></li>
+                </ol></p>
             </subsection>
 
             <subsection xml:id="subsection-sbs-other-panels">
@@ -5211,7 +5738,7 @@ the xsltproc executable.
                 </sidebyside>
             </subsection>
 
-            <subsection>
+            <subsection xml:id="subsection-sbsgroup">
                 <title>Side-By-Side Groups</title>
 
                 <p>A <q>side-by-side group,</q> <c>&lt;sbsgroup&gt;</c>, is still in development.  (Notably, subcaptions do not behave as expected.)  It is a sequence of <c>sidebyside</c>, which may conceivably use the same margins, widths and vertical alignments for each horizontal run of panels.  Attributes on the <c>sbsgroup</c> are global to the group's enclosed <c>sidebyside</c>, and will be used by each contained <c>sidebyside</c>.  If attributes are present on an individual <c>sidebyside</c>, they override the global values.  The next two examples demonstrate some of this behavior, in a limited way.</p>
@@ -5536,59 +6063,181 @@ the xsltproc executable.
                     <image source="images/cross-square.png" width="20%" />
                 </figure>
             </subsection>
+        </section>
 
-            <subsection>
-                <title>Gallery</title>
-                <!-- 
-                Temporary Notes on Gallery construction
-                No Number: Done -  Paragraph | Paragraphs | List | Preformatted | Poem | Tabular | Image  
-                No Number: To Do - (allowed in figure: Video | JSXGraph | MuseScore)
+        <section>
+            <title>Side-by-Side Gallery</title>
 
-                Needs work: Program | Console (LaTeX side only?)
+            <p>This subsection attempts to survey all the possible items that can be placed into a <c>sidebyside</c> element, in various combinations.  While intended to be exhaustive across contents, it does not test all possibilities, and is not meant to be instructive (see <xref ref="section-side-by-side" text="type-global" /> for that). The layout is identical for each <c>sidebyside</c>, 5<percent /> margins, panel widths of 40<percent /> and 45<percent />, leaving 5<percent /> for the space between the panels.  The vertical alignment is left at the default, <c>top</c>.</p>
 
-                Captioned (sort of) NamedList | Figure (figure table listing)
-                 -->
-                <p>This subsection has.............The layout is identical for each <c>sidebyside</c>, 5<percent /> margins, panel widths of 40<percent /> and 45<percent />, leaving 5<percent /> for the space between the panels.  The vertical alignment is left at the default, <c>top</c>.</p>
+            <p>We begin with <q>simpler</q> atomic items.  If necessary, comments follow each.</p>
 
-                <p>We begin with <q>simpler</q> atomic items.  If necessary, comments follow each.</p>
+            <figure>
+                <caption>Single <c>p</c> (left), <c>paragraphs</c> (right)</caption>
+                <sidebyside margins="5%" widths="40% 45%">
+                    <p>Vestibulum sit amet est non lacus accumsan iaculis aliquam nec leo. Maecenas placerat consequat quam, a lobortis odio convallis vitae. Curabitur sagittis, risus non suscipit pulvinar, enim tortor posuere purus, id dignissim sapien sapien non dui. Vestibulum ultrices, enim a ornare consectetur, nisl est iaculis arcu, eget scelerisque nunc magna a nisl. Vestibulum vestibulum ante sit amet ex vulputate, eu facilisis sapien tempor.</p>
+                    <paragraphs>
+                        <title>Lorem Ipsum</title>
+                        <p>Aliquam dui nisi, pharetra id enim vel, imperdiet laoreet risus. Nunc convallis elit eu erat imperdiet tincidunt. Sed eget augue et nunc mollis tempor. Suspendisse luctus elit non lorem scelerisque, nec lacinia lectus dictum.</p>
+                        <p>Vivamus ut orci nisl. Donec eleifend ultricies tortor, a pellentesque neque dignissim in. Praesent maximus, augue eu pretium auctor, dolor quam feugiat augue, ut vulputate nunc eros vitae massa. Phasellus quis ante quis est venenatis dapibus eget luctus ipsum.</p>
+                    </paragraphs>
+                </sidebyside>
+            </figure>
 
-                <figure>
-                    <caption>Single <c>p</c> (left), <c>paragraphs</c> (right)</caption>
-                    <sidebyside margins="5%" widths="40% 45%">
-                        <p>Vestibulum sit amet est non lacus accumsan iaculis aliquam nec leo. Maecenas placerat consequat quam, a lobortis odio convallis vitae. Curabitur sagittis, risus non suscipit pulvinar, enim tortor posuere purus, id dignissim sapien sapien non dui. Vestibulum ultrices, enim a ornare consectetur, nisl est iaculis arcu, eget scelerisque nunc magna a nisl. Vestibulum vestibulum ante sit amet ex vulputate, eu facilisis sapien tempor.</p>
-                        <paragraphs>
-                            <title>Lorem Ipsum</title>
-                            <p>Aliquam dui nisi, pharetra id enim vel, imperdiet laoreet risus. Nunc convallis elit eu erat imperdiet tincidunt. Sed eget augue et nunc mollis tempor. Suspendisse luctus elit non lorem scelerisque, nec lacinia lectus dictum.</p>
-                            <p>Vivamus ut orci nisl. Donec eleifend ultricies tortor, a pellentesque neque dignissim in. Praesent maximus, augue eu pretium auctor, dolor quam feugiat augue, ut vulputate nunc eros vitae massa. Phasellus quis ante quis est venenatis dapibus eget luctus ipsum.</p>
-                        </paragraphs>
-                    </sidebyside>
-                </figure>
+            <figure>
+                <caption>An <c>ol</c> with simple items, a <c>ul</c> with items with paragraphs</caption>
+                <sidebyside margins="5%" widths="40% 45%">
+                    <ol>
+                        <li>Blue</li>
+                        <li>Red</li>
+                        <li>Green</li>
+                        <li>Purple</li>
+                        <li>Violet</li>
+                        <li>Brown</li>
+                    </ol>
+                    <ul>
+                        <li><p>Vestibulum sit amet est non lacus accumsan iaculis aliquam nec leo. Maecenas placerat consequat quam, a lobortis odio convallis vitae.</p>
+                        <p>Curabitur sagittis, risus non suscipit pulvinar, enim tortor posuere purus, id dignissim sapien sapien non dui.</p></li>
+                        <li><p>Vestibulum ultrices, enim a ornare consectetur, nisl est iaculis arcu, eget scelerisque nunc magna a nisl.</p>
+                        <p>Vestibulum vestibulum ante sit amet ex vulputate, eu facilisis sapien tempor.</p></li>
+                    </ul>
+                </sidebyside>
+            </figure>
 
+            <figure>
+                <caption>A <c>program</c> and a <c>console</c></caption>
+                <sidebyside margins="5%" widths="40% 45%">
+                    <program language="r">
+                        <input>
+                        n_loops &lt;- 10
+                        x.means &lt;- numeric(n_loops)
+                        for (i in 1:n_loops){
+                            x &lt;- as.integer(runif(100, 1, 7))
+                            x.means[i] &lt;- mean(x)
+                        }
+                        x.means
+                        </input>
+                    </program>
+                    <console>
+                        <prompt>pi@rpi ~$ </prompt>
+                        <input>gcc -o intAndFloat intAndFloat.c</input>
+                        <prompt>pi@rpi ~$ </prompt>
+                        <input>./intAndFloat</input>
+                        <output>
+                        19088743 (integer) and 19088.742188 (float)
+                        </output>
+                        <prompt>pi@rpi ~$ </prompt>
+                        <input />
+                    </console>
+                </sidebyside>
+            </figure>
 
-                <figure>
-                    <caption>An <c>ol</c> with simple items, a <c>ul</c> with items with paragraphs</caption>
-                    <sidebyside margins="5%" widths="40% 45%">
-                        <ol>
-                            <li>Blue</li>
-                            <li>Red</li>
-                            <li>Green</li>
-                            <li>Purple</li>
-                            <li>Violet</li>
-                            <li>Brown</li>
-                        </ol>
-                        <ul>
-                            <li><p>Vestibulum sit amet est non lacus accumsan iaculis aliquam nec leo. Maecenas placerat consequat quam, a lobortis odio convallis vitae.</p>
-                            <p>Curabitur sagittis, risus non suscipit pulvinar, enim tortor posuere purus, id dignissim sapien sapien non dui.</p></li>
-                            <li><p>Vestibulum ultrices, enim a ornare consectetur, nisl est iaculis arcu, eget scelerisque nunc magna a nisl.</p>
-                            <p>Vestibulum vestibulum ante sit amet ex vulputate, eu facilisis sapien tempor.</p></li>
-                        </ul>
-                    </sidebyside>
-                </figure>
+            <p>Note that these two chunks of verbatim text will very likely exceed the right side of a too-skinny panel.  We have severly edited these two examples from previous appearances just to fit here.</p>
 
+            <figure>
+                <caption>An <c>poem</c> and a <c>tabular</c></caption>
+                <sidebyside margins="5%" widths="40% 45%">
+                    <poem>
+                        <title>To A Friend Whose Work Has Come To Nothing</title>
+                        <author>William Butler Yeats</author>
+                        <stanza>
+                            <line>Now all the truth is out,</line>
+                            <line>Be secret and take defeat</line>
+                            <line>From any brazen throat,</line>
+                            <line>For how can you compete,</line>
+                            <line>Being honour bred, with one</line>
+                            <line>Who, were it proved he lies,</line>
+                            <line>Were neither shamed in his own</line>
+                            <line>Nor in his neighbours' eyes?</line>
+                            <line>Bred to a harder thing</line>
+                            <line>Than Triumph, turn away</line>
+                            <line>And like a laughing string</line>
+                            <line>Whereon mad fingers play</line>
+                            <line>Amid a place of stone,</line>
+                            <line>Be secret and exult,</line>
+                            <line>Because of all things known</line>
+                            <line>That is most difficult.</line>
+                        </stanza>
+                    </poem>
+                    <tabular>
+                        <row bottom="major">
+                             <cell>Organism</cell><cell>Classification</cell>
+                         </row>
+                        <row><cell>Trout</cell><cell>Fish</cell></row>
+                        <row><cell>Monkey</cell><cell>Mammal</cell></row>
+                        <row><cell>Crow</cell><cell>Bird</cell></row>
+                        <row><cell>Crimini</cell><cell>Fungus</cell></row>
+                        <row><cell>Bee</cell><cell>Insect</cell></row>
+                    </tabular>
+                </sidebyside>
+            </figure>
 
-                <figure>
-                    <caption>A <c>program</c> and a <c>console</c></caption>
-                    <sidebyside margins="5%" widths="40% 45%">
+            <p>A <c>tabular</c> can exceed the width of its panel in print, while in <c>HTML</c> it may reflow individual cells to stay within a panel, depending on their contents.</p>
+
+            <figure>
+                <caption>A <c>pre</c>, and a <c>pre</c> employing <c>cline</c></caption>
+                <sidebyside margins="5%" widths="40% 45%">
+                    <pre>
+                    Vestibulum sit amet est non
+                        lacus accumsan iaculis
+                    aliquam nec leo. Maecenas
+                    placerat consequat quam, a
+                    lobortis odio convallis
+                    vitae.
+                    </pre>
+                    <pre>
+                        <cline>Vestibulum sit amet est non</cline>
+                        <cline>    lacus accumsan iaculis</cline>
+                        <cline>aliquam nec leo. Maecenas</cline>
+                        <cline>    placerat consequat quam,</cline>
+                        <cline>a lobortis odio convallis</cline>
+                        <cline>        vitae.</cline>
+                    </pre>
+                </sidebyside>
+            </figure>
+
+            <p>Be aware that the lines of <c>pre</c> can spill outside of its panel without any word-wrapping.  So you may need to vary panel widths or rearrange line breaks manually.  Page width is a scarce resource.</p>
+
+            <figure>
+                <caption>An identical <c>image</c>, twice</caption>
+                <sidebyside margins="5%" widths="40% 45%">
+                    <image source="images/cross-rectangle.png" />
+                    <image source="images/cross-rectangle.png" />
+                </sidebyside>
+            </figure>
+
+            <p>Images will scale to fill their panel's width.  We provide no services to change the aspect ratio of your images, that is your responsibility to accomplish elsewhere.  This rectangular image will have slightly different widths, and so will be slightly deeper in the right panel (at a 45:40 ratio).  Remember, vertical alignment is at the top.</p>
+
+            <p>Now we turn to <q>captioned</q> items: <c>figure</c>, <c>table</c>, <c>listing</c>, and the anomalous <q>named list</q>, <c>list</c>, whose future is uncertain.  We test subcaptions here.  Note that many different atomic items can go in a figure, and largely they will behave in a <c>sidebyside</c> much as they do when placed in a panel all by themselves (<ie /> captionless).</p>
+
+            <figure>
+                <caption>A <c>figure</c> and a <c>table</c></caption>
+                <sidebyside margins="5%" widths="40% 45%">
+                    <figure>
+                        <caption>A Rectangular Test Image</caption>
+                        <image source="images/cross-rectangle.png" />
+                    </figure>
+                    <table>
+                        <caption>Classifying Organisms</caption>
+                        <tabular>
+                            <row bottom="major">
+                                 <cell>Organism</cell><cell>Classification</cell>
+                             </row>
+                            <row><cell>Trout</cell><cell>Fish</cell></row>
+                            <row><cell>Monkey</cell><cell>Mammal</cell></row>
+                            <row><cell>Crow</cell><cell>Bird</cell></row>
+                            <row><cell>Crimini</cell><cell>Fungus</cell></row>
+                            <row><cell>Bee</cell><cell>Insect</cell></row>
+                        </tabular>
+                    </table>
+                </sidebyside>
+            </figure>
+
+            <figure>
+                <caption>A <c>listing</c> and a <c>list</c></caption>
+                <sidebyside margins="5%" widths="40% 45%">
+                    <listing>
+                        <caption>A statistical computation</caption>
                         <program language="r">
                             <input>
                             n_loops &lt;- 10
@@ -5600,163 +6249,50 @@ the xsltproc executable.
                             x.means
                             </input>
                         </program>
-                        <console>
-                            <prompt>pi@rpi ~$ </prompt>
-                            <input>gcc -o intAndFloat intAndFloat.c</input>
-                            <prompt>pi@rpi ~$ </prompt>
-                            <input>./intAndFloat</input>
-                            <output>
-                            19088743 (integer) and 19088.742188 (float)
-                            </output>
-                            <prompt>pi@rpi ~$ </prompt>
-                            <input />
-                        </console>
-                    </sidebyside>
-                </figure>
+                    </listing>
+                    <list>
+                        <caption>Colors Again</caption>
+                        <introduction>
+                            <p>We have named list of colors.</p>
+                        </introduction>
+                        <ol>
+                            <li>Blue</li>
+                            <li>Red</li>
+                            <li>Green</li>
+                            <li>Purple</li>
+                            <li>Violet</li>
+                            <li>Brown</li>
+                        </ol>
+                        <conclusion>
+                            <p>That was nice.</p>
+                        </conclusion>
+                    </list>
+                </sidebyside>
+            </figure>
 
-                <p>Note that these two chunks of verbatim text will very likely exceed the right side of a too-skinny panel.  We have severly edited these two examples from previous appearances just to fit here.</p>
+            <p>Now we have some more interactive elements</p>
 
-                <figure>
-                    <caption>An <c>poem</c> and a <c>tabular</c></caption>
-                    <sidebyside margins="5%" widths="40% 45%">
-                        <poem>
-                            <title>To A Friend Whose Work Has Come To Nothing</title>
-                            <author>William Butler Yeats</author>
-                            <stanza>
-                                <line>Now all the truth is out,</line>
-                                <line>Be secret and take defeat</line>
-                                <line>From any brazen throat,</line>
-                                <line>For how can you compete,</line>
-                                <line>Being honour bred, with one</line>
-                                <line>Who, were it proved he lies,</line>
-                                <line>Were neither shamed in his own</line>
-                                <line>Nor in his neighbours' eyes?</line>
-                                <line>Bred to a harder thing</line>
-                                <line>Than Triumph, turn away</line>
-                                <line>And like a laughing string</line>
-                                <line>Whereon mad fingers play</line>
-                                <line>Amid a place of stone,</line>
-                                <line>Be secret and exult,</line>
-                                <line>Because of all things known</line>
-                                <line>That is most difficult.</line>
-                            </stanza>
-                        </poem>
-                        <tabular>
-                            <row bottom="major">
-                                 <cell>Organism</cell><cell>Classification</cell>
-                             </row>
-                            <row><cell>Trout</cell><cell>Fish</cell></row>
-                            <row><cell>Monkey</cell><cell>Mammal</cell></row>
-                            <row><cell>Crow</cell><cell>Bird</cell></row>
-                            <row><cell>Crimini</cell><cell>Fungus</cell></row>
-                            <row><cell>Bee</cell><cell>Insect</cell></row>
-                        </tabular>
-                    </sidebyside>
-                </figure>
+            <sidebyside  margins="5%" widths="40% 45%">
+                <!-- Hosted -->
+                <video source="images/ups-visitor-guide-360" width="80%"/>
+                <!-- Airborne Toxic Event -->
+                <video xml:id="airborne-midnight-1" youtube="UYPoMjR6-Ao" />
+            </sidebyside>
 
-                <p>A <c>tabular</c> can exceed the width of its panel in print, while in <c>HTML</c> it may reflow individual cells to stay within a panel, depending on their contents.</p>
+            <p>Videos can be placed quite compactly for HTML output, but we display a fair amount of information for a YouTube video in print, and therefore two videos side-by-side gets pretty crowded.  The examples above have the bare minimum amount of information attached (not in an overarching <c>figure</c>), and the bare amount which which is displayed in print.  We could relax our common spacing to make it a bit better.  For other examples see <xref ref="section-video" text="type-global" />.</p>
 
-                <figure>
-                    <caption>A <c>pre</c>, and a <c>pre</c> employing <c>cline</c></caption>
-                    <sidebyside margins="5%" widths="40% 45%">
-                        <pre>
-                        Vestibulum sit amet est non
-                            lacus accumsan iaculis
-                        aliquam nec leo. Maecenas
-                        placerat consequat quam, a
-                        lobortis odio convallis
-                        vitae.
-                        </pre>
-                        <pre>
-                            <cline>Vestibulum sit amet est non</cline>
-                            <cline>    lacus accumsan iaculis</cline>
-                            <cline>aliquam nec leo. Maecenas</cline>
-                            <cline>    placerat consequat quam,</cline>
-                            <cline>a lobortis odio convallis</cline>
-                            <cline>        vitae.</cline>
-                        </pre>
-                    </sidebyside>
-                </figure>
+            <figure>
+                <caption>A <c>sidebyside</c> with one large panel</caption>
+                <sidebyside margins="10%">
+                    <figure>
+                        <title>Sometime Around Midnight</title>
+                        <caption><booktitle>Sometime Around Midnight</booktitle>, Airborne Toxic Event, 2009</caption>
+                        <video xml:id="airborne-midnight-2" youtube="UYPoMjR6-Ao" start="48" end="100" />
+                    </figure>
+                </sidebyside>
+            </figure>
 
-                <p>Be aware that the lines of <c>pre</c> can spill outside of its panel without any word-wrapping.  So you may need to vary panel widths or rearrange line breaks manually.  Page width is a scarce resource.</p>
-
-                <figure>
-                    <caption>An identical <c>image</c>, twice</caption>
-                    <sidebyside margins="5%" widths="40% 45%">
-                        <image source="images/cross-rectangle.png" />
-                        <image source="images/cross-rectangle.png" />
-                    </sidebyside>
-                </figure>
-
-                <p>Images will scale to fill their panel's width.  We provide no services to change the aspect ratio of your images, that is your responsibility to accomplish elsewhere.  This rectangular image will have slightly different widths, and so will be slightly deeper in the right panel (at a 45:40 ratio).  Remember, vertical alignment is at the top.</p>
-
-                <p>Now we turn to <q>captioned</q> items: <c>figure</c>, <c>table</c>, <c>listing</c>, and the anomalous <q>named list</q>, <c>list</c>, whose future is uncertain.  We test subcaptions here.  Note that many different atomic items can go in a figure, and largely they will behave in a <c>sidebyside</c> much as they do when placed in a panel all by themselves (<ie /> captionless).</p>
-
-                <figure>
-                    <caption>A <c>figure</c> and a <c>table</c></caption>
-                    <sidebyside margins="5%" widths="40% 45%">
-                        <figure>
-                            <caption>A Rectangular Test Image</caption>
-                            <image source="images/cross-rectangle.png" />
-                        </figure>
-                        <table>
-                            <caption>Classifying Organisms</caption>
-                            <tabular>
-                                <row bottom="major">
-                                     <cell>Organism</cell><cell>Classification</cell>
-                                 </row>
-                                <row><cell>Trout</cell><cell>Fish</cell></row>
-                                <row><cell>Monkey</cell><cell>Mammal</cell></row>
-                                <row><cell>Crow</cell><cell>Bird</cell></row>
-                                <row><cell>Crimini</cell><cell>Fungus</cell></row>
-                                <row><cell>Bee</cell><cell>Insect</cell></row>
-                            </tabular>
-                        </table>
-                    </sidebyside>
-                </figure>
-
-                <figure>
-                    <caption>A <c>listing</c> and a <c>list</c></caption>
-                    <sidebyside margins="5%" widths="40% 45%">
-                        <listing>
-                            <caption>A statistical computation</caption>
-                            <program language="r">
-                                <input>
-                                n_loops &lt;- 10
-                                x.means &lt;- numeric(n_loops)
-                                for (i in 1:n_loops){
-                                    x &lt;- as.integer(runif(100, 1, 7))
-                                    x.means[i] &lt;- mean(x)
-                                }
-                                x.means
-                                </input>
-                            </program>
-                        </listing>
-                        <list>
-                            <title>Colors Again</title>
-                            <introduction>
-                                <p>We have named list of colors.</p>
-                            </introduction>
-                            <ol>
-                                <li>Blue</li>
-                                <li>Red</li>
-                                <li>Green</li>
-                                <li>Purple</li>
-                                <li>Violet</li>
-                                <li>Brown</li>
-                            </ol>
-                            <conclusion>
-                                <p>That was nice.</p>
-                            </conclusion>
-                        </list>
-                    </sidebyside>
-                </figure>
-
-
-            </subsection>
-
-
-
+            <p>We make an exception to our common layout and put one YouTube video, with a start and end time into a single panel of a <c>sidebyside</c> as a <c>figure</c> with a <c>title</c> and a <c>caption</c> that is rendered as a sub-caption.  Read about <q>side-by-side</q> groups (<c>sbsgroup</c>) and experiment with stacking several sub-captioned videos into an overall captioned figure (<xref ref="subsection-sbsgroup" text="type-global" />).</p>
         </section>
 
         <section xml:id="poetry">

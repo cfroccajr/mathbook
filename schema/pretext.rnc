@@ -13,7 +13,8 @@
             element article {
                 MetaDataSubtitle,
                 ArticleFrontMatter,
-                (Section+ & Exercises* & References*),
+                Section,
+                (Section | Exercises | References)*,
                 BackMatter?
             }
         Book =
@@ -21,7 +22,8 @@
             element book {
                 MetaDataSubtitle,
                 BookFrontMatter,
-                (Chapter+ & Exercises* & References*),
+                Chapter,
+                (Chapter | Exercises | References)*,
                 BackMatter?
             }
         Letter =
@@ -38,11 +40,12 @@
                     (BlockDivision | Paragraphs)+ |
                     (
                         IntroductionDivision?,
+                        Section,
                         (
-                            Section+ &
-                            Exercises* &
-                            References*
-                        ),
+                            Section |
+                            Exercises |
+                            References
+                        )*,
                         ConclusionDivision?)
                 )
             }
@@ -54,11 +57,12 @@
                     (BlockDivision | Paragraphs)+ |
                     (
                         IntroductionDivision?,
+                        Subsection,
                         (
-                            Subsection+ &
-                            Exercises* &
-                            References*
-                        ),
+                            Subsection |
+                            Exercises |
+                            References
+                        )*,
                         ConclusionDivision?)
                 )
             }
@@ -70,11 +74,12 @@
                     (BlockDivision | Paragraphs)+ |
                     (
                         IntroductionDivision?,
+                        Subsubsection,
                         (
-                            Subsubsection+ &
-                            Exercises* &
-                            References*
-                        ),
+                            Subsubsection |
+                            Exercises |
+                            References
+                        )*,
                         ConclusionDivision?)
                 )
             }
@@ -91,12 +96,13 @@
                     (BlockDivision | Paragraphs | NotationList | SolutionList )+ |
                     (
                         IntroductionDivision?,
+                        Section,
                         (
-                            Section+ &
-                            Exercises* &
-                            References*
-                        ),
-                        ConclusionDivision?)
+                            Section |
+                            Exercises |
+                            References
+                        )*,
+                        ConclusionDivision?
                     )
                 )
             }
@@ -104,16 +110,6 @@
             element index {
                 MetaDataTitleOptional,
                 IndexList
-            }
-        IntroductionDivision =
-            element introduction {
-                MetaDataTitleOptional,
-                BlockDivision+
-            }
-        ConclusionDivision =
-            element conclusion {
-                MetaDataTitleOptional?,
-                BlockDivision+
             }
         
         
@@ -135,7 +131,7 @@
         TitlePage =
             element titlepage {
                 Author+,
-                Credit?,
+                Credit*,
                 Date?
             }
         Author =
@@ -148,11 +144,11 @@
         Credit =
             element credit {
                 element title {TextShort},
-                Author
+                Author+
             }
         Date = 
             element date {
-                text & Character* & Generator*
+                mixed {(Character | Generator)*}
             }
         Abstract =
             element abstract {
@@ -161,6 +157,10 @@
             }
         ColophonFront =
             element colophon {
+                element credit {
+                    element role {TextShort},
+                    element entity {TextLong}
+                }*,
                 element edition {text}?,
                 element website {
                     element name {TextShort},
@@ -176,7 +176,7 @@
         Biography = 
             element biography {
                 MetaDataTitleOptional,
-                BlockText+
+                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
             }
         Dedication = 
             element dedication {
@@ -186,14 +186,14 @@
         Acknowledgement = 
             element acknowledgement {
                 MetaDataTitleOptional,
-                BlockText+
+                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
             }
         Preface =
             element preface {
                 MetaDataTitleOptional,
                 (
-                    ((BlockText | SideBySideNoNumber)+, Attribution*) |
-                    Contributors
+                    ((BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+, Attribution*) |
+                    ((BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)*, Contributors, (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)*)
                 )
             }
         
@@ -207,7 +207,7 @@
                 ColophonBack?
             }
         ColophonBack = 
-            element colophon {(BlockText | SideBySideNoNumber)+}
+            element colophon {(BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+}
         
         
         Paragraphs = 
@@ -236,22 +236,18 @@
         
         BlockText =
             Paragraph | BlockQuote | Preformatted | ToDo
-        BlockDivision =
-            BlockText | Figure |
-            Remark | Theorem | Proof | Definition | Axiom |
-            Example | Exercise | NamedList | Project |
-            Poem | Aside | Assemblage | ListGenerator |
-            SideBySide | SideBySideGroup | Sage |
-            Console | Program |
-            GGB | Demonstration
         BlockStatement =
-            BlockText | Figure | Aside | SideBySide | SideBySideGroup | Sage
+            BlockText |
+            Figure | Aside |
+            SideBySide | SideBySideGroup | Sage
+        BlockDivision =
+            BlockStatement |
+            Remark | Theorem | Proof | Definition |
+            Axiom | Example | Exercise | Project |
+            Poem | Assemblage | ListGenerator |
+            GGB | Demonstration
         
         
-        IntroductionBlock =
-            element introduction {BlockText+}
-        ConclusionBlock =
-            element conclusion {BlockText+}
         Prelude =
             element prelude {BlockText+}
         Interlude =
@@ -279,12 +275,32 @@
             }
         
         
+        IntroductionText =
+            element introduction {BlockText+}
+        ConclusionText =
+            element conclusion {BlockText+}
+        IntroductionStatement =
+            element introduction {BlockStatement+}
+        ConclusionStatement =
+            element conclusion {BlockStatement+}
+        IntroductionDivision =
+            element introduction {
+                MetaDataTitleOptional,
+                BlockDivision+
+            }
+        ConclusionDivision =
+            element conclusion {
+                MetaDataTitleOptional?,
+                BlockDivision+
+            }
+        
+        
         Objectives =
             element objectives {
                 MetaDataTitleOptional,
-                IntroductionBlock?, 
+                IntroductionText?,
                 List,
-                ConclusionBlock?
+                ConclusionText?
             }
         
         
@@ -377,15 +393,6 @@
             }
         
         
-        NamedList =
-            element list {
-                MetaDataTitleOptional,
-                IntroductionBlock?, 
-                List,
-                ConclusionBlock?
-            }
-        
-        
         DefinitionLike =
             MetaDataTitleOptional,
             Notation*,
@@ -420,6 +427,10 @@
             element proposition {TheoremLike}
         |
             element algorithm {TheoremLike}
+        |
+            element fact {TheoremLike}
+        |
+            element identity {TheoremLike}
         
         
         AxiomLike =
@@ -431,6 +442,12 @@
             element principle {AxiomLike}
         |
             element conjecture {AxiomLike}
+        |
+            element heuristic {AxiomLike}
+        |
+            element hypothesis {AxiomLike}
+        |
+            element assumption {AxiomLike}
         
         
         ExampleLike =
@@ -448,16 +465,26 @@
             MetaDataTitleOptional,
             (
                 (BlockStatement+) |
-                (Prelude*, Statement, Hint*, Answer*, Solution*, Postlude*)
+                (Prelude?, Statement, Hint*, Answer*, Solution*, Postlude?) |
+                (Prelude?, IntroductionStatement?, Task+, ConclusionStatement?, Postlude?)
             )
         Project =
             element activity {ProjectLike}
         |
+            element investigation {ProjectLike}
+        |
             element exploration {ProjectLike}
         |
             element project {ProjectLike}
-        |
-            element task {ProjectLike}
+        Task =
+            element task {
+                MetaDataTarget,
+                (
+                    BlockStatement+ |
+                    (Statement, Hint*, Answer*, Solution*) |
+                    (IntroductionText?, Task+, ConclusionText?)
+                )
+            }
         
         
         RemarkLike =
@@ -466,14 +493,32 @@
         Remark = 
             element remark {RemarkLike}
         |
+            element convention {RemarkLike}
+        |
             element note {RemarkLike}
+        |
+            element observation {RemarkLike}
+        |
+            element warning {RemarkLike}
+        |
+            element insight {RemarkLike}
+        |
+            element computation {RemarkLike}
+        |
+            element technology {RemarkLike}
         
         
+        AsideLike =
+            MetaDataTitleOptional,
+            BlockStatement+
         Aside =
-            element aside {
-                MetaDataTitleOptional,
-                BlockStatement+
-            }
+            element aside {AsideLike}
+            |
+            element biographical {AsideLike}
+            |
+            element historical {AsideLike}
+        
+        
         Assemblage =
             element assemblage {
                 MetaDataTitleOptional,
@@ -508,19 +553,28 @@
                     Console
                 )
             }
+        |
+            element list {
+                MetaDataCaption,
+                IntroductionText?,
+                List,
+                ConclusionText?
+            }
         
         
+        SidebySideAttributes =
+            attribute margins {text}?,
+            (attribute width {text} | attribute widths {text})?,
+            (AlignmentVertical | attribute valigns {text})?
         SideBySide =
             element sidebyside {
-                attribute margins {text}?,
-                (attribute width {text} | attribute widths {text})?,
-                (AlignmentVertical | attribute valigns {text})?,
+                SidebySideAttributes,
                 (
                     Figure |
-                    NamedList |
                     Poem |
                     Tabular |
                     Image |
+                    Video |
                     Program |
                     Console |
                     Paragraph |
@@ -529,15 +583,14 @@
                     List
                 )+
             }
-        SideBySideNoNumber =
+        SideBySideNoCaption =
             element sidebyside {
-                attribute margins {text}?,
-                (attribute width {text} | attribute widths {text})?,
-                (AlignmentVertical | attribute valigns {text})?,
+                SidebySideAttributes,
                 (
                     Poem |
                     Tabular |
                     Image |
+                    Video |
                     Program |
                     Console |
                     Paragraph |
@@ -548,16 +601,17 @@
             }
         SideBySideGroup =
             element sbsgroup {
-                attribute margins {text}?,
-                (attribute width {text} | attribute widths {text})?,
-                (attribute valign {text} | attribute valigns {text})?,
+                SidebySideAttributes,
                 SideBySide+
             }
-        SideBySideWW = 
+        SideBySideGroupNoCaption =
+            element sbsgroup {
+                SidebySideAttributes,
+                SideBySideNoCaption+
+            }
+        SideBySideWW =
             element sidebyside {
-                attribute margins {text}?,
-                (attribute width {text} | attribute widths {text})?,
-                (attribute valign {text} | attribute valigns {text})?,
+                SidebySideAttributes,
                 (
                     TabularWW |
                     ImageWW
@@ -597,7 +651,7 @@
                 attribute width {xsd:integer}?,
                 attribute height {xsd:integer}?,
                 attribute tex-size {xsd:integer}?,
-                element description {TextShort & WWVariableUse*}?
+                element description {(TextShort | WWVariableUse)*}?
             }
         
         
@@ -716,14 +770,17 @@
             element video {
                 UniqueID?,
                 attribute width {text}?,
+                attribute aspect {text}?,
+                attribute start {xsd:integer}?,
+                attribute end {xsd:integer}?,
+                attribute play-at {"embed" | "popout" | "select"}?,
+                attribute preview {"default" | "generic" }?,
                 (AttributesSourceFile | AttributesYouTube)
             }
         AttributesSourceFile =
             attribute source {text}
         AttributesYouTube =
-            attribute youtube {text},
-            attribute start {text}?,
-            attribute end {text}?
+            attribute youtube {text}
         
         
         StatementExercise = 
@@ -746,16 +803,16 @@
                 attribute number {text}?,
                 (
                 (StatementExercise, Hint*, Answer*, Solution*) |
-                (IntroductionBlock?, WebWork, ConclusionBlock?)
+                (IntroductionText?, WebWork, ConclusionText?)
                 )
             }
         ExerciseGroup =
             element exercisegroup {
                 MetaDataTarget,
                 attribute cols {"2"|"3"|"4"|"5"|"6"}?,
-                IntroductionBlock?,
+                IntroductionText?,
                 Exercise+,
-                ConclusionBlock?
+                ConclusionText?
             }
         
         
@@ -786,14 +843,14 @@
             element biblio {
                 UniqueID?,
                 attribute type {"raw"}?,
-                (TextShort* &
-                Ibid* &
-                BibTitle* &
-                BibYear* &
-                BibJournal* &
-                BibNumber* &
-                BibVolume* &
-                BibNote*)
+                (TextLong |
+                Ibid |
+                BibTitle |
+                BibYear |
+                BibJournal |
+                BibNumber |
+                BibVolume |
+                BibNote)*
             }
         Ibid = element ibid {empty}
         BibYear = element year {text}
@@ -810,6 +867,7 @@
                 element personname {TextSimple},
                 element department {TextSimple}?,
                 element institution {TextSimple}?,
+                element location {TextSimple}?,
                 element email {text}?
             }
         Contributors =
@@ -845,6 +903,7 @@
             element statement {
                 (
                     ParagraphWW |
+                    WWInstruction |
                     Preformatted |
                     SideBySideWW |
                     ImageWW |
@@ -881,6 +940,8 @@
                 (attribute form {"essay"},
                 attribute width {text}?)
             }
+        WWInstruction =
+            element instruction {TextShort}
         HintWW =
             element hint {
                 (
@@ -1199,6 +1260,19 @@
             element delete {TextLong} |
             element insert {TextLong} |
             element stale {TextLong}
+        
+            
+        Group |=
+            element taxon {
+                attribute ncbi {xsd:integer}?,
+                (
+                    TextSimple |
+                    (
+                        element genus {TextSimple}?,
+                        element species {TextSimple}?
+                    )
+                )
+            }
         
         
         

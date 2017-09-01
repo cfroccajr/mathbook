@@ -73,9 +73,11 @@
     <section xml:id="overview-images">
         <title>Images</title>
 
-        <p>You can include an image via the <tag>image</tag> tag.  You can use the <attribute>source</attribute> attribute to provide a filename, likely prefixed by a relative path, that points at an image file.  It is your responsibility to locate that file properly relative to your output, and that the file format is compatible.  So, for example, suppose your source contained <c>&lt;image source="images/butterflies.jpg" /&gt;</c>.  Then you would want to have a directory named <c>images</c> below wherever you process your <latex /> output, or wherever you place your HTML output on a web server.  The <attribute>width</attribute> attribute can be used to control the size of the image. Specifying a percentage is easiest, such as <c>width="60%"</c>.</p>
+        <p>You can include an image via the <tag>image</tag> tag.  You can use the <attribute>source</attribute> attribute to provide a filename, likely prefixed by a relative path, that points at an image file.  It is your responsibility to locate that file properly relative to your output, and that the file format is compatible.  So, for example, suppose your source contained <c>&lt;image source="images/butterflies.jpg" /&gt;</c>.  Then you would want to have a directory named <c>images</c> below wherever you process your <latex /> output, or wherever you place your HTML output on a web server.  The <attribute>width</attribute> attribute can be used to control the size of the image.   Widths are expressed as a percentage of the available width, such as <c>width="60%"</c>.</p>
 
-        <p>You will probably want to wrap your image in a <tag>figure</tag> to have it centered, and to have some vertical separation above and below.  Presence of a <tag>caption</tag> element will dictate whether or not the figure is numbered.  See <xref ref="overview-figures-tables" /> for more.  Note too, that the <tag>sidebyside</tag> tag provides some very flexible options for placing several images (<xref ref="overview-sidebyside" />) together.</p>
+        <p>You may want to wrap your image in a <tag>figure</tag> to have it centered, and to have some vertical separation above and below.  A <tag>figure</tag> must also have a <tag>caption</tag>, and the figure will be numbered.</p>
+
+        <p>If you want to place an anonymous image (no caption, no number), then you must wrap it in a <tag>sidebyside</tag>.  Note also that the <tag>sidebyside</tag> tag provides some very flexible options for placing several images (<xref ref="overview-sidebyside" />) together, or combining figures with subcaptions.</p>
 
         <p>If you wish to construct technical diagrams, with editable source, and perhaps including the use of <latex /> macros, MathBook XML provides support for graphics languages like PGF, TikZ, and Asymptote, in addition to using Sage code to describe a plot or image.  In most cases output can be obtained as smoothly-scalable SVG images, in addition to other formats like PDF or PNG.  Making all this happen is one of the more technical aspects of MathBook XML, so we save the discussion for one of the topics, <xref provisional="topic-image-languages" />.</p>
     </section>
@@ -195,7 +197,7 @@
     <section xml:id="overview-sidebyside">
         <title>Side-by-Side Panels</title>
 
-        <p>A <tag>sidebyside</tag> is a useful organization of elements in a horizontal layout, and so begins to blur the line between content and presentation.  While we default to organizing information in a vertical sequence, it is often desirable to organize smaller elements adjacent to each other horizontally.  Specifically, images, tabular, figures, tables, paragraphs may all be combined and there is some control over vertical and horizontal alignment.  Captioning, both overall and individually, is especially flexible.  See <xref ref="topic-sidebyside" /> for details.</p>
+        <p>A <tag>sidebyside</tag> is a useful organization of elements in a horizontal layout, and so begins to blur the line between content and presentation.  While we default to organizing information in a vertical sequence, it is often desirable to organize smaller elements adjacent to each other horizontally.  Specifically, images, tabular, figures, tables, paragraphs, and more, may all be combined and there is good control over vertical and horizontal alignment.  Captioning, both overall and individually, is especially flexible.  An <tag>sbsgroup</tag>  (<q>side-by-side group</q>) collects multiple <tag>sidebyside</tag> to stack vertically, which allows for displays in grids.  See <xref ref="topic-sidebyside" /> for details.</p>
     </section>
 
     <section xml:id="overview-math-results">
@@ -244,6 +246,12 @@
 
         <p>This element may also be used to link to external data files.  See <xref ref="topic-url" /> for details.</p>
 
+    </section>
+
+    <section xml:id="overview-video">
+        <title>Video</title>
+
+        <p>Videos, either author-hosted or hosted on YouTube, may be embedded in a <pretext /> document using <init>HTML</init>, or may be <q>popped-out</q> to view on another page.  For a YouTube video, an author need only supply the identification string, and all the details of the embedding are handled by <pretext />.  See <xref ref="topic-video" /> for details.</p>
     </section>
 
     <section xml:id="overview-si-units">

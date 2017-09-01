@@ -85,6 +85,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:param name="html.knowl.definition" select="'no'" />
 <xsl:param name="html.knowl.example" select="'yes'" />
 <xsl:param name="html.knowl.project" select="'no'" />
+<xsl:param name="html.knowl.task" select="'no'" />
 <xsl:param name="html.knowl.list" select="'no'" />
 <xsl:param name="html.knowl.remark" select="'no'" />
 <xsl:param name="html.knowl.objectives" select="'no'" />
@@ -687,6 +688,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- We process pieces, in document order -->
 <!-- TODO: edition, publisher, production notes, cover design, etc -->
 <!-- TODO: revision control commit hash -->
+<xsl:template match="frontmatter/colophon/credit">
+    <p>
+        <b>
+            <xsl:apply-templates select="role" />
+        </b>
+        <xsl:text>: </xsl:text>
+        <xsl:apply-templates select="entity"/>
+    </p>
+</xsl:template>
+
 <xsl:template match="frontmatter/colophon/edition">
     <xsl:element name="p">
         <xsl:element name="b">
@@ -1398,7 +1409,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <!-- build xref-knowl, and optionally a hidden-knowl duplicate -->
-<xsl:template match="fn|li|men|md|mdn|p|blockquote|&DEFINITION-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|&EXAMPLE-LIKE;|&PROJECT-LIKE;|list|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|proof|case|&FIGURE-LIKE;|paragraphs|exercise|exercisegroup|webwork[*|@*]|hint[not(ancestor::webwork)]|answer[not(ancestor::webwork)]|solution[not(ancestor::webwork)]|biblio|biblio/note|contributor" mode="xref-knowl">
+<xsl:template match="fn|li|men|md|mdn|p|blockquote|&DEFINITION-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|proof|case|&FIGURE-LIKE;|paragraphs|exercise|exercisegroup|webwork[*|@*]|hint[not(ancestor::webwork)]|answer[not(ancestor::webwork)]|solution[not(ancestor::webwork)]|biblio|biblio/note|contributor" mode="xref-knowl">
     <!-- a generally available cross-reference knowl file, of duplicated content -->
     <xsl:apply-templates select="." mode="manufacture-knowl">
         <xsl:with-param name="knowl-type" select="'xref'" />
@@ -1430,7 +1441,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- write file infrastructure first -->
     <exsl:document href="{$knowl-file}" method="html">
         <xsl:text disable-output-escaping="yes">&lt;!doctype html&gt;&#xa;</xsl:text>
-        <html>
+            <html lang="{$document-language}"> <!-- dir="rtl" here -->
             <!-- header since separate file -->
             <xsl:text>&#xa;</xsl:text>
             <xsl:call-template name="converter-blurb-html" />
@@ -1571,6 +1582,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </h5>
 </xsl:template>
 
+<!-- h5, no type name, just simple list number, no title -->
+<xsl:template match="*" mode="heading-list-number">
+    <h5 class="heading">
+        <span class="codenumber">
+            <xsl:text>(</xsl:text>
+            <xsl:apply-templates select="." mode="list-number" />
+            <xsl:text>)</xsl:text>
+        </span>
+    </h5>
+</xsl:template>
+
 <!-- h5, type name, no number (even if exists), title (if exists) -->
 <!-- eg, objectives is one-per-subdivison, max,                   -->
 <!-- so no need to display at birth, but is needed in xref        -->
@@ -1699,7 +1721,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- (7) TODO: "wrapped-content" called by "body" to separate code. -->
 
-<xsl:template match="li|me|men|md|mdn|fn|biblio|p|blockquote|&DEFINITION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|list|assemblage|objectives|&THEOREM-LIKE;|proof|case|&AXIOM-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|exercisegroup|webwork[*|@*]|paragraphs|exercise|hint[not(ancestor::webwork)]|answer[not(ancestor::webwork)]|solution[not(ancestor::webwork)]|biblio/note|contributor">
+<xsl:template match="li|me|men|md|mdn|fn|biblio|p|blockquote|&DEFINITION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|&FIGURE-LIKE;|assemblage|objectives|&THEOREM-LIKE;|proof|case|&AXIOM-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|exercisegroup|webwork[*|@*]|paragraphs|exercise|hint[not(ancestor::webwork)]|answer[not(ancestor::webwork)]|solution[not(ancestor::webwork)]|biblio/note|contributor">
     <xsl:param name="b-original" select="true()" />
     <xsl:variable name="hidden">
         <xsl:apply-templates select="." mode="is-hidden" />
@@ -2085,8 +2107,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:value-of select="$html.knowl.project = 'yes'" />
 </xsl:template>
 
-<xsl:template match="list" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.list = 'yes'" />
+<xsl:template match="task" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.task = 'yes'" />
 </xsl:template>
 
 <xsl:template match="objectives" mode="is-hidden">
@@ -2109,7 +2131,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:value-of select="$html.knowl.listing = 'yes'" />
 </xsl:template>
 
-<xsl:template match="sidebyside/figure|sidebyside/table|side-byside/listing" mode="is-hidden">
+<xsl:template match="list" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.list = 'yes'" />
+</xsl:template>
+
+<xsl:template match="sidebyside/figure|sidebyside/table|sidebyside/listing|sidebyside/list" mode="is-hidden">
     <xsl:value-of select="false()" />
 </xsl:template>
 
@@ -2153,7 +2179,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>article</xsl:text>
 </xsl:template>
 
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|list|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;" mode="body-element">
+<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;" mode="body-element">
     <xsl:text>article</xsl:text>
 </xsl:template>
 
@@ -2223,8 +2249,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|list" mode="body-css-class">
+<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;" mode="body-css-class">
     <xsl:text>example-like</xsl:text>
+</xsl:template>
+
+<xsl:template match="task" mode="body-css-class">
+    <xsl:text>exercise-like</xsl:text>
 </xsl:template>
 
 <xsl:template match="objectives" mode="body-css-class">
@@ -2291,7 +2321,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|list|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|&FIGURE-LIKE;" mode="birth-element">
+<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|&FIGURE-LIKE;" mode="birth-element">
     <xsl:text>div</xsl:text>
 </xsl:template>
 
@@ -2345,8 +2375,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates select="." mode="heading-type" />
 </xsl:template>
 
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|list" mode="heading-birth">
+<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;" mode="heading-birth">
     <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<xsl:template match="task" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-list-number" />
 </xsl:template>
 
 <xsl:template match="objectives" mode="heading-birth">
@@ -2359,6 +2393,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- no heading, since captioned -->
 <xsl:template match="&FIGURE-LIKE;" mode="heading-birth" />
+
+<!-- Sort of for backward compatibility, &FIGURE-LIKE; should be similar -->
+<xsl:template match="list" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-title" />
+</xsl:template>
 
 <!-- always a knowl attached to an example -->
 <xsl:template match="hint|answer|solution|biblio/note" mode="heading-birth">
@@ -2384,7 +2423,15 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="&PROJECT-LIKE;" mode="wrapped-content">
     <xsl:param name="b-original" select="true()" />
     <xsl:choose>
-        <!-- structured version first      -->
+        <!-- structured versions first      -->
+        <!-- prelude?, introduction?, task+,   -->
+        <!-- conclusion?, postlude? -->
+        <xsl:when test="(&PROJECT-FILTER;) and task">
+            <xsl:apply-templates select="introduction"/>
+            <xsl:apply-templates select="task"/>
+            <xsl:apply-templates select="conclusion"/>
+        </xsl:when>
+        <!-- Now no project/task possibility -->
         <!-- prelude?, statement, hint*,   -->
         <!-- answer*, solution*, postlude? -->
         <xsl:when test="statement">
@@ -2427,8 +2474,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
-
-<xsl:template match="fn|blockquote|&DEFINITION-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|case|proof|&EXAMPLE-LIKE;|&PROJECT-LIKE;|list|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|&FIGURE-LIKE;|paragraphs|exercisegroup|exercise|hint|answer|solution|biblio|biblio/note|contributor" mode="body">
+<xsl:template match="fn|blockquote|&DEFINITION-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|case|proof|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|&FIGURE-LIKE;|paragraphs|exercisegroup|exercise|hint|answer|solution|biblio|biblio/note|contributor" mode="body">
     <xsl:param name="block-type" />
     <xsl:param name="b-original" select="true()" />
     <!-- prelude beforehand, when original -->
@@ -2492,7 +2538,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     <xsl:with-param name="b-original" select="$b-original" />
                 </xsl:apply-templates>
             </xsl:when>
-            <xsl:when test="self::list or self::objectives">
+            <xsl:when test="self::objectives">
                 <xsl:apply-templates select="introduction">
                     <xsl:with-param name="b-original" select="$b-original" />
                 </xsl:apply-templates>
@@ -2503,17 +2549,85 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     <xsl:with-param name="b-original" select="$b-original" />
                 </xsl:apply-templates>
             </xsl:when>
-            <xsl:when test="&FIGURE-FILTER;">
+            <!-- the two following could best be -->
+            <!-- combined as test="&FIGURE-FILTER;" -->
+            <xsl:when test="self::figure or self::table or self::listing">
                 <!-- do we just kill captions as metadata? -->
                 <xsl:apply-templates select="*[not(self::caption)]">
                     <xsl:with-param name="b-original" select="$b-original" />
                 </xsl:apply-templates>
                 <xsl:apply-templates select="caption" />
             </xsl:when>
+            <xsl:when test="self::list">
+                <div class="named-list-content">
+                    <xsl:apply-templates select="*[not(self::caption)]">
+                        <xsl:with-param name="b-original" select="$b-original" />
+                    </xsl:apply-templates>
+                </div>
+                <!-- Exceptional for backward compatibility, 2017-08-25 -->
+                <xsl:if test="title and not(caption)">
+                    <figcaption>
+                        <span class="heading">
+                            <xsl:apply-templates select="." mode="type-name"/>
+                        </span>
+                        <span class="codenumber">
+                            <xsl:apply-templates select="." mode="number"/>
+                        </span>
+                        <xsl:apply-templates select="." mode="title-full" />
+                    </figcaption>
+                </xsl:if>
+                <xsl:apply-templates select="caption" />
+            </xsl:when>
             <xsl:when test="self::hint or self::answer or self::solution or self::note">
                 <xsl:apply-templates select="*|text()">
                     <xsl:with-param name="b-original" select="$b-original" />
                 </xsl:apply-templates>
+            </xsl:when>
+            <xsl:when test="self::task">
+                <!-- more structured versions first -->
+                <xsl:choose>
+                    <!-- introduction?, task+, conclusion? -->
+                    <xsl:when test="task">
+                        <xsl:apply-templates select="introduction"/>
+                        <xsl:apply-templates select="task"/>
+                        <xsl:apply-templates select="conclusion"/>
+                    </xsl:when>
+                    <!-- statement, hint*, answer*, solution* -->
+                    <xsl:when test="statement">
+                        <xsl:if test="$task.text.statement='yes'">
+                            <xsl:apply-templates select="statement">
+                                <xsl:with-param name="b-original" select="$b-original" />
+                            </xsl:apply-templates>
+                        </xsl:if>
+                        <xsl:if test="$task.text.hint='yes'">
+                            <xsl:for-each select="hint">
+                                <xsl:apply-templates select=".">
+                                    <xsl:with-param name="b-original" select="$b-original" />
+                                </xsl:apply-templates>
+                            </xsl:for-each>
+                        </xsl:if>
+                        <xsl:if test="$task.text.answer='yes'">
+                            <xsl:for-each select="answer">
+                                <xsl:apply-templates select=".">
+                                    <xsl:with-param name="b-original" select="$b-original" />
+                                </xsl:apply-templates>
+                                <xsl:text> </xsl:text>
+                            </xsl:for-each>
+                        </xsl:if>
+                        <xsl:if test="$task.text.solution='yes'">
+                            <xsl:for-each select="solution">
+                                <xsl:apply-templates select=".">
+                                    <xsl:with-param name="b-original" select="$b-original" />
+                                </xsl:apply-templates>
+                                <xsl:text> </xsl:text>
+                            </xsl:for-each>
+                        </xsl:if>
+                    </xsl:when>
+                    <!-- unstructured -->
+                    <xsl:otherwise>
+                        <xsl:apply-templates />
+                    </xsl:otherwise>
+                </xsl:choose>
             </xsl:when>
             <xsl:when test="self::exercisegroup">
                 <!-- Then actual content -->
@@ -2595,11 +2709,28 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <div class="contributor-info">
                     <xsl:if test="department">
                         <xsl:apply-templates select="department" />
+                        <xsl:if test="department/following-sibling::*">
+                            <br />
+                        </xsl:if>
                     </xsl:if>
-                    <xsl:if test="department and institution">
-                        <br />
+                    <xsl:if test="institution">
+                        <xsl:apply-templates select="institution" />
+                        <xsl:if test="institution/following-sibling::*">
+                            <br />
+                        </xsl:if>
                     </xsl:if>
-                    <xsl:apply-templates select="institution" />
+                    <xsl:if test="location">
+                        <xsl:apply-templates select="location" />
+                        <xsl:if test="location/following-sibling::*">
+                            <br />
+                        </xsl:if>
+                    </xsl:if>
+                    <xsl:if test="email">
+                        <xsl:apply-templates select="email" />
+                        <xsl:if test="email/following-sibling::*">
+                            <br />
+                        </xsl:if>
+                    </xsl:if>
                 </div>
             </xsl:when>
             <xsl:when test="self::biblio">
@@ -2631,7 +2762,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- create posterior for appendages                  -->
     <!-- could condition on block too, rather than schema -->
     <!-- exercises have selectors, activities do not, think how to refactor this -->
-    <xsl:if test="(hint|answer|solution and not(self::exercise) and not(&PROJECT-FILTER;)) or proof or note">
+    <xsl:if test="(hint|answer|solution and not(self::exercise) and not(&PROJECT-FILTER;) and not(self::task)) or proof or note">
         <div class="posterior">
             <xsl:apply-templates select="hint|answer|solution|proof|note">
                 <xsl:with-param name="b-original" select="$b-original" />
@@ -2671,7 +2802,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates select="." mode="heading-type" />
 </xsl:template>
 
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|list|objectives" mode="heading-xref-knowl">
+<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives" mode="heading-xref-knowl">
     <xsl:apply-templates select="." mode="heading-full" />
 </xsl:template>
 
@@ -3377,6 +3508,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:element>
 </xsl:template>
 
+<!-- ############################# -->
+<!-- Widths of Images, Videos, Etc -->
+<!-- ############################# -->
+
+<!-- Anyway that an image gets placed in a sidebyside  -->
+<!-- panel it should have a relative size filling that -->
+<!-- panel, so this is easy, just 100% all the time    -->
+<xsl:template match="image[ancestor::sidebyside]" mode="get-width-percentage">
+    <xsl:text>100%</xsl:text>
+</xsl:template>
 
 
 <!-- ###### -->
@@ -3405,7 +3546,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 </xsl:with-param>
                 <xsl:with-param name="png-fallback-filename" />
                 <xsl:with-param name="image-width">
-                    <xsl:apply-templates select="." mode="image-width" />
+                    <xsl:apply-templates select="." mode="get-width-percentage" />
                 </xsl:with-param>
                 <xsl:with-param name="image-description">
                     <xsl:apply-templates select="description" />
@@ -3420,7 +3561,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:otherwise>
             <xsl:element name="img">
                 <xsl:attribute name="width">
-                    <xsl:apply-templates select="." mode="image-width" />
+                    <xsl:apply-templates select="." mode="get-width-percentage" />
                 </xsl:attribute>
                 <xsl:attribute name="src">
                     <xsl:value-of select="@source" />
@@ -3463,7 +3604,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:if>
         </xsl:with-param>
         <xsl:with-param name="image-width">
-            <xsl:apply-templates select="." mode="image-width" />
+            <xsl:apply-templates select="." mode="get-width-percentage" />
         </xsl:with-param>
         <xsl:with-param name="image-description">
             <xsl:apply-templates select="description" />
@@ -3653,8 +3794,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- of the remaining space.                                      -->
 <xsl:template name="relative-width">
     <xsl:param name="width" />
-    <xsl:param name="margins" />
-    <xsl:value-of select="(100 * substring-before($width, '%')) div (100 - 2 * substring-before($margins, '%'))" />
+    <xsl:param name="left-margin" />
+    <xsl:param name="right-margin" />
+    <xsl:value-of select="(100 * substring-before($width, '%')) div (100 - substring-before($left-margin, '%') - substring-before($right-margin, '%'))" />
     <xsl:text>%</xsl:text>
 </xsl:template>
 
@@ -3666,7 +3808,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- else we write an empty div to occupy the space -->
 <xsl:template match="*" mode="panel-heading">
     <xsl:param name="width" />
-    <xsl:param name="margins" />
+    <xsl:param name="left-margin" />
+    <xsl:param name="right-margin" />
     <xsl:element name="h5">
         <xsl:attribute name="class">
             <xsl:text>sbsheader</xsl:text>
@@ -3675,7 +3818,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>width:</xsl:text>
             <xsl:call-template name="relative-width">
                 <xsl:with-param name="width" select="$width" />
-                <xsl:with-param name="margins" select="$margins" />
+                <xsl:with-param name="left-margin"  select="$left-margin" />
+                <xsl:with-param name="right-margin" select="$right-margin" />
             </xsl:call-template>
             <xsl:text>;</xsl:text>
             <xsl:if test="$sbsdebug">
@@ -3699,7 +3843,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:param name="b-original" select="true()" />
 
     <xsl:param name="width" />
-    <xsl:param name="margins" />
+    <xsl:param name="left-margin" />
+    <xsl:param name="right-margin" />
     <xsl:param name="valign" />
     <xsl:element name="div">
         <xsl:attribute name="class">
@@ -3719,7 +3864,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>width:</xsl:text>
             <xsl:call-template name="relative-width">
                 <xsl:with-param name="width" select="$width" />
-                <xsl:with-param name="margins" select="$margins" />
+                <xsl:with-param name="left-margin"  select="$left-margin" />
+                <xsl:with-param name="right-margin" select="$right-margin" />
             </xsl:call-template>
             <xsl:text>;</xsl:text>
             <!-- assumes "sbspanel" class set vertical direction -->
@@ -3756,7 +3902,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- See more at utility template immediately following  -->
 <xsl:template match="*" mode="panel-caption">
     <xsl:param name="width" />
-    <xsl:param name="margins" />
+    <xsl:param name="left-margin" />
+    <xsl:param name="right-margin" />
 
     <xsl:choose>
         <!-- interior to a figure'd sidebyside        -->
@@ -3764,7 +3911,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="caption and (parent::sidebyside/parent::figure or parent::sidebyside/parent::sbsgroup/parent::figure)">
             <xsl:apply-templates select="caption" mode="subcaption">
                 <xsl:with-param name="width" select="$width" />
-                <xsl:with-param name="margins" select="$margins" />
+                <xsl:with-param name="left-margin" select="$left-margin" />
+                <xsl:with-param name="right-margin" select="$right-margin" />
             </xsl:apply-templates>
         </xsl:when>
         <!-- a caption'ed item, normal numbering      -->
@@ -3772,7 +3920,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="caption">
             <xsl:apply-templates select="caption" >
                 <xsl:with-param name="width" select="$width" />
-                <xsl:with-param name="margins" select="$margins" />
+                <xsl:with-param name="left-margin" select="$left-margin" />
+                <xsl:with-param name="right-margin" select="$right-margin" />
             </xsl:apply-templates>
         </xsl:when>
         <!-- fill the space (properly) -->
@@ -3780,7 +3929,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <figcaption>
                 <xsl:call-template name="sbs-caption-attributes">
                     <xsl:with-param name="width" select="$width" />
-                    <xsl:with-param name="margins" select="$margins" />
+                    <xsl:with-param name="left-margin" select="$left-margin" />
+                    <xsl:with-param name="right-margin" select="$right-margin" />
                 </xsl:call-template>
             </figcaption>
         </xsl:otherwise>
@@ -3794,7 +3944,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- two modal templates for a caption when signaled     -->
 <xsl:template name="sbs-caption-attributes">
     <xsl:param name="width" />
-    <xsl:param name="margins" />
+    <xsl:param name="left-margin" />
+    <xsl:param name="right-margin" />
     <xsl:attribute name="class">
         <xsl:text>sbscaption</xsl:text>
     </xsl:attribute>
@@ -3802,7 +3953,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:text>width:</xsl:text>
         <xsl:call-template name="relative-width">
             <xsl:with-param name="width" select="$width" />
-            <xsl:with-param name="margins" select="$margins" />
+            <xsl:with-param name="left-margin"  select="$left-margin" />
+            <xsl:with-param name="right-margin" select="$right-margin" />
         </xsl:call-template>
         <xsl:text>;</xsl:text>
         <xsl:if test="$sbsdebug">
@@ -3827,7 +3979,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:param name="panels" />
     <xsl:param name="captions" />
 
-    <xsl:variable name="margins" select="$layout/margins" />
+    <xsl:variable name="left-margin"  select="$layout/left-margin" />
+    <xsl:variable name="right-margin" select="$layout/right-margin" />
 
     <!-- A "sidebyside" div, to contain headings,  -->
     <!-- panels, captions rows as "sbsrow" divs -->
@@ -3860,10 +4013,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <!-- margins are custom from source -->
                 <xsl:attribute name="style">
                     <xsl:text>margin-left:</xsl:text>
-                    <xsl:value-of select="$margins" />
+                    <xsl:value-of select="$left-margin" />
                     <xsl:text>;</xsl:text>
                     <xsl:text>margin-right:</xsl:text>
-                    <xsl:value-of select="$margins" />
+                    <xsl:value-of select="$right-margin" />
                     <xsl:text>;</xsl:text>
                     <xsl:if test="$sbsdebug">
                         <xsl:text>box-sizing: border-box;</xsl:text>
@@ -3884,10 +4037,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <!-- margins are custom from source -->
             <xsl:attribute name="style">
                 <xsl:text>margin-left:</xsl:text>
-                <xsl:value-of select="$margins" />
+                <xsl:value-of select="$left-margin" />
                 <xsl:text>;</xsl:text>
                 <xsl:text>margin-right:</xsl:text>
-                <xsl:value-of select="$margins" />
+                <xsl:value-of select="$right-margin" />
                 <xsl:text>;</xsl:text>
                 <xsl:if test="$sbsdebug">
                     <xsl:text>box-sizing: border-box;</xsl:text>
@@ -3910,10 +4063,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <!-- margins are custom from source -->
                 <xsl:attribute name="style">
                     <xsl:text>margin-left:</xsl:text>
-                    <xsl:value-of select="$margins" />
+                    <xsl:value-of select="$left-margin" />
                     <xsl:text>;</xsl:text>
                     <xsl:text>margin-right:</xsl:text>
-                    <xsl:value-of select="$margins" />
+                    <xsl:value-of select="$right-margin" />
                     <xsl:text>;</xsl:text>
                     <xsl:if test="$sbsdebug">
                         <xsl:text>box-sizing: border-box;</xsl:text>
@@ -3957,17 +4110,18 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:apply-templates>
 </xsl:template>
 
+<xsl:template match="program|console" mode="panel-html-box">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select=".">
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
 <!-- Process intro, the list, conclusion     -->
 <!-- title is killed -->
 <xsl:template match="list" mode="panel-html-box">
     <xsl:param name="b-original" select="true()" />
-    <xsl:apply-templates select="introduction">
-        <xsl:with-param name="b-original" select="$b-original" />
-    </xsl:apply-templates>
-    <xsl:apply-templates select="ol|ul|dl">
-        <xsl:with-param name="b-original" select="$b-original" />
-    </xsl:apply-templates>
-    <xsl:apply-templates select="conclusion">
+    <xsl:apply-templates select="introduction|ol|ul|dl|conclusion">
         <xsl:with-param name="b-original" select="$b-original" />
     </xsl:apply-templates>
 </xsl:template>
@@ -3994,14 +4148,18 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </div>
 </xsl:template>
 
-<!-- "image-width" modal template can override a width        -->
-<!-- For an image inside a width-constrained panel, we simply -->
-<!-- require the image to fill the panel with a 100% width    -->
-<!-- Otherwise, just do the usual                             -->
+<!-- An image "knows" how to look outward         -->
+<!-- for side-by-side layout, or other width      -->
+<!-- specification so we do nothing extraordinary -->
 <xsl:template match="image" mode="panel-html-box">
-    <xsl:apply-templates select=".">
-        <xsl:with-param name="width-override" select="'100%'" />
-    </xsl:apply-templates>
+    <xsl:apply-templates select="." />
+</xsl:template>
+
+<!-- An video "knows" how to look outward         -->
+<!-- for side-by-side layout, or other width      -->
+<!-- specification so we do nothing extraordinary -->
+<xsl:template match="video" mode="panel-html-box">
+    <xsl:apply-templates select="." />
 </xsl:template>
 
 <!-- A figure or table is just a container to hold a -->
@@ -4010,10 +4168,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- to the other routines                           -->
 <!-- table needs to pass width to tabular in case    -->
 <!-- there is a paragraph cell                       -->
+<!-- and generically to other contained objects      -->
 <xsl:template match="figure" mode="panel-html-box">
     <xsl:param name="b-original" select="true()" />
+    <xsl:param name="width" select="''" />
     <xsl:apply-templates select="*[not(&METADATA-FILTER;)][1]" mode="panel-html-box">
         <xsl:with-param name="b-original" select="$b-original" />
+        <xsl:with-param name="width" select="$width" />
     </xsl:apply-templates>
 </xsl:template>
 
@@ -4026,6 +4187,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:apply-templates>
 </xsl:template>
 
+<xsl:template match="listing" mode="panel-html-box">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*[not(&METADATA-FILTER;)][1]" mode="panel-html-box">
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+<xsl:template match="jsxgraph" mode="panel-html-box">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="." />
+</xsl:template>
 
 <!-- Just temporary markers of unimplemented stuff -->
 <xsl:template match="*" mode="panel-html-box">
@@ -4099,21 +4271,315 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- ################################## -->
 
 
+<!-- ##### -->
 <!-- Video -->
+<!-- ##### -->
+
+<!-- We begin with a general construction of various   -->
+<!-- options for embedding, pop-out, and previews.     -->
+<!-- An abstract modal method "video-embed" constructs -->
+<!-- an HTML object of the correct size and with the   -->
+<!-- right autoplay characteristic.                    -->
+
 <xsl:template match="video">
+    <xsl:variable name="width-percent">
+        <xsl:apply-templates select="." mode="get-width-percentage" />
+    </xsl:variable>
+    <xsl:variable name="width-fraction">
+        <xsl:value-of select="substring-before($width-percent,'%') div 100" />
+    </xsl:variable>
+    <xsl:variable name="aspect-ratio">
+        <xsl:apply-templates select="." mode="get-aspect-ratio">
+            <xsl:with-param name="default-aspect" select="'16:9'" />
+        </xsl:apply-templates>
+    </xsl:variable>
+    <xsl:variable name="width"  select="$design-width * $width-fraction" />
+    <xsl:variable name="height" select="$design-width * $width-fraction div $aspect-ratio" />
+    <xsl:variable name="int-id">
+        <xsl:apply-templates select="." mode="internal-id" />
+    </xsl:variable>
+    <!-- construct a pop-out page when mandatory or electable -->
+    <!-- as a pop-out set YouTube autoplay parameter to true  -->
+    <xsl:if test="(@play-at = 'popout') or (@play-at = 'select')">
+    <!-- apparent width of content region of HTML page  -->
+    <!-- with no sidebar, subtract margins = 900 - 2*30 -->
+    <xsl:variable name="ptx-content-width" select="'840'" />
+    <xsl:variable name="ptx-content-height" select="$ptx-content-width div $aspect-ratio" />
+        <xsl:apply-templates select="." mode="masthead-only-page">
+            <xsl:with-param name="content">
+                <xsl:apply-templates select="." mode="video-embed">
+                    <xsl:with-param name="width"  select="$ptx-content-width" />
+                    <xsl:with-param name="height" select="$ptx-content-height" />
+                    <xsl:with-param name="autoplay" select="'true'" />
+                </xsl:apply-templates>
+                <div style="text-align: center;">Reloading this page will reset a start location</div>
+            </xsl:with-param>
+        </xsl:apply-templates>
+    </xsl:if>
+    <!-- nine combinations: {embed|popout|select} x {default|generic|custom} -->
+    <xsl:choose>
+        <xsl:when test="@play-at = 'popout'">
+            <a href="{$int-id}.html" target="_blank">
+            <!-- place a thumbnail as clickable for page already extant -->
+                <xsl:choose>
+                    <xsl:when test="@preview = 'generic'">
+                        <xsl:call-template name="generic-preview-svg">
+                            <xsl:with-param name="width" select="$width" />
+                            <xsl:with-param name="height" select="$height" />
+                        </xsl:call-template>
+                    </xsl:when>
+                    <!-- not implemented -->
+                    <xsl:when test="@preview = 'custom'" />
+                    <xsl:when test="(@preview = 'default') or not(@preview)">
+                        <xsl:variable name="thumbnail-image">
+                            <xsl:text>images/</xsl:text>
+                            <xsl:value-of select="$int-id" />
+                            <xsl:text>.jpg</xsl:text>
+                        </xsl:variable>
+                        <img src="{$thumbnail-image}" width="{$width}" height="{$height}"/>
+                    </xsl:when>
+                </xsl:choose>
+            </a>
+            <!-- until we get an overlay, explain popout -->
+            <div style="text-align: center;">
+                <xsl:text>Click Above to Play</xsl:text>
+            </div>
+        </xsl:when>
+        <xsl:when test="(@play-at = 'select') or (@play-at = 'embed') or not(@play-at)">
+            <xsl:choose>
+                <xsl:when test="@preview = 'generic'">
+                    <xsl:apply-templates select="." mode="video-embed-generic">
+                        <xsl:with-param name="width"  select="$width" />
+                        <xsl:with-param name="height" select="$height" />
+                        <xsl:with-param name="autoplay" select="'true'" />
+                    </xsl:apply-templates>
+                </xsl:when>
+                <!-- not implemented -->
+                <!-- will require hiding device (make it a template?) -->
+                <xsl:when test="@preview = 'custom'" />
+                <xsl:when test="(@preview = 'default') or not(@preview)">
+                    <xsl:apply-templates select="." mode="video-embed">
+                        <xsl:with-param name="width"  select="$width" />
+                        <xsl:with-param name="height" select="$height" />
+                        <xsl:with-param name="autoplay" select="'false'" />
+                    </xsl:apply-templates>
+                </xsl:when>
+            </xsl:choose>
+            <!-- for the reader-select case, we need a link as a "button" -->
+            <xsl:if test="@play-at = 'select'">
+                <div style="text-align: center;">
+                    <a href="{$int-id}.html" target="_blank">
+                        <xsl:text>Click to Pop-Out</xsl:text>
+                    </a>
+                </div>
+            </xsl:if>
+        </xsl:when>
+        <xsl:otherwise />
+    </xsl:choose>
+</xsl:template>
+
+<!-- "Pop-Out Page" -->
+<!-- (A bit rough)                  -->
+<!-- no extra libraries, no sidebar -->
+<!-- 840px available (~900 - 2*30)  -->
+<!-- Page name comes from context node -->
+<!-- TODO:  one page template, super-parameterized      -->
+<!-- TODO:  trash navigation further in masthead        -->
+<!-- TODO:  replace libraries by hooks to add some back -->
+<xsl:template match="*" mode="masthead-only-page">
+    <xsl:param name="content" select="''" />
+    <xsl:variable name="int-id">
+        <xsl:apply-templates select="." mode="internal-id" />
+    </xsl:variable>
+    <exsl:document href="{$int-id}.html" method="html">
+        <!-- Need to be careful for format of this initial string     -->
+        <xsl:text disable-output-escaping='yes'>&lt;!DOCTYPE html>&#xa;</xsl:text>
+        <xsl:call-template name="converter-blurb-html" />
+        <html lang="{$document-language}"> <!-- dir="rtl" here -->
+            <head>
+                <title>
+                    <!-- Leading with initials is useful for small tabs -->
+                    <xsl:if test="//docinfo/initialism">
+                        <xsl:apply-templates select="//docinfo/initialism" />
+                        <xsl:text> </xsl:text>
+                    </xsl:if>
+                <xsl:apply-templates select="." mode="title-simple" />
+                </title>
+                <meta name="Keywords" content="Authored in PreTeXt" />
+                <!-- http://webdesignerwall.com/tutorials/responsive-design-in-3-steps -->
+                <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
+                <!-- ########################################## -->
+                <!-- A variety of libraries were loaded here    -->
+                <!-- Only purpose of this page is YouTube video -->
+                <!-- A hook could go here for some extras       -->
+                <!-- ########################################## -->
+                <xsl:call-template name="knowl" />
+                <xsl:call-template name="mathbook-js" />
+                <xsl:call-template name="fonts" />
+                <xsl:call-template name="css" />
+            </head>
+            <xsl:element name="body">
+                <!-- the first class controls the default icon -->
+                <xsl:attribute name="class">
+                    <xsl:choose>
+                        <xsl:when test="/mathbook/book">mathbook-book</xsl:when>
+                        <xsl:when test="/mathbook/article">mathbook-article</xsl:when>
+                    </xsl:choose>
+                    <!-- ################################################# -->
+                    <!-- This is how the left sidebar goes away            -->
+                    <!-- <xsl:if test="$b-has-toc">                        -->
+                    <!--    <xsl:text> has-toc has-sidebar-left</xsl:text> -->
+                    <!-- </xsl:if>                                         -->
+                    <!-- ################################################# -->
+                </xsl:attribute>
+                <!-- assistive "Skip to main content" link    -->
+                <!-- this *must* be first for maximum utility -->
+                <xsl:call-template name="skip-to-content-link" />
+                <xsl:call-template name="latex-macros" />
+                 <header id="masthead" class="smallbuttons">
+                    <div class="banner">
+                        <!-- Seems to help clean up navigation some         -->
+                        <!-- <xsl:call-template name="google-search-box" /> -->
+                        <div class="container">
+                            <xsl:call-template name="brand-logo" />
+                            <div class="title-container">
+                                <h1 class="heading">
+                                    <xsl:element name="a">
+                                        <xsl:attribute name="href">
+                                            <xsl:apply-templates select="/mathbook/*[not(self::docinfo)]" mode="containing-filename" />
+                                        </xsl:attribute>
+                                        <span class="title">
+                                            <xsl:apply-templates select="/mathbook/book|/mathbook/article" mode="title-simple" />
+                                        </span>
+                                        <xsl:if test="normalize-space(/mathbook/book/subtitle|/mathbook/article/subtitle)">
+                                            <span class="subtitle">
+                                                <xsl:apply-templates select="/mathbook/book|/mathbook/article" mode="subtitle" />
+                                            </span>
+                                        </xsl:if>
+                                    </xsl:element>
+                                </h1>
+                                <!-- Serial list of authors/editors -->
+                                <p class="byline">
+                                    <xsl:apply-templates select="//frontmatter/titlepage/author" mode="name-list"/>
+                                    <xsl:apply-templates select="//frontmatter/titlepage/editor" mode="name-list"/>
+                                </p>
+                            </div>  <!-- title-container -->
+                        </div>  <!-- container -->
+                    </div> <!-- banner -->
+                    <!-- This seemed to not be enough, until Google Search went away  -->
+                    <!-- <xsl:apply-templates select="." mode="primary-navigation" /> -->
+                </header> <!-- masthead -->
+                <div class="page">
+                    <!-- With sidebars killed, this stuff is extraneous     -->
+                    <!-- <xsl:apply-templates select="." mode="sidebars" /> -->
+                    <main class="main">
+                        <div id="content" class="mathbook-content">
+                            <!-- This is content passed in as a parameter -->
+                            <xsl:copy-of select="$content" />
+                          </div>
+                    </main>
+                </div>
+                <xsl:apply-templates select="/mathbook/docinfo/analytics" />
+                <!-- <xsl:call-template name="pytutor-footer" /> -->
+            </xsl:element>
+        </html>
+    </exsl:document>
+</xsl:template>
+
+<!-- Cover up an embedded version with a generic preview -->
+<!-- Click to reveal, so do not autoplay the video       -->
+<xsl:template match="video" mode="video-embed-generic">
+    <xsl:param name="width" select="''" />
+    <xsl:param name="height" select="''" />
+    <xsl:param name="autoplay" select="'false'" />
+
+    <!-- hide behind generic image, code from post at -->
+    <!-- https://stackoverflow.com/questions/7199624  -->
+    <!-- TODO: maybe event handlers can start playing via onclick? -->
+    <div onclick="this.nextElementSibling.style.display='block'; this.style.display='none'">
+        <xsl:call-template name="generic-preview-svg">
+            <xsl:with-param name="width" select="$width" />
+            <xsl:with-param name="height" select="$height" />
+        </xsl:call-template>
+    </div>
+    <div style="display:none">
+        <!-- Hidden content in here -->
+        <xsl:apply-templates select="." mode="video-embed">
+            <xsl:with-param name="width"  select="$width" />
+            <xsl:with-param name="height" select="$height" />
+            <xsl:with-param name="autoplay" select="'false'" />
+        </xsl:apply-templates>
+    </div>
+</xsl:template>
+
+<xsl:template name="generic-preview-svg">
+    <xsl:param name="width" select="''" />
+    <xsl:param name="height" select="''" />
+    <!-- viewbox was square (0,0), 96x96, now clipped 14 above and below                   -->
+    <!-- preserveAspectRatio="none" makes it amenable to matching video it hides           -->
+    <!-- SVG scaling, comprehensive: https://css-tricks.com/scale-svg/                     -->
+    <!-- Accessed: 2017-08-08                                                              -->
+    <!-- Page: https://commons.wikimedia.org/wiki/File:YouTube_Play_Button.svg             -->
+    <!-- File: https://upload.wikimedia.org/wikipedia/commons/d/d1/YouTube_Play_Button.svg -->
+    <!-- License text:  This image only consists of simple geometric shapes or text.       -->
+    <!-- It does not meet the threshold of originality needed for copyright protection,    -->
+    <!-- and is therefore in the public domain.                                            -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 14 96 68" width="{$width}" height="{$height}" style="cursor:pointer;" preserveAspectRatio="none">
+        <path fill="#e62117" d="M94.98,28.84c0,0-0.94-6.6-3.81-9.5c-3.64-3.81-7.72-3.83-9.59-4.05c-13.4-0.97-33.52-0.85-33.52-0.85s-20.12-0.12-33.52,0.85c-1.87,0.22-5.95,0.24-9.59,4.05c-2.87,2.9-3.81,9.5-3.81,9.5S0.18,36.58,0,44.33v7.26c0.18,7.75,1.14,15.49,1.14,15.49s0.93,6.6,3.81,9.5c3.64,3.81,8.43,3.69,10.56,4.09c7.53,0.72,31.7,0.89,32.54,0.9c0.01,0,20.14,0.03,33.54-0.94c1.87-0.22,5.95-0.24,9.59-4.05c2.87-2.9,3.81-9.5,3.81-9.5s0.96-7.75,1.02-15.49v-7.26C95.94,36.58,94.98,28.84,94.98,28.84z M38.28,61.41v-27l25.74,13.5L38.28,61.41z"/>
+    </svg>
+</xsl:template>
+
+<!-- create a "video" element for author-hosted -->
+<!-- dimensions and autoplay as parameters      -->
+<xsl:template match="video[@source]" mode="video-embed">
+    <xsl:param name="width" select="''" />
+    <xsl:param name="height" select="''" />
+    <xsl:param name="autoplay" select="'false'" />
+
+    <!-- start/end times (read both, see 4.1, 4.2.1 at w3.org)    -->
+    <!-- Media Fragment URI: https://www.w3.org/TR/media-frags/   -->
+    <!-- Javascript: https://stackoverflow.com/questions/11212715 -->
+    <!-- variable is possibly empty, so no harm using that later  -->
+    <xsl:variable name="temporal-fragment">
+        <xsl:if test="@start or @end">
+            <xsl:text>#t=</xsl:text>
+        </xsl:if>
+        <xsl:if test="@start">
+            <xsl:value-of select="@start" />
+        </xsl:if>
+        <!-- can lead with comma, implies 0,xx -->
+        <xsl:if test="@end">
+            <xsl:text>,</xsl:text>
+            <xsl:value-of select="@end" />
+        </xsl:if>
+    </xsl:variable>
+    <!-- we need to build the element, since @autoplay is optional -->
     <xsl:element name="video">
         <xsl:attribute name="id">
             <xsl:apply-templates select="." mode="internal-id"/>
         </xsl:attribute>
         <xsl:attribute name="width">
-            <xsl:apply-templates select="." mode="image-width" />
+            <xsl:value-of select="$width" />
         </xsl:attribute>
-        <!-- an empty string is equivalent to the "value-less" syntax -->
+        <xsl:attribute name="height">
+            <xsl:value-of select="$height" />
+        </xsl:attribute>
+        <!-- This CSS allows us to break the aspect-ratio -->
+        <!-- https://stackoverflow.com/questions/4000818/ -->
+        <xsl:attribute name="style">
+            <text>object-fit: fill;</text>
+        </xsl:attribute>
+        <!-- empty forms work as boolean switches -->
         <xsl:attribute name="controls" />
+        <xsl:if test="$autoplay = 'true'">
+            <xsl:attribute name="autoplay" />
+        </xsl:if>
+        <!-- children "source" elements -->
         <xsl:element name="source">
             <xsl:attribute name="src">
                 <xsl:value-of select="@source"/>
                 <xsl:text>.mp4</xsl:text>
+                <xsl:value-of select="$temporal-fragment" />
             </xsl:attribute>
             <xsl:attribute name="type">
                 <xsl:text>video/mp4</xsl:text>
@@ -4123,6 +4589,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:attribute name="src">
                 <xsl:value-of select="@source"/>
                 <xsl:text>.ogg</xsl:text>
+                <xsl:value-of select="$temporal-fragment" />
             </xsl:attribute>
             <xsl:attribute name="type">
                 <xsl:text>video/ogg</xsl:text>
@@ -4132,12 +4599,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:attribute name="src">
                 <xsl:value-of select="@source"/>
                 <xsl:text>.webm</xsl:text>
+                <xsl:value-of select="$temporal-fragment" />
             </xsl:attribute>
             <xsl:attribute name="type">
                 <xsl:text>video/webm</xsl:text>
             </xsl:attribute>
         </xsl:element>
-        <xsl:text>Your browser does not support the video tag.</xsl:text>
+        <!-- failure to perform -->
+        <xsl:text>Your browser does not support the &lt;video&gt; tag.</xsl:text>
     </xsl:element>
 </xsl:template>
 
@@ -4151,50 +4620,56 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- something to do with cross-domain scripting security? -->
 <!-- <xsl:text>&amp;origin=http://example.com</xsl:text>   -->
 <!-- start/end time parameters -->
-<xsl:template match="video[@youtube]">
-    <xsl:variable name="width">
-        <xsl:apply-templates select="." mode="image-width" />
+
+<!-- create iframe home for YouTube video -->
+<!-- dimensions and autoplay as parameters -->
+<xsl:template match="video[@youtube]" mode="video-embed">
+    <xsl:param name="width" select="''" />
+    <xsl:param name="height" select="''" />
+    <xsl:param name="autoplay" select="'false'" />
+
+    <xsl:variable name="int-id">
+        <xsl:apply-templates select="." mode="internal-id" />
     </xsl:variable>
-    <xsl:variable name="width-fraction">
-        <xsl:value-of select="substring-before($width,'%') div 100" />
+    <xsl:variable name="source-url">
+        <xsl:apply-templates select="." mode="youtube-embed-url">
+            <xsl:with-param name="autoplay" select="$autoplay" />
+        </xsl:apply-templates>
     </xsl:variable>
-    <!-- assumes 16:9 ratio (0.5625), make configurable -->
-    <xsl:variable name="aspect-ratio">
-        <xsl:text>0.5625</xsl:text>
-    </xsl:variable>
-    <xsl:element name="iframe">
-        <xsl:attribute name="id">
-            <xsl:apply-templates select="." mode="internal-id" />
-        </xsl:attribute>
-        <xsl:attribute name="type">text/html</xsl:attribute>
-        <xsl:attribute name="width">
-            <xsl:value-of select="$design-width * $width-fraction" />
-        </xsl:attribute>
-        <xsl:attribute name="height">
-            <xsl:value-of select="$design-width * $width-fraction * $aspect-ratio" />
-        </xsl:attribute>
-        <xsl:attribute name="frameborder">0</xsl:attribute>
-        <xsl:attribute name="src">
-            <xsl:text>https://www.youtube.com/embed/</xsl:text>
-            <xsl:value-of select="@youtube" />
-            <!-- alphabetical, ? separator first -->
-            <!-- enables keyboard controls       -->
-            <xsl:text>?disablekd=1</xsl:text>
-            <!-- use &amp; separator for remainder -->
-            <!-- modest branding -->
-            <xsl:text>&amp;modestbranding=1</xsl:text>
-            <!-- kill related videos at end -->
-            <xsl:text>&amp;rel=0</xsl:text>
-            <xsl:if test="@start">
-                <xsl:text>&amp;start=</xsl:text>
-                <xsl:value-of select="@start" />
-            </xsl:if>
-            <xsl:if test="@end">
-                <xsl:text>&amp;end=</xsl:text>
-                <xsl:value-of select="@end" />
-            </xsl:if>
-        </xsl:attribute>
-    </xsl:element>
+    <iframe id="{$int-id}"
+            type="text/html"
+            width="{$width}"
+            height="{$height}"
+            frameborder="0"
+            src="{$source-url}" />
+</xsl:template>
+
+<!-- Creates a YouTube URL for embedding, typically in an iframe -->
+<!-- autoplay for popout, otherwise not                          -->
+<xsl:template match="video[@youtube]" mode="youtube-embed-url">
+    <xsl:param name="autoplay" select="'false'" />
+    <xsl:text>https://www.youtube.com/embed/</xsl:text>
+    <xsl:value-of select="@youtube" />
+    <!-- alphabetical, ? separator first -->
+    <!-- enables keyboard controls       -->
+    <xsl:text>?disablekd=1</xsl:text>
+    <!-- use &amp; separator for remainder -->
+    <!-- modest branding -->
+    <xsl:text>&amp;modestbranding=1</xsl:text>
+    <!-- kill related videos at end -->
+    <xsl:text>&amp;rel=0</xsl:text>
+    <xsl:if test="@start">
+        <xsl:text>&amp;start=</xsl:text>
+        <xsl:value-of select="@start" />
+    </xsl:if>
+    <xsl:if test="@end">
+        <xsl:text>&amp;end=</xsl:text>
+        <xsl:value-of select="@end" />
+    </xsl:if>
+    <!-- default autoplay is 0, don't -->
+    <xsl:if test="$autoplay = 'true'">
+        <xsl:text>&amp;autoplay=1</xsl:text>
+    </xsl:if>
 </xsl:template>
 
 <!-- ############ -->
@@ -4566,14 +5041,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- All the relevant information is in the parent  -->
 <xsl:template match="caption">
     <xsl:param name="width" />
-    <xsl:param name="margins" />
+    <xsl:param name="left-margin" />
+    <xsl:param name="right-margin" />
     <figcaption>
-        <!-- $width and $margins are sentinels for -->
-        <!-- sidebyside width control attributes   -->
-        <xsl:if test="$width or $margins">
+        <!-- $width, $left-margin, $right-margin are sentinels -->
+        <!-- for sidebyside width control attributes           -->
+        <xsl:if test="$width or $left-margin or $right-margin">
             <xsl:call-template name="sbs-caption-attributes">
                 <xsl:with-param name="width" select="$width" />
-                <xsl:with-param name="margins" select="$margins" />
+                <xsl:with-param name="left-margin" select="$left-margin" />
+                <xsl:with-param name="right-margin" select="$right-margin" />
             </xsl:call-template>
         </xsl:if>
         <span class="heading">
@@ -4590,14 +5067,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- which is a formatted  (a), (b), (c),...      -->
 <xsl:template match="caption" mode="subcaption">
     <xsl:param name="width" />
-    <xsl:param name="margins" />
+    <xsl:param name="left-margin" />
+    <xsl:param name="right-margin" />
     <figcaption>
         <!-- $width and $margins are sentinels for -->
         <!-- sidebyside width control attributes   -->
         <xsl:if test="$width or $margins">
             <xsl:call-template name="sbs-caption-attributes">
                 <xsl:with-param name="width" select="$width" />
-                <xsl:with-param name="margins" select="$margins" />
+                <xsl:with-param name="left-margin" select="$left-margin" />
+                <xsl:with-param name="right-margin" select="$right-margin" />
             </xsl:call-template>
         </xsl:if>
         <!-- no heading info in subcaption -->
@@ -4638,7 +5117,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Override to turn off cross-references as knowls          -->
 <!-- NB: this device makes it easy to turn off knowlification -->
 <!-- entirely, since some renders cannot use knowl JavaScript -->
-<xsl:template match="fn|p|blockquote|biblio|biblio/note|&DEFINITION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|list|&THEOREM-LIKE;|proof|case|&AXIOM-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|paragraphs|objectives|exercise|webwork|hint|answer|solution|exercisegroup|me|men|mrow|li|contributor" mode="xref-as-knowl">
+<xsl:template match="fn|p|blockquote|biblio|biblio/note|&DEFINITION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|&FIGURE-LIKE;|&THEOREM-LIKE;|proof|case|&AXIOM-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|paragraphs|objectives|exercise|webwork|hint|answer|solution|exercisegroup|me|men|mrow|li|contributor" mode="xref-as-knowl">
     <xsl:value-of select="true()" />
 </xsl:template>
 <xsl:template match="*" mode="xref-as-knowl">
@@ -4666,7 +5145,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:apply-templates select="." mode="xref-as-knowl" />
     </xsl:variable>
     <xsl:choose>
-        <!-- exceptional case, xref in mrow of display math      -->
+        <!-- 1st exceptional case, xref in webwork -->
+        <!-- Just parrot the content               -->
+        <xsl:when test="$xref/ancestor::webwork">
+            <xsl:value-of select="$content" />
+        </xsl:when>
+        <!-- 2nd exceptional case, xref in mrow of display math  -->
         <!-- Requires http://aimath.org/mathbook/mathjaxknowl.js -->
         <!-- loaded as a MathJax extension for knowls to render  -->
         <xsl:when test="$xref/parent::mrow">
@@ -4717,6 +5201,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 </xsl:attribute>
                 <!-- link content from common template -->
                 <!-- For a contributor we bypass autonaming, etc -->
+                <!-- TODO: should this be more integrated? -->
                 <xsl:choose>
                     <xsl:when test="self::contributor">
                         <xsl:apply-templates select="personname" />
@@ -5371,6 +5856,34 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>&#8208;</xsl:text>
 </xsl:template>
 
+<!-- ################ -->
+<!-- Biological Names -->
+<!-- ################ -->
+
+<xsl:template match="taxon[not(genus) and not(species)]">
+    <span class="taxon">
+        <xsl:apply-templates />
+    </span>
+</xsl:template>
+
+<xsl:template match="taxon[genus or species]">
+    <span class="taxon">
+        <xsl:if test="genus">
+            <span class="genus">
+                <xsl:apply-templates select="genus"/>
+            </span>
+        </xsl:if>
+        <xsl:if test="genus and species">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+        <xsl:if test="species">
+            <span class="species">
+                <xsl:apply-templates select="species"/>
+            </span>
+        </xsl:if>
+    </span>
+</xsl:template>
+
 <!-- Titles of Books and Articles -->
 <xsl:template match="booktitle">
     <span class="booktitle"><xsl:apply-templates /></span>
@@ -5815,26 +6328,19 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <!-- JSXGraph -->
 <xsl:template match="jsxgraph">
     <!-- interpret @width percentage and @aspect ratio -->
-    <xsl:variable name="width-percentage">
-        <xsl:apply-templates select="." mode="image-width" />
+    <xsl:variable name="width-percent">
+        <xsl:apply-templates select="." mode="get-width-percentage" />
+    </xsl:variable>
+    <xsl:variable name="width-fraction">
+        <xsl:value-of select="substring-before($width-percent,'%') div 100" />
     </xsl:variable>
     <xsl:variable name="aspect-ratio">
-        <xsl:apply-templates select="." mode="aspect-ratio" />
+        <xsl:apply-templates select="." mode="get-aspect-ratio">
+            <xsl:with-param name="default-aspect" select="'1:1'" />
+        </xsl:apply-templates>
     </xsl:variable>
-    <xsl:variable name="width-pixels">
-        <xsl:value-of select="round((substring-before($width-percentage, '%') div 100) * $design-width)" />
-    </xsl:variable>
-    <xsl:variable name="height-pixels">
-        <xsl:choose>
-            <xsl:when test="not($aspect-ratio='')">
-                <xsl:value-of select="round($width-pixels div $aspect-ratio)" />
-            </xsl:when>
-            <!-- empty string means not specified, use 1:1, ie square -->
-            <xsl:otherwise>
-                <xsl:value-of select="$width-pixels" />
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:variable>
+    <xsl:variable name="width"  select="$design-width * $width-fraction" />
+    <xsl:variable name="height" select="$design-width * $width-fraction div $aspect-ratio" />
     <!-- the div to hold the JSX output -->
     <xsl:element name="div">
         <xsl:attribute name="id">
@@ -5845,9 +6351,9 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
         </xsl:attribute>
         <xsl:attribute name="style">
             <xsl:text>width:</xsl:text>
-            <xsl:value-of select="$width-pixels" />
+            <xsl:value-of select="$width" />
             <xsl:text>px; height:</xsl:text>
-            <xsl:value-of select="$height-pixels" />
+            <xsl:value-of select="$height" />
             <xsl:text>px;</xsl:text>
         </xsl:attribute>
     </xsl:element>
@@ -5862,6 +6368,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <xsl:with-param name="text" select="input" />
         </xsl:call-template>
     </xsl:element>
+    <xsl:copy-of select="controls" />
 </xsl:template>
 
 <!-- ########################## -->
@@ -5916,7 +6423,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
     <!-- Need to be careful for format of this initial string     -->
     <xsl:text disable-output-escaping='yes'>&lt;!DOCTYPE html>&#xa;</xsl:text>
     <xsl:call-template name="converter-blurb-html" />
-    <html> <!-- lang="", and/or dir="rtl" here -->
+    <html lang="{$document-language}"> <!-- dir="rtl" here -->
         <head>
             <title>
                 <!-- Leading with initials is useful for small tabs -->
@@ -6024,7 +6531,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
     <!-- Need to be careful for format of this initial string     -->
     <xsl:text disable-output-escaping='yes'>&lt;!DOCTYPE html>&#xa;</xsl:text>
     <xsl:call-template name="converter-blurb-html" />
-    <html> <!-- lang="", and/or dir="rtl" here -->
+    <html lang="{$document-language}"> <!-- dir="rtl" here -->
         <head>
             <meta name="Keywords" content="Authored in PreTeXt" />
             <meta name="viewport" content="width=device-width,  initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" />
@@ -6797,10 +7304,11 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <!-- Text from docinfo, or localized string           -->
 <!-- Target URL from docinfo                          -->
 <xsl:template name="feedback-link">
-    <xsl:variable name="feedback-text">
+    <!-- Possibly an empty URL -->
+    <a class="feedback-link" href="{$docinfo/feedback/url}" target="_blank">
         <xsl:choose>
-            <xsl:when test="/mathbook/docinfo/feedback/text">
-                <xsl:apply-templates select="/mathbook/docinfo/feedback/text" />
+            <xsl:when test="$docinfo/feedback/text">
+                <xsl:apply-templates select="$docinfo/feedback/text" />
             </xsl:when>
             <xsl:otherwise>
                 <xsl:call-template name="type-name">
@@ -6808,13 +7316,6 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
                 </xsl:call-template>
             </xsl:otherwise>
         </xsl:choose>
-    </xsl:variable>
-    <!-- Possibly an empty URL -->
-    <xsl:variable name="feedback-url">
-        <xsl:apply-templates select="/mathbook/docinfo/feedback/url" />
-    </xsl:variable>
-    <a class="feedback-link" href="{$feedback-url}">
-        <xsl:value-of select="$feedback-text" />
     </a>
 </xsl:template>
 
@@ -7186,8 +7687,8 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <!-- JSXGraph -->
 <xsl:template name="jsxgraph">
     <xsl:if test="$b-has-jsxgraph">
-        <link rel="stylesheet" type="text/css" href="http://jsxgraph.uni-bayreuth.de/distrib/jsxgraph.css" />
-        <script type="text/javascript" src="http://jsxgraph.uni-bayreuth.de/distrib/jsxgraphcore.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsxgraph/0.99.6/jsxgraph.css" />
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsxgraph/latest/jsxgraphcore.js"></script>
     </xsl:if>
 </xsl:template>
 
@@ -7279,7 +7780,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
     <xsl:choose>
         <xsl:when test="/mathbook/docinfo/brandlogo">
             <a id="logo-link" href="{/mathbook/docinfo/brandlogo/@url}" target="_blank" >
-                <img src="{/mathbook/docinfo/brandlogo/@source}" />
+                <img src="{/mathbook/docinfo/brandlogo/@source}" alt="Logo image for document"/>
             </a>
         </xsl:when>
         <xsl:otherwise>

@@ -357,8 +357,35 @@
     </section>
 
     <section xml:id="topic-sidebyside">
-        <title>(*) Side-by-Side Panels</title>
+        <title>Side-by-Side Panels</title>
 
+        <p>Documents, pages, and screens tend to run vertically from top to bottom.  But sometimes you want to control elements laid out horizontally.  A <tag>sidebyside</tag> is designed to play this role.  It is best thought of as a container, enclosing <term>panels</term>, and specifying their layout.  Examples include three images, all the same size and equally spaced.  Or a poem occupying two-thirds of the available width, with commentary adjacent in the remaining third.  Or an image next to a table.  But the most common use may be a single image (with no caption, and hence no number), whose width and horizontal placement are controlled by the layout.</p>
+
+        <p>See the schema for the exact items that are allowed in a <tag>sidebyside</tag>.  To author, just place these items within <tag>sidebyside</tag> in the order they should appear, left to right.  Then you add attributes to the <tag>sidebyside</tag> element to affect placement.</p>
+
+        <p>Instead of placing a <attribute>width</attribute> attribute on each item, instead place this on the <tag>sidebyside</tag> element.  A single <attribute>width</attribute> will use the same value for each panel.  For different widths, use the plural form <attribute>widths</attribute> and provide a space-separated list of percentages.  The default is to give each panel the same width, and as large as possible, which will result in no gap between panels.</p>
+
+        <p>The margins can be specified with the <attribute>margins</attribute> attribute, which if given as a single percentage will be used for both the left and right sides.  You may also specify asymmetric left and right margins with two percentages, separated by a space, in the same attribute.  An additional option is to use the value <c>auto</c> which will set each margin to half of the (common) space between panels.  This is also the default.</p>
+
+        <p>Once the widths and margins are known, any additional available width is used to create a common distance separating panels.</p>
+
+        <p>Independent of horizontal positioning, individual panels may be aligned vertically.  The attribute is <attribute>valigns</attribute> and its value is a space-separated list of <c>top</c>, <c>middle</c>, and <c>bottom</c>.  The singular version, <attribute>valign</attribute>, is used to give every panel the same alignment, using the same keywords.  The default is to have every panel at the <c>top</c>.</p>
+
+        <p>We could give lots of examples, but instead it might be best to just experiment.  Error-checking is very robust, so it is hard to get it too wrong.  OK, we will do just one to help explain.  Suppose a <tag>sidebyside</tag> contains three panels and has layout parameters given by<cd>
+            <cline>&lt;sidebyside widths="20% 40% 25%" margins="auto" valign="middle"&gt;</cline>
+        </cd>Then there will be 15<percent /> of the width left to space out the panels.  The two gaps are each 5<percent /> of the width, and the remaining 5<percent /> is split between the margins at 2.5<percent /> each.  And the vertical midlines of each panel are all aligned.</p>
+
+        <p>For a single panel with no attributes, the panel will occupy 100<percent /> of the width.  A single panel with a specified width will get equal (auto) margins, resulting in a centered panel.</p>
+
+        <p>Captioned items as panels deserve special mention.  These will continue to be numbered consecutively, with one exception.  If you place a <tag>sidebyside</tag> inside of a <tag>figure</tag>, then the <tag>figure</tag> will be numbered, and the captioned items inside the <tag>sidebyside</tag> will be <term>sub-captioned</term>.  In other words, the second captioned panel of a <tag>sidebyside</tag> inside Figure 5.2 would be referenced as Figure 5.2.b.</p>
+
+        <p>An <tag>sbsgroup</tag> (<q>side-by-side group</q>) contains only <tag>sidebyside</tag>, which are displayed in order.  However, all of the layout parameters allowed on a <tag>sidebyside</tag> may be used on an <tag>sbsgroup</tag>.  This might allow a collection of fifteen images to be laid out in three rows of five images each, with widths and spacing identical for each row because the parameters are specified on the <tag>sbsgroup</tag> element.  In this way, simple grids can be constructed.  Note that any layout parameters given on an enclosed <tag>sidebyside</tag> will take priority over those given on the <tag>sbsgroup</tag>.  Captioning behavior extends to an entire <tag>sbsgroup</tag>.</p>
+
+        <p>Since <tag>sidebyside</tag> and <tag>sbsgroup</tag> are containers they cannot be referenced and so do not have an <attribute>xml:id</attribute>.  However, you can reference their individual contents if they are captioned, and you can reference an enclosing <tag>figure</tag>.</p>
+
+        <p>Generally, a <tag>sidebyside</tag> or <tag>sbsgroup</tag> can be placed as a child of a division, or within various blocks, such as <tag>proof</tag> for example.  See the schema for (evolving) specifics.</p>
+
+        <p>It should be clear now that a <tag>sidebyside</tag> is more about presentation than most <pretext /> elements, though there is some semantic information being conveyed by grouping the panels with one another.</p>
     </section>
 
     <section xml:id="topic-front-back-matter">
@@ -401,6 +428,52 @@
 
             <p>Consider your audience and think about how much guidance they need about using context menus or helper/viewer applications to make use of the file formats you are providing. This advice may be different depending on the type of files and the types of output for your document.</p>
         </subsection>
+    </section>
+
+    <section xml:id="topic-video">
+        <title>Video</title>
+
+        <p>The <tag>video</tag> element is used to embed a video in output formed from <init>HTML</init>.  It may be placed inside a <tag>figure</tag> or can be a panel of a <tag>sidebyside</tag>.  The former will have a caption, be numbered, and hence can be the target of a cross-reference (<tag>xref</tag>).  The latter is anonymous, but allows for horizontal layout, and combinations with other panels.</p>
+
+        <p>Size is controlled by a <attribute>width</attribute> attribute expressed as a percentage (on the <tag>video</tag> element when used in a figure, or as part of the <tag>sidebyside</tag> layout parameters).  Height is controlled by giving the <term>aspect ratio</term> with the <attribute>aspect</attribute> attribute on the <tag>video</tag> element.  The value can be a ratio expressed like <c>4:3</c> or a decimal number computed from the width divided by the height, such as <c>1.333</c>.  The default for videos is a 16:9 aspect ratio, which is very common.</p>
+
+        <p>If you host the video content as part of your output, then the <attribute>source</attribute> should be a relative file name that points to the file containing the video, but <em>without an extension</em>.  The supported formats are MP4, Ogg, and WebM.  Browser capabilities and provided files are searched preferentially in that order.  In other words, you can provide files in more than one format and increase the likelihood that a reader's browser will find a format it can playback.</p>
+
+        <p>For a video hosted at YouTube, find the 11-character identification string in the address of a video you are viewing.  It will look something like <c>hAzdgU_kpGo</c>.  Then simply provide this with the <attribute>youtube</attribute> attribute, such as<cd>
+            <cline>youtube="hAzdgU_kpGo"</cline>
+        </cd></p>
+
+        <p>Options include specifying a <attribute>start</attribute> and an <attribute>end</attribute> in seconds as integers (no units) if you only want to highlight a key portion of a video.  The <attribute>play-at</attribute> attribute can take the following values<dl width="narrow">
+            <li>
+                <title><c>embed</c></title>
+                <p>Play in place (the default action).</p>
+            </li>
+            <li>
+                <title><c>popout</c></title>
+                <p>Play in new window or tab, at 150<percent /> width.</p>
+            </li>
+            <li>
+                <title><c>select</c></title>
+                <p>Provide the reader the choice of the other two options.</p>
+            </li>
+        </dl>In an educational setting, sometimes the preview images provided by YouTube can be distracting, or for an author-hosted video you may wish to provide your own preview image.  The <attribute>preview</attribute> attribute can take on the following values<dl width="narrow">
+            <li>
+                <title><c>default</c></title>
+                <p>Whatever the video playback provides (also the default action).</p>
+            </li>
+            <li>
+                <title><c>generic</c></title>
+                <p><pretext /> supplies a Play-button image.</p>
+            </li>
+            <li>
+                <title><c>custom</c></title>
+                <p>Not implemented yet (2017-08-28).  Send a request.</p>
+            </li>
+        </dl></p>
+
+        <p>The <c>mbx</c> script (<xref ref="mbx-script" />) may be used to download the provided preview images for YouTube videos.  Filenames will be formed from the <attribute>xml:id</attribute> of the <tag>video</tag> element.  These will be used in static versions of output, such as print.  Once custom preview images are implemented for author-hosted video, their static representation will improve.</p>
+
+        <p>Contemplated extensions, as of 2017-08-28, would be specifying content from Vimeo, and/or Google Drive.  Send requests if these are of use.</p>
     </section>
 
     <section xml:id="topic-units-measure">

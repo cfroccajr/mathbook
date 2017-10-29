@@ -203,6 +203,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- List is elements in REMARK-LIKE entity             -->
 <!-- remark|convention|note|observation|warning|insight -->
 <xsl:strip-space elements="remark convention note observation warning insight" />
+<!-- List is elements in COMPUTATION-LIKE entity -->
+<!-- computation|technology                      -->
+<xsl:strip-space elements="computation technology" />
 <!-- List is elements in EXAMPLE-LIKE entity -->
 <!-- example|question|problem                -->
 <xsl:strip-space elements="example question problem" />
@@ -438,6 +441,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- exercise historical default -->
 <xsl:variable name="b-number-exercise-distinct" select="false()" />
 
+<!-- TEMPORARY: exercise numbering cutover -->
+<xsl:param name="new.exercises" select="'no'" />
+<xsl:variable name="newexercises" select="boolean($new.exercises = 'yes')" />
+
+
 <!-- We read the document language translation -->
 <!-- nodes out of the right file, which relies -->
 <!-- on filenames with country codes           -->
@@ -569,26 +577,37 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- "chunking" templates defined below.                    -->
 
 
-<!--        -->
+<!-- ###### -->
 <!-- Levels -->
-<!--        -->
+<!-- ###### -->
+
+<!-- Certain characteristics of the output can be configured    -->
+<!-- based on how deep they are in the hierachy of a structured -->
+<!-- document.  Authors specify these characteristics relative  -->
+<!-- to their own project, more specifically relative to the    -->
+<!-- logical top-level element, such as "book" or "article".    -->
+<!-- These are "Level 0". We normalize these numbers internally -->
+<!-- so that level 0 is the first possible division in any      -->
+<!-- document, which would be a "part"                          -->
+
 
 <!-- (Relative) Levels -->
-<!-- Chase any element up full XML tree,      -->
-<!-- but adjust for actual document root      -->
-<!-- XML document root is always -2           -->
-<!-- mathbook element is always -1            -->
-<!-- book, article, letter, memo, etc is 0    -->
-<!-- sectioning works its way down from there -->
-<!-- http://bytes.com/topic/net/answers/572365-how-compute-nodes-depth-xslt -->
-<!-- NB: a * instead of node() seems to break things, unsure why            -->
+<!-- Input: an element that is a division of some kind -->
+<!-- Output: its relative level, eg "book" is 0        -->
+<!-- Front and back matter are faux divisions, so we   -->
+<!-- filter them out.  The overarching XML root (not   -->
+<!-- the special root node) is simply subtracted from  -->
+<!-- the count.                                        -->
 <xsl:template match="*" mode="level">
-    <xsl:value-of select="count(ancestor::node())-2" />
+    <xsl:variable name="hierarchy" select="ancestor-or-self::*[not(self::backmatter or self::frontmatter)]" />
+    <xsl:value-of select="count($hierarchy) - 2" />
 </xsl:template>
 
 <!-- Enclosing Level -->
 <!-- For any element, work up the tree to a structural -->
 <!-- node and then compute level as above              -->
+<!-- NB: to meld with previous would require a better     -->
+<!-- definition of structural, and care with introduction -->
 <xsl:template match="*" mode="enclosing-level">
     <xsl:variable name="structural">
         <xsl:apply-templates select="." mode="is-structural" />
@@ -604,10 +623,21 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <!-- Relative level offset -->
-<!-- Document root on absolute level scale (not XML root)            -->
-<!-- See "absolute" scale in use just below                          -->
-<!-- For example, article with sections has document root at level 1 -->
-<!-- So:  absolute-level = (relative-)level + root-level             -->
+<!-- This is the adjustment to move a relative       -->
+<!-- level onto the absolute scale                   -->
+<!--     part: 0                                     -->
+<!--     chapter, appendix: 1                        -->
+<!--     section: 2                                  -->
+<!--     subsection: 3                               -->
+<!--     subsubsection: 4                            -->
+<!-- It can be defined as the value on this absolute -->
+<!-- scale that the $document-root (book, article,   -->
+<!-- memo, etc.) would have, depending on options    -->
+<!-- for structure beneath it.  So for all divisions -->
+<!--                                                 -->
+<!-- absolute-level = (relative-)level + root-level  -->
+<!--                                                 -->
+<!-- NB: 2017-09-05, three places, keep as variable  -->
 <xsl:variable name="root-level">
     <xsl:choose>
         <xsl:when test="/mathbook/book/part">-1</xsl:when>
@@ -624,56 +654,61 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:variable>
 
 <!-- Names for Levels -->
-<!-- Levels (ie depths in the tree) translate to MBX element           -->
-<!-- names and LaTeX sections, which are generally the same            -->
-<!-- This is useful for "new" sections (like exercises and references) -->
-<!-- used with standard LaTeX sectioning and numbering                 -->
+<!-- Levels (ie depths in the tree) translate to MBX element -->
+<!-- names and LaTeX divisions, which are generally the same -->
+<!-- This is useful for "new" sections (eg exercises) when   -->
+<!-- used with standard LaTeX sectioning and numbering       -->
 
-<!-- These are are the "absolute" level numbers        -->
-<!-- We convert a level to a LaTeX/MBX sectioning name -->
-<xsl:template name="level-number-to-latex-name">
+<!-- Input:  a relative level, ie counted from document root -->
+<!-- Output:  the LaTeX name (or close), HTML element        -->
+<!-- NB:  this is a named template, independent of context   -->
+<xsl:template name="level-to-name">
     <xsl:param name="level" />
+    <xsl:variable name="normalized-level" select="$level + $root-level" />
     <xsl:choose>
-        <xsl:when test="$level=0">part</xsl:when>
-        <xsl:when test="$level=1">chapter</xsl:when>
-        <xsl:when test="$level=2">section</xsl:when>
-        <xsl:when test="$level=3">subsection</xsl:when>
-        <xsl:when test="$level=4">subsubsection</xsl:when>
+        <xsl:when test="$normalized-level=0">part</xsl:when>
+        <xsl:when test="$normalized-level=1">chapter</xsl:when>
+        <xsl:when test="$normalized-level=2">section</xsl:when>
+        <xsl:when test="$normalized-level=3">subsection</xsl:when>
+        <xsl:when test="$normalized-level=4">subsubsection</xsl:when>
         <xsl:otherwise>
-            <xsl:message>MBX:ERROR: Level computation is out-of-bounds (<xsl:value-of select="$level" />)</xsl:message>
+            <xsl:message>MBX:ERROR: Level computation is out-of-bounds (input as <xsl:value-of select="$level" />, normalized to <xsl:value-of select="$normalized-level" />)</xsl:message>
         </xsl:otherwise>
     </xsl:choose>
 </xsl:template>
 
+<!-- This is the context-sensitive version of the previous -->
+<!-- named template, with protection against mis-use       -->
 <!-- Nodes to Subdivision Names -->
 <!-- Compute relative level of a node, adjust to absolute -->
 <!-- Subdivision name comes from named template above     -->
 <!-- Note: frontmatter and backmatter are structural, so  -->
 <!-- get considered in level computation.  However, they  -->
 <!-- are just containers, so we subtract them away        -->
-<xsl:template match="*" mode="subdivision-name">
+<!-- The frontmatter is divided for books in HTML,        -->
+<!-- and the backmatter is divided for articles and books -->
+<xsl:template match="part|chapter|appendix|section|subsection|subsubsection|exercises|references|introduction|conclusion|colophon|biography|dedication|acknowledgement|preface|index" mode="division-name">
     <xsl:variable name="relative-level">
         <xsl:apply-templates select="." mode="level" />
     </xsl:variable>
-    <xsl:call-template name="level-number-to-latex-name">
-        <xsl:with-param name="level">
-            <xsl:choose>
-                <!-- With parts, the *matter is a peer of a part and +1 and -1 counteract -->
-                <xsl:when test="(ancestor::frontmatter or ancestor::backmatter) and /mathbook/book/part">
-                    <xsl:value-of select="$relative-level + $root-level" />
-                </xsl:when>
-                <!-- *matter is considered structural, but shouldn't be counted    -->
-                <!-- in building the right names at different levels, absent parts -->
-                <xsl:when test="ancestor::frontmatter or ancestor::backmatter">
-                    <xsl:value-of select="$relative-level + $root-level - 1" />
-                </xsl:when>
-                <!-- in the body this is right -->
-                <xsl:otherwise>
-                    <xsl:value-of select="$relative-level + $root-level" />
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:with-param>
+    <xsl:call-template name="level-to-name">
+        <xsl:with-param name="level" select="$relative-level" />
     </xsl:call-template>
+</xsl:template>
+
+<xsl:template match="*" mode="division-name">
+    <xsl:message>MBX:BUG: Asking for the name of an element (<xsl:value-of select="local-name(.)" />) that is not a division</xsl:message>
+</xsl:template>
+
+<!-- LaTex Native Levels -->
+<!-- LaTeX has its own internal absolute numbering scheme, -->
+<!-- where sections are always level 1, while PTX uses     -->
+<!-- level 2. So while a LaTeX-specific computation, we do -->
+<!-- the translation here, so as to isolate the use of the -->
+<!-- root-level variable in this -common file.             -->
+<xsl:template name="level-to-latex-level">
+    <xsl:param name="level" />
+    <xsl:value-of select="$level + $root-level -1" />
 </xsl:template>
 
 <!-- ########### -->
@@ -1909,15 +1944,37 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <!-- Structural Leaves -->
-<!-- Some structural elements of the document tree    -->
-<!-- are the leaves of that tree, meaning they do     -->
-<!-- not contain any structural nodes themselves      -->
-<!-- frontmatter and backmatter are always structured -->
-<!-- otherwise, we look for definitive markers        -->
-<!-- Note: references and exercises are not markers   -->
+<!-- Some structural elements of the document tree     -->
+<!-- are the leaves of that tree, meaning they do      -->
+<!-- not contain any structural nodes themselves       -->
+<!-- backmatter is always structured, else no purpose  -->
+<!-- frontmatter is anomalous:  "titlepage" (and       -->
+<!-- for an "article", "abstract") are not treated     -->
+<!-- as divisions, they just get mined as part of the  -->
+<!-- frontmatter itself.  So an article/frontmatter    -->
+<!-- is always a leaf, and a book/frontmatter is not   -->
+<!-- a leaf if it has a child other than a "titlepage" -->
+<!-- Generaly, we look for definitive markers          -->
+<!-- Note: references and exercises are not markers    -->
 <xsl:template match="&STRUCTURAL;" mode="is-leaf">
     <xsl:choose>
-        <xsl:when test="self::frontmatter or self::backmatter or child::part or child::chapter or child::section or child::subsection or child::subsubsection">
+        <xsl:when test="self::frontmatter">
+            <xsl:choose>
+                <xsl:when test="parent::article">
+                    <xsl:value-of select="true()" />
+                </xsl:when>
+                <xsl:when test="parent::book">
+                    <xsl:value-of select="not(*[not(self::titlepage)])" />
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:message>MBX:BUG:     asking if a "frontmatter" is a leaf, for a document that is not a "book" nor an "article"</xsl:message>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+        <xsl:when test="self::backmatter">
+            <xsl:value-of select="false()" />
+        </xsl:when>
+        <xsl:when test="part or chapter or section or subsection or subsubsection">
             <xsl:value-of select="false()" />
         </xsl:when>
         <xsl:otherwise>
@@ -1926,8 +1983,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
+<!-- This once just returned false,      -->
+<!-- but should maybe not even be called -->
 <xsl:template match="*" mode="is-leaf">
     <xsl:value-of select="false()" />
+    <!-- <xsl:message>MBX:BUG:     asking if a non-structural division is a leaf</xsl:message> -->
 </xsl:template>
 
 <!-- We also want to identify smaller pieces of a document,          -->
@@ -1939,7 +1999,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- descended introduction or conclusion .                          -->
 <!-- Also, list items are considered blocks.                         -->
 <!-- NB: we don't point to a sidebyside, so not included here        -->
-<xsl:template match="md|mdn|ul|ol|dl|blockquote|pre|sage|&FIGURE-LIKE;|poem|program|image|tabular|paragraphs|&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|exercise|li" mode="is-block">
+<xsl:template match="md|mdn|ul|ol|dl|blockquote|pre|sage|&FIGURE-LIKE;|poem|program|image|tabular|paragraphs|&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|exercise|li" mode="is-block">
     <xsl:value-of select="true()" />
 </xsl:template>
 
@@ -2530,21 +2590,6 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     </xsl:choose>
 </xsl:template>
 
-<!--                                -->
-<!-- Label (cross-reference target) -->
-<!--                                -->
-
-<!-- LaTeX labels get used on MathJax content in HTML, so we -->
-<!-- put this template in the common file for universal use  -->
-<!-- Insert an identifier as a LaTeX label on anything       -->
-<!-- Calls to this template need come from where LaTeX likes -->
-<!-- a \label, generally someplace that can be numbered      -->
-<xsl:template match="*" mode="label">
-    <xsl:text>\label{</xsl:text>
-    <xsl:apply-templates select="." mode="internal-id" />
-    <xsl:text>}</xsl:text>
-</xsl:template>
-
 <!--            -->
 <!-- Long Names -->
 <!--            -->
@@ -2591,9 +2636,9 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Parameters of the form "numbering.<scheme>.level" -->
 <!-- control the number of components in these numbers -->
 
-<!--                -->
+<!-- ############## -->
 <!-- Serial Numbers -->
-<!--                -->
+<!-- ############## -->
 
 <!-- These count the occurence of the item, within it's  -->
 <!-- scheme and within a natural, or configured, subtree -->
@@ -2604,41 +2649,34 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- otherwise we call for a serial number relative to peers      -->
 <!-- via particular modal templates.  These may include Exercises -->
 <!-- and References sections, which can occur at multiple levels  -->
-<xsl:template match="part|chapter|appendix|section|subsection|subsubsection|exercises|references" mode="serial-number">
-    <xsl:variable name="relative-level">
-        <xsl:apply-templates select="." mode="level" />
-    </xsl:variable>
-    <xsl:choose>
-        <xsl:when test="$relative-level > $numbering-maxlevel">
-            <xsl:text></xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:apply-templates select="." mode="raw-serial-number" />
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<xsl:template match="part" mode="raw-serial-number">
+<!-- NB: newexercises: hack to kill "exercises" division numbering, later move to "the unnumbered" -->
+<xsl:template match="part" mode="serial-number">
     <xsl:number format="I" />
 </xsl:template>
 <!-- TODO: condition on part/chapter style to use  level='any'; from="book/part"  to cross part boundaries -->
-<xsl:template match="chapter" mode="raw-serial-number">
+<xsl:template match="chapter" mode="serial-number">
     <xsl:number count="chapter|references|exercises" format="1" />
 </xsl:template>
-<xsl:template match="appendix" mode="raw-serial-number">
+<xsl:template match="appendix" mode="serial-number">
     <xsl:number format="A" />
 </xsl:template>
-<xsl:template match="section" mode="raw-serial-number">
+<xsl:template match="section" mode="serial-number">
     <xsl:number count="section|references|exercises" format="1" />
 </xsl:template>
-<xsl:template match="subsection" mode="raw-serial-number">
+<xsl:template match="subsection" mode="serial-number">
     <xsl:number count="subsection|references|exercises" format="1" />
 </xsl:template>
-<xsl:template match="subsubsection" mode="raw-serial-number">
+<xsl:template match="subsubsection" mode="serial-number">
     <xsl:number count="subsubsection|references|exercises" format="1" />
 </xsl:template>
-<xsl:template match="exercises|references" mode="raw-serial-number">
-    <xsl:number count="part|chapter|appendix|section|subsection|subsubsection|references|exercises" format="1" />
+<!-- Convert references and exercises to the unnumbered once cutover -->
+<xsl:template match="exercises|references" mode="serial-number">
+    <xsl:choose>
+        <xsl:when test="$newexercises" />
+        <xsl:otherwise>
+            <xsl:number count="part|chapter|appendix|section|subsection|subsubsection|references|exercises" format="1" />
+        </xsl:otherwise>
+    </xsl:choose>
 </xsl:template>
 
 <!-- Serial Numbers: Theorems, Examples, Inline Exercise, Figures, Etc. -->
@@ -2655,7 +2693,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- element that is at the maximum level                                        -->
 <!-- This template returns the absolute level necessary based on                 -->
 <!-- the particular scheme as a parameter: theorems, equations and footnotes.    -->
-<!-- Exercises (in sets) and bibliographic items (in references) will always     -->
+<!-- Sectional exercises and bibliographic items (in references) will always     -->
 <!-- get their serial numbers from within their immediately enclosing structure. -->
 <xsl:template match="*" mode="absolute-subtree-level">
     <xsl:param name="numbering-items" />
@@ -2681,7 +2719,8 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 
 <!-- "Blocks" can be counted "all together," or some types may be "split out." -->
 <!--                                                                           -->
-<!-- Definitions, theorems, axioms, remarks, and examples always go together.  -->
+<!-- Definitions, theorems, axioms, remarks, computations,                     -->
+<!-- and examples always go together.                                          -->
 <!-- Projects, figures, and inline exercises may be split out individually.    -->
 <!--                                                                           -->
 <!-- For each of these items, we count the predecessors within each of the     -->
@@ -2691,7 +2730,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 
 
 <!-- Serial Numbers: Fundamental Blocks (Theorems, Etc.) -->
-<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;" mode="serial-number">
+<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;" mode="serial-number">
     <xsl:apply-templates select="." mode="overall-blocks-serial-number" />
 </xsl:template>
 
@@ -2734,7 +2773,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- We accumulate counts for any elements     -->
 <!-- included in the grand, overall block      -->
 <!-- count, while excluding those not included -->
-<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|exercise" mode="overall-blocks-serial-number">
+<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|exercise" mode="overall-blocks-serial-number">
     <!-- always count fundamental blocks -->
     <xsl:variable name="atomic-block">
         <xsl:apply-templates select="." mode="atomic-block-serial-number" />
@@ -2777,7 +2816,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 </xsl:template>
 
 <!-- Atomic block serial number -->
-<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|exercise" mode="atomic-block-serial-number">
+<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|exercise" mode="atomic-block-serial-number">
     <xsl:variable name="subtree-level">
         <xsl:apply-templates select="." mode="absolute-subtree-level">
             <xsl:with-param name="numbering-items" select="$numbering-theorems" />
@@ -2785,22 +2824,22 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     </xsl:variable>
     <xsl:choose>
         <xsl:when test="$subtree-level=-1">
-            <xsl:number from="book|article|letter|memo" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;" />
+            <xsl:number from="book|article|letter|memo" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;" />
         </xsl:when>
         <xsl:when test="$subtree-level=0">
-            <xsl:number from="part" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;" />
+            <xsl:number from="part" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;" />
         </xsl:when>
         <xsl:when test="$subtree-level=1">
-            <xsl:number from="chapter|book/backmatter/appendix" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;" />
+            <xsl:number from="chapter|book/backmatter/appendix" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;" />
         </xsl:when>
         <xsl:when test="$subtree-level=2">
-            <xsl:number from="section|article/backmatter/appendix" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;" />
+            <xsl:number from="section|article/backmatter/appendix" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;" />
         </xsl:when>
         <xsl:when test="$subtree-level=3">
-            <xsl:number from="subsection" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;" />
+            <xsl:number from="subsection" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;" />
         </xsl:when>
         <xsl:when test="$subtree-level=4">
-            <xsl:number from="subsubsection" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;" />
+            <xsl:number from="subsubsection" level="any" count="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;" />
         </xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:ERROR: Subtree level for atomic block number computation is out-of-bounds (<xsl:value-of select="$subtree-level" />)</xsl:message>
@@ -2809,7 +2848,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 </xsl:template>
 
 <!-- Atomic project serial number -->
-<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|exercise" mode="atomic-project-serial-number">
+<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|exercise" mode="atomic-project-serial-number">
     <xsl:variable name="subtree-level">
         <xsl:apply-templates select="." mode="absolute-subtree-level">
             <xsl:with-param name="numbering-items" select="$numbering-projects" />
@@ -2846,7 +2885,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- turn contained in a "figure", then they will     -->
 <!-- earn a subcaption with a subnumber, so we ignore -->
 <!-- them in these counts of top-level numbered items -->
-<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|exercise" mode="atomic-figure-serial-number">
+<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|&FIGURE-LIKE;|exercise" mode="atomic-figure-serial-number">
     <xsl:variable name="subtree-level">
         <xsl:choose>
             <xsl:when test="$b-number-figure-distinct">
@@ -2911,7 +2950,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 </xsl:template>
 
 <!-- Atomic inline exercise serial number -->
-<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|exercise|&FIGURE-LIKE;" mode="atomic-exercise-serial-number">
+<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;|exercise|&FIGURE-LIKE;" mode="atomic-exercise-serial-number">
     <xsl:variable name="subtree-level">
         <xsl:apply-templates select="." mode="absolute-subtree-level">
             <xsl:with-param name="numbering-items" select="$numbering-theorems" />
@@ -2960,7 +2999,11 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- given the document root and the configured depth      -->
 <!-- Note: numbered/unnumbered accounted for here          -->
 <xsl:template match="mrow|men" mode="serial-number">
-    <xsl:variable name="subtree-level" select="$numbering-equations + $root-level" />
+    <xsl:variable name="subtree-level">
+        <xsl:apply-templates select="." mode="absolute-subtree-level">
+            <xsl:with-param name="numbering-items" select="$numbering-equations" />
+        </xsl:apply-templates>
+    </xsl:variable>
     <xsl:choose>
         <xsl:when test="$subtree-level=-1"><xsl:number from="book|article|letter|memo" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no')]"/></xsl:when>
         <xsl:when test="$subtree-level=0"><xsl:number from="part" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no')]"/></xsl:when>
@@ -2982,7 +3025,23 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- N.B. Same priority as above, so needs to come in this order, -->
 <!-- as we wish hard-coded to have higher priority                -->
 <xsl:template match="exercises/exercise|exercises/exercisegroup/exercise" mode="serial-number">
-    <xsl:number from="exercises" level="any" count="exercise" />
+    <xsl:variable name="base">
+        <xsl:variable name="parent-exercises" select="parent::exercises|parent::exercisegroup/parent::exercises" />
+        <xsl:choose>
+            <xsl:when test="$parent-exercises/preceding-sibling::exercises and $newexercises">
+                <!-- <xsl:value-of select="count($parent-exercises/preceding-sibling::exercises/exercise)" /> -->
+                <xsl:apply-templates select="$parent-exercises/preceding-sibling::exercises/exercise[last()]" mode="serial-number"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>0</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <!-- NB: newexercises:  offset is the original definition here -->
+    <xsl:variable name="offset">
+        <xsl:number from="exercises" level="any" count="exercise" />
+    </xsl:variable>
+    <xsl:value-of select="$base + $offset" />
 </xsl:template>
 <xsl:template match="exercises/exercise[@number]|exercisegroup/exercise[@number]" mode="serial-number">
     <xsl:apply-templates select="@number" />
@@ -3007,7 +3066,11 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- We determine the appropriate subtree to count within -->
 <!-- given the document root and the configured depth     -->
 <xsl:template match="fn" mode="serial-number">
-    <xsl:variable name="subtree-level" select="$numbering-footnotes + $root-level" />
+    <xsl:variable name="subtree-level">
+        <xsl:apply-templates select="." mode="absolute-subtree-level">
+            <xsl:with-param name="numbering-items" select="$numbering-footnotes" />
+        </xsl:apply-templates>
+    </xsl:variable>
     <xsl:choose>
         <xsl:when test="$subtree-level=-1"><xsl:number from="book|article|letter|memo" level="any" count="fn" /></xsl:when>
         <xsl:when test="$subtree-level=0"><xsl:number from="part" level="any" count="fn" /></xsl:when>
@@ -3166,82 +3229,68 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Multi-Numbers Utility -->
 <!--                       -->
 
-<!-- The X.Y.Z part of the containing structural element of any item -->
-<!-- The "levels" parameter controls how many parts there are        -->
-<!-- Note: this employs the serial numbers of each division          -->
-<xsl:template match="*" mode="multi-number">
-    <xsl:param name="levels" />
-    <xsl:param name="pad" />
-    <!-- when ancestor axis is saved as a variable "mathbook" -->
-    <!-- occurs in first slot so on initialization we scrub   -->
-    <!-- two elements: mathbook and MBX document root         -->
-    <!-- frontmatter and backmatter are irrelevant here,      -->
-    <!-- so we scrub three elements in that case              -->
-    <!-- NB: when parts become "decorative" or "structural"   -->
-    <!--     then this might be a place to slide by, or not   -->
-    <xsl:variable name="hierarchy" select="ancestor::*" />
-    <xsl:variable name="nodes-scrubbed">
-        <xsl:choose>
-            <xsl:when test="ancestor::frontmatter or ancestor::backmatter">
-                <xsl:text>3</xsl:text>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:text>2</xsl:text>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:variable>
-    <xsl:call-template name="one-multi-number">
-        <xsl:with-param name="nodes" select="$hierarchy[position() > $nodes-scrubbed]" />
-        <xsl:with-param name="levels" select="$levels" />
-        <xsl:with-param name="pad" select="$pad" />
-    </xsl:call-template>
-</xsl:template>
+<!-- We concatenate serial numbers of divisions to form the       -->
+<!-- "structure number" of a division or element.                 -->
+<!-- NOTE: this is not the number of a division (or element),     -->
+<!-- it is everything but the "serial number".  Later, the        -->
+<!-- serial number is appended to form the "number".              -->
+<!-- So if the context is a division element we look at strict    -->
+<!-- *ancestors* to accumulate serial numbers into a structure    -->
+<!-- number.  For example, an implication of this is that the     -->
+<!-- structure number of a chapter in a part-less book will be    -->
+<!-- empty - its number is just its serial-number.                -->
+<!-- NB: the structure number never ends in a separator (period). -->
+<!--                                                              -->
+<!-- We initialize the recursion with exactly the ancestors       -->
+<!-- that contributes to a structure number.  This is the only    -->
+<!-- time the context is employed.  The level is                  -->
+<!--   (a) $pad = 'no',  the maximum number of levels, which      -->
+<!--   may not be reached if the $nodes get depleted              -->
+<!--   (b) $pad = 'yes', the exact number of serial numbers       -->
+<!--   accumulated, and hence the number of separators            -->
+<!--   in the final number (after the serial number is appended)  -->
+<!-- NB: decorative parts may mean we need                        -->
+<!-- to exclude "part" from the ancestors?                        -->
 
-<!-- We recursively compute serial numbers of structural elements               -->
-<!-- A period is the separator, and if not empty, there is a terminating period -->
-<!-- We halt when                      -->
-<!--   (a) there are no more nodes,    -->
-<!--   (b) we have enough levels, or   -->
-<!--   (c) we hit non-structural stuff -->
-<xsl:template name="one-multi-number">
-    <xsl:param name="nodes" />
+<xsl:template match="*" mode="multi-number">
+    <xsl:param name="nodes" select="ancestor::*[self::part or self::chapter or self::appendix or self::section or self::subsection or self::subsubsection or self::exercises or self::references]"/>
     <xsl:param name="levels" />
     <xsl:param name="pad" />
-    <xsl:variable name="the-node" select="$nodes[1]" />
-    <xsl:variable name="structural">
-        <xsl:apply-templates select="$the-node" mode="is-structural" />
-    </xsl:variable>
+
     <xsl:choose>
-        <!-- done, always get numbering.maximum.level -->
+        <!-- always halt when levels met -->
         <xsl:when test="$levels = 0" />
-        <!-- pad when we run out of nodes, or out of structural nodes -->
-        <!-- recycle node list unchanged, so this continues           -->
-        <!-- but decrement the levels to get right amount of padding  -->
-        <xsl:when test="not($nodes) or $structural != 'true'">
+        <!-- not padding, halt if $nodes exhausted -->
+        <xsl:when test="($pad = 'no') and not($nodes)" />
+        <xsl:otherwise>
             <xsl:choose>
-                <xsl:when test="$pad='no'" />
+                <xsl:when test="$nodes">
+                    <xsl:apply-templates select="$nodes[1]" mode="serial-number"/>
+                </xsl:when>
+                <!-- no nodes, so must be padding -->
                 <xsl:otherwise>
-                    <xsl:text>0.</xsl:text>
-                    <xsl:call-template name="one-multi-number">
-                        <xsl:with-param name="nodes" select="$nodes" />
-                        <xsl:with-param name="levels" select="$levels - 1" />
-                        <xsl:with-param name="pad" select="$pad" />
-                    </xsl:call-template>
+                    <xsl:text>0</xsl:text>
                 </xsl:otherwise>
             </xsl:choose>
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:apply-templates select="$the-node" mode="serial-number"/>
-            <xsl:text>.</xsl:text>
-            <xsl:call-template name="one-multi-number">
+            <!-- mutuially exclusive conditions, just for clarity           -->
+            <!-- (a) if halting next pass, no separator, no-padding version -->
+            <xsl:if test="($pad = 'no') and not(count($nodes) = 1) and not($levels = 1)">
+                <xsl:text>.</xsl:text>
+            </xsl:if>
+            <!-- (b) if halting next pass, no separator, padding version -->
+            <xsl:if test="($pad = 'yes') and not($levels = 1)">
+                <xsl:text>.</xsl:text>
+            </xsl:if>
+            <!-- decrease $nodes and $levels             -->
+            <!-- padding: empty $nodes can't get emptier -->
+            <xsl:apply-templates select="." mode="multi-number">
                 <xsl:with-param name="nodes" select="$nodes[position() > 1]" />
                 <xsl:with-param name="levels" select="$levels - 1" />
                 <xsl:with-param name="pad" select="$pad" />
-            </xsl:call-template>
+            </xsl:apply-templates>
         </xsl:otherwise>
     </xsl:choose>
 </xsl:template>
-
 
 <!--                         -->
 <!-- Structure Numbers       -->
@@ -3258,15 +3307,17 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Structure Numbers: Divisions -->
 <!-- NB: this is number of the *container* of the division,   -->
 <!-- a serial number for the division itself will be appended -->
-<xsl:template match="part|chapter|appendix|section|subsection|subsubsection|exercises|references" mode="structure-number">
+<!-- NB:  newexercises: removed "exercises" here, duplicated below -->
+<xsl:template match="part|chapter|appendix|section|subsection|subsubsection|references" mode="structure-number">
     <xsl:apply-templates select="." mode="multi-number">
         <xsl:with-param name="levels" select="$numbering-maxlevel - 1" />
         <xsl:with-param name="pad" select="'no'" />
     </xsl:apply-templates>
 </xsl:template>
 
-<!-- Structure Numbers: Theorems, Examples, Projects, Inline Exercises, Figures -->
-<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&EXAMPLE-LIKE;|exercise" mode="structure-number">
+<!-- Structure Numbers: Theorems, Examples, Projects, Figures -->
+<!-- NB: newexercises: inline copied out below                -->
+<xsl:template match="&DEFINITION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;" mode="structure-number">
     <xsl:apply-templates select="." mode="multi-number">
         <xsl:with-param name="levels" select="$numbering-theorems" />
         <xsl:with-param name="pad" select="'yes'" />
@@ -3300,15 +3351,13 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Proofs get structure number from parent theorem -->
 <xsl:template match="proof" mode="structure-number">
     <xsl:apply-templates select="parent::*" mode="number" />
-    <xsl:text>.</xsl:text>
 </xsl:template>
 <!-- Captioned items, arranged in a side-by-side,  -->
 <!-- then inside a captioned figure, earn a serial -->
 <!-- number that is a letter.  So their structure  -->
 <!-- number comes from their grandparent figure    -->
-<xsl:template match="figure/sidebyside/figure | figure/sidebyside/table | figure/sidebyside/listing" mode="structure-number">
+<xsl:template match="figure/sidebyside/figure | figure/sidebyside/table | figure/sidebyside/listing | figure/sidebyside/list" mode="structure-number">
     <xsl:apply-templates select="parent::sidebyside/parent::figure" mode="number" />
-    <xsl:text>.</xsl:text>
 </xsl:template>
 
 <!-- Structure Numbers: Equations -->
@@ -3319,21 +3368,80 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     </xsl:apply-templates>
 </xsl:template>
 
+<!-- NB: newexercises: consolidated "exercises/exercise" structure numbering here -->
+
+<!-- Structure Numbers: Exercises Division -->
+<!-- NB:  newexercises = true : then no effect here, should not ever called -->
+<xsl:template match="exercises" mode="structure-number">
+    <xsl:apply-templates select="." mode="multi-number">
+        <xsl:with-param name="levels" select="$numbering-maxlevel - 1" />
+        <xsl:with-param name="pad" select="'no'" />
+    </xsl:apply-templates>
+</xsl:template>
+
+<!-- Structure Numbers: Inline Exercises -->
+<!-- NB: newexercises: preserve behavior, copied out of above -->
+<!-- Eventually breakout (optionally) into its own scheme     -->
+<xsl:template match="exercise[not(ancestor::exercises)]" mode="structure-number">
+    <xsl:apply-templates select="." mode="multi-number">
+        <xsl:with-param name="levels" select="$numbering-theorems" />
+        <xsl:with-param name="pad" select="'yes'" />
+    </xsl:apply-templates>
+</xsl:template>
+
 <!-- Structure Numbers: Sectional Exercises -->
 <!-- If we set a level for sectional exercises, and pad,        -->
 <!-- then we could mimic the AMSMath scheme.  But we control    -->
 <!-- these numbers universally, so we do not copy this behavior -->
-<xsl:template match="exercises/exercise|exercises/exercisegroup/exercise|exercises/exercise[@number]|exercisegroup/exercise[@number]" mode="structure-number">
-    <xsl:apply-templates select="." mode="multi-number">
-        <xsl:with-param name="levels" select="$numbering-maxlevel" />
-        <xsl:with-param name="pad" select="'no'" />
-    </xsl:apply-templates>
+<!-- NB: newexercises: simplified match from before -->
+<xsl:template match="exercises/exercise" mode="structure-number">
+    <xsl:choose>
+        <xsl:when test="$newexercises">
+            <!-- hop exercisegroup (perhaps explicitly?) -->
+            <xsl:apply-templates select="parent::exercises/parent::*" mode="number" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:apply-templates select="." mode="multi-number">
+                <xsl:with-param name="levels" select="$numbering-maxlevel" />
+                <xsl:with-param name="pad" select="'no'" />
+            </xsl:apply-templates>
+        </xsl:otherwise>
+    </xsl:choose>
 </xsl:template>
+
+<xsl:template match="exercises/exercisegroup/exercise" mode="structure-number">
+    <xsl:choose>
+        <xsl:when test="$newexercises">
+            <!-- hop exercisegroup (perhaps explicitly?) -->
+            <xsl:apply-templates select="ancestor::exercises/parent::*" mode="number" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:apply-templates select="parent::exercisegroup" mode="multi-number">
+                <xsl:with-param name="levels" select="$numbering-maxlevel" />
+                <xsl:with-param name="pad" select="'no'" />
+            </xsl:apply-templates>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- Structure Numbers: Exercise Groups -->
+<!-- An exercisegroup gets it structure number from the parent exercises -->
+<!-- NB: newexercises: step up one more parent -->
+<xsl:template match="exercisegroup" mode="structure-number">
+    <xsl:choose>
+        <xsl:when test="$newexercises">
+            <xsl:apply-templates select="parent::exercises/parent::*" mode="number" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:apply-templates select="parent::*" mode="number" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
 <!-- Hints, answers, solutions get structure number from parent      -->
 <!-- exercise's number. Identical for inline and sectional exercises -->
 <xsl:template match="hint|answer|solution" mode="structure-number">
     <xsl:apply-templates select="parent::*" mode="number" />
-    <xsl:text>.</xsl:text>
 </xsl:template>
 
 <!-- Structure Numbers: Bibliographic Items -->
@@ -3353,7 +3461,6 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Notes get structure number from parent biblio's number -->
 <xsl:template match="biblio/note" mode="structure-number">
     <xsl:apply-templates select="parent::*" mode="number" />
-    <xsl:text>.</xsl:text>
 </xsl:template>
 
 <!-- Structure Numbers: Footnotes -->
@@ -3380,14 +3487,6 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- NB: these templates have equal priority, so order matters -->
 <xsl:template match="exercise//ol/li" mode="structure-number">
     <xsl:apply-templates select="ancestor::exercise[1]" mode="number" />
-    <xsl:text>.</xsl:text>
-</xsl:template>
-
-<!-- Structure Numbers: Exercise Groups -->
-<!-- An exercisegroup gets it structure number from the parent exercises -->
-<xsl:template match="exercisegroup" mode="structure-number">
-    <xsl:apply-templates select="parent::*" mode="number" />
-    <xsl:text>.</xsl:text>
 </xsl:template>
 
 <!-- Structure Numbers: Tasks (in projects) -->
@@ -3395,7 +3494,6 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <xsl:template match="task" mode="structure-number">
     <!-- ancestors, strip tasks, get number of next enclosure -->
     <xsl:apply-templates select="ancestor::*[not(self::task)][1]" mode="number" />
-    <xsl:text>.</xsl:text>
 </xsl:template>
 
 <!-- Structure Numbers: Objectives -->
@@ -3410,7 +3508,6 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- in an objectives environment       -->
 <xsl:template match="objectives/ol/li" mode="structure-number">
     <xsl:apply-templates select="ancestor::*[&STRUCTURAL-FILTER;][1]" mode="number" />
-    <xsl:text>.</xsl:text>
 </xsl:template>
 
 <!--              -->
@@ -3420,14 +3517,24 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Now trivial, container structure plus serial -->
 <!-- We condition on empty serial number in       -->
 <!-- order to create empty full numbers           -->
+<!-- This is where we add separator, a period     -->
 <xsl:template match="*" mode="number">
     <xsl:variable name="serial">
         <xsl:apply-templates select="." mode="serial-number" />
     </xsl:variable>
-    <xsl:if test="not($serial = '')">
-        <xsl:apply-templates select="." mode="structure-number" />
-        <xsl:value-of select="$serial" />
-    </xsl:if>
+    <xsl:choose>
+        <xsl:when test="$serial = ''" />
+        <xsl:otherwise>
+            <xsl:variable name="structure">
+                <xsl:apply-templates select="." mode="structure-number" />
+            </xsl:variable>
+            <xsl:if test="not($structure='')">
+                <xsl:value-of select="$structure" />
+                <xsl:text>.</xsl:text>
+            </xsl:if>
+            <xsl:value-of select="$serial" />
+        </xsl:otherwise>
+    </xsl:choose>
 </xsl:template>
 
 
@@ -5605,7 +5712,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
             <xsl:message>MBX:BUG:     Looks like a [<xsl:value-of select="local-name($parent)" />] element has an ambiguous number, found while making cross-reference text</xsl:message>
         </xsl:when>
         <!-- no match, just recurse, and preserve $highest-match -->
-        <xsl:when test="not(concat($parent-number, '.') = $target-structure-number)">
+        <xsl:when test="not($parent-number = $target-structure-number)">
             <xsl:apply-templates select="$parent" mode="smart-xref-text">
                 <xsl:with-param name="text-style" select="$text-style" />
                 <xsl:with-param name="xref" select="$xref" />
@@ -5615,7 +5722,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
             </xsl:apply-templates>
         </xsl:when>
         <!-- a match, record in updated $highest-match -->
-        <xsl:when test="concat($parent-number, '.') = $target-structure-number">
+        <xsl:when test="$parent-number = $target-structure-number">
             <xsl:apply-templates select="$parent" mode="smart-xref-text">
                 <xsl:with-param name="text-style" select="$text-style" />
                 <xsl:with-param name="xref" select="$xref" />
@@ -6131,6 +6238,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- 26 Latin letters (upper, lower case),  -->
 <!-- 10 digits, hyphen/dash, underscore     -->
 <!-- TODO: Added 2016-10-29, make into a fatal error later -->
+<!-- Unique UI id's added 2017-09-25 as fatal error -->
 <xsl:template match="mathbook" mode="xmlid-warning">
     <xsl:variable name="xmlid-characters" select="concat('-_', &SIMPLECHAR;)" />
     <xsl:for-each select="//@xml:id">
@@ -6140,6 +6248,21 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
                 <xsl:text>The @xml:id "</xsl:text>
                 <xsl:value-of select="." />
                 <xsl:text>" is invalid.  Use only letters, numbers, hyphens and underscores.</xsl:text>
+            </xsl:message>
+        </xsl:if>
+        <!-- unique HTML id's in use for PreTeXt-provided UI -->
+        <xsl:if test="(. = 'masthead') or
+                      (. = 'content') or
+                      (. = 'primary-navbar') or
+                      (. = 'sidebar-left') or
+                      (. = 'sidebar-right') or
+                      (. = 'toc') or
+                      (. = 'logo-link')">
+            <xsl:message terminate='yes'>
+                <xsl:text>MBX:ERROR:      </xsl:text>
+                <xsl:text>The @xml:id "</xsl:text>
+                <xsl:value-of select="." />
+                <xsl:text>" is invalid since it will conflict with a unique HTML id in use by the user interface.  Please use a different string.  Quitting...</xsl:text>
             </xsl:message>
         </xsl:if>
     </xsl:for-each>
@@ -6550,6 +6673,13 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
         <xsl:with-param name="occurences" select="$document-root//list[title and not(caption)]" />
         <xsl:with-param name="date-string" select="'2017-08-25'" />
         <xsl:with-param name="message" select="'the &quot;list&quot; element now requires a &quot;caption&quot; and the &quot;title&quot; is optional'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2017-09-10  deprecate title-less paragraphs, outside of sidebyside -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//paragraphs[not(title) and not(parent::sidebyside)]" />
+        <xsl:with-param name="date-string" select="'2017-09-10'" />
+        <xsl:with-param name="message" select="'the &quot;paragraphs&quot; element (outside of a &quot;sidebyside&quot;) now requires a &quot;title&quot; (but you can xref individual &quot;p&quot; now, if that is your purpose)'" />
     </xsl:call-template>
 </xsl:template>
 

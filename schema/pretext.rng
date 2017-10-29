@@ -19,7 +19,9 @@
   <define name="Article">
     <element name="article">
       <ref name="MetaDataSubtitle"/>
-      <ref name="ArticleFrontMatter"/>
+      <optional>
+        <ref name="ArticleFrontMatter"/>
+      </optional>
       <ref name="Section"/>
       <zeroOrMore>
         <choice>
@@ -37,7 +39,9 @@
     <element name="book">
       <a:documentation>Here is what a book looks like.</a:documentation>
       <ref name="MetaDataSubtitle"/>
-      <ref name="BookFrontMatter"/>
+      <optional>
+        <ref name="BookFrontMatter"/>
+      </optional>
       <ref name="Chapter"/>
       <zeroOrMore>
         <choice>
@@ -317,6 +321,9 @@
   </define>
   <define name="ColophonFront">
     <element name="colophon">
+      <optional>
+        <ref name="UniqueID"/>
+      </optional>
       <zeroOrMore>
         <element name="credit">
           <element name="role">
@@ -454,6 +461,9 @@
   </define>
   <define name="ColophonBack">
     <element name="colophon">
+      <optional>
+        <ref name="UniqueID"/>
+      </optional>
       <oneOrMore>
         <choice>
           <ref name="BlockText"/>
@@ -464,6 +474,17 @@
     </element>
   </define>
   <define name="Paragraphs">
+    <element name="paragraphs">
+      <ref name="MetaDataTitle"/>
+      <zeroOrMore>
+        <ref name="Index"/>
+      </zeroOrMore>
+      <oneOrMore>
+        <ref name="BlockDivision"/>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="ParagraphsTitleOptional">
     <element name="paragraphs">
       <ref name="MetaDataTitleOptional"/>
       <zeroOrMore>
@@ -514,6 +535,14 @@
       <ref name="ToDo"/>
     </choice>
   </define>
+  <define name="BlockStatementNoCaption">
+    <choice>
+      <ref name="BlockText"/>
+      <ref name="Aside"/>
+      <ref name="SideBySideNoCaption"/>
+      <ref name="SideBySideGroupNoCaption"/>
+    </choice>
+  </define>
   <define name="BlockStatement">
     <choice>
       <ref name="BlockText"/>
@@ -528,6 +557,7 @@
     <choice>
       <ref name="BlockStatement"/>
       <ref name="Remark"/>
+      <ref name="Computation"/>
       <ref name="Theorem"/>
       <ref name="Proof"/>
       <ref name="Definition"/>
@@ -608,6 +638,20 @@
       </oneOrMore>
     </element>
   </define>
+  <define name="IntroductionStatementNoCaption">
+    <element name="introduction">
+      <oneOrMore>
+        <ref name="BlockStatementNoCaption"/>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="ConclusionStatementNoCaption">
+    <element name="conclusion">
+      <oneOrMore>
+        <ref name="BlockStatementNoCaption"/>
+      </oneOrMore>
+    </element>
+  </define>
   <define name="IntroductionStatement">
     <element name="introduction">
       <oneOrMore>
@@ -675,6 +719,9 @@
   </define>
   <define name="CodeDisplay">
     <element name="cd">
+      <optional>
+        <attribute name="latexsep"/>
+      </optional>
       <choice>
         <text/>
         <oneOrMore>
@@ -1111,13 +1158,13 @@
         </group>
         <group>
           <optional>
-            <ref name="IntroductionText"/>
+            <ref name="IntroductionStatement"/>
           </optional>
           <oneOrMore>
             <ref name="Task"/>
           </oneOrMore>
           <optional>
-            <ref name="ConclusionText"/>
+            <ref name="ConclusionStatement"/>
           </optional>
         </group>
       </choice>
@@ -1149,11 +1196,21 @@
       <element name="insight">
         <ref name="RemarkLike"/>
       </element>
+    </choice>
+  </define>
+  <define name="ComputationLike">
+    <ref name="MetaDataTitleOptional"/>
+    <oneOrMore>
+      <ref name="BlockStatement"/>
+    </oneOrMore>
+  </define>
+  <define name="Computation">
+    <choice>
       <element name="computation">
-        <ref name="RemarkLike"/>
+        <ref name="ComputationLike"/>
       </element>
       <element name="technology">
-        <ref name="RemarkLike"/>
+        <ref name="ComputationLike"/>
       </element>
     </choice>
   </define>
@@ -1260,6 +1317,7 @@
           <ref name="Paragraph"/>
           <ref name="Preformatted"/>
           <ref name="Paragraphs"/>
+          <ref name="ParagraphsTitleOptional"/>
           <ref name="List"/>
         </choice>
       </oneOrMore>
@@ -1279,6 +1337,7 @@
           <ref name="Paragraph"/>
           <ref name="Preformatted"/>
           <ref name="Paragraphs"/>
+          <ref name="ParagraphsTitleOptional"/>
           <ref name="List"/>
         </choice>
       </oneOrMore>
@@ -1789,13 +1848,13 @@
         </attribute>
       </optional>
       <optional>
-        <ref name="IntroductionText"/>
+        <ref name="IntroductionStatementNoCaption"/>
       </optional>
       <oneOrMore>
         <ref name="Exercise"/>
       </oneOrMore>
       <optional>
-        <ref name="ConclusionText"/>
+        <ref name="ConclusionStatementNoCaption"/>
       </optional>
     </element>
   </define>
@@ -2275,6 +2334,9 @@
   </define>
   <define name="Paragraph">
     <element name="p">
+      <optional>
+        <ref name="UniqueID"/>
+      </optional>
       <ref name="TextParagraph"/>
     </element>
   </define>
@@ -2307,6 +2369,9 @@
   </define>
   <define name="ParagraphLined">
     <element name="p">
+      <optional>
+        <ref name="UniqueID"/>
+      </optional>
       <oneOrMore>
         <element name="line">
           <ref name="TextShort"/>
@@ -2517,7 +2582,7 @@
   </define>
   <define name="MathIntertext">
     <element name="intertext">
-      <ref name="TextShort"/>
+      <ref name="TextLong"/>
     </element>
   </define>
   <define name="MathDisplay">
@@ -3145,7 +3210,17 @@
         </optional>
         <zeroOrMore>
           <element name="alteration">
-            <ref name="TextSimple"/>
+            <zeroOrMore>
+              <choice>
+                <ref name="TextSimple"/>
+                <element name="sharp">
+                  <empty/>
+                </element>
+                <element name="flat">
+                  <empty/>
+                </element>
+              </choice>
+            </zeroOrMore>
           </element>
         </zeroOrMore>
       </element>

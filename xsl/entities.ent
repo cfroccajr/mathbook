@@ -74,6 +74,10 @@
 <!ENTITY REMARK-LIKE "remark|convention|note|observation|warning|insight|computation|technology">
 <!ENTITY REMARK-FILTER "self::remark or self::convention or self::note or self::observation or self::warning or self::insight or self::computation or self::technology">
 
+<!-- about computations or technology -->
+<!ENTITY COMPUTATION-LIKE "computation|technology">
+<!ENTITY COMPUTATION-FILTER "self::computation or self::technology">
+
 <!-- incidental, skippable, lightweight -->
 <!ENTITY ASIDE-LIKE "aside|biographical|historical">
 <!ENTITY ASIDE-FILTER "self::aside or self::biographical or self::historical">
@@ -90,3 +94,7 @@
 <!-- displays with captions -->
 <!ENTITY FIGURE-LIKE "figure|table|listing|list">
 <!ENTITY FIGURE-FILTER "self::figure or self::table or self::listing or self::list">
+
+<!-- appendages of examples, exercises, tasks -->
+<!ENTITY SOLUTION-LIKE "hint|answer|solution">
+<!ENTITY SOLUTION-FILTER "self::hint or self::answer or self::solution">

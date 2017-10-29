@@ -45,7 +45,7 @@
         Article =
             element article {
                 MetaDataSubtitle,
-                ArticleFrontMatter,
+                ArticleFrontMatter?,
                 Section,
                 (Section | Exercises | References)*,
                 BackMatter?
@@ -54,7 +54,7 @@
             ## Here is what a book looks like.
             element book {
                 MetaDataSubtitle,
-                BookFrontMatter,
+                BookFrontMatter?,
                 Chapter,
                 (Chapter | Exercises | References)*,
                 BackMatter?
@@ -162,12 +162,20 @@
     <section>
         <title>Lightweight Divisions</title>
 
-        <p>The <c>paragraphs</c> element, which is not to be confused with a <em>real</em> paragraph as implemented by the <c>p</c> element, is an exceptional type of division (both in design and utility).  It can have an optional <c>title</c>, can appear anywhere within any of the divisions, cannot be further subdivided, and is not ever numbered.  Its contents are conceptually a run of paragraphs, but as described here allow much more than that.</p>
+        <p>The <c>paragraphs</c> element, which is not to be confused with a <em>real</em> paragraph as implemented by the <c>p</c> element, is an exceptional type of division (both in design and utility).  It must have a <c>title</c>, can appear anywhere within any of the divisions, cannot be further subdivided, and is not ever numbered.  Its contents are conceptually a run of paragraphs, but as described here allow much more than that.</p>
 
         <p>It is especially useful in a short document (like a class handout, letter, memorandum, or short proposal) where numbered divisions might feel like overkill.</p>
 
+        <p>The <c>TitleOptional</c> variant is only for use in <c>sidebyside</c> and will be removed once <c>p</c> can be stacked in a panel of a <c>sidebyside</c>.</p>
+
         <fragment xml:id="paragraphs">
-        Paragraphs = 
+        Paragraphs =
+            element paragraphs {
+                MetaDataTitle,
+                Index*,
+                BlockDivision+
+            }
+        ParagraphsTitleOptional =
             element paragraphs {
                 MetaDataTitleOptional,
                 Index*,
@@ -240,8 +248,7 @@
             WWVariableUse)* }
         </fragment>
 
-        <p>A paragraph is a key bottleneck between structure and prose.  You can use a variety of constructs in a paragraph, and you may use a paragraph in many places.  So the name of the element is very simple, just a <c>p</c>.  Now you can include footnotes, display mathematics, display verbatim text, and lists.  Note that a list can <em>only</em> occur in a paragraph, so to make nested lists you must structure a list item of the exterior list with a paragraph to contain the interior list.  A paragraph can contain some metadata, like index entries and mathematical notation.  It does not have a title.</p>
-
+        <p>A paragraph is a key bottleneck between structure and prose.  You can use a variety of constructs in a paragraph, and you may use a paragraph in many places.  So the name of the element is very simple, just a <c>p</c>.  Now you can include footnotes, display mathematics, display verbatim text, and lists.  Note that a list can <em>only</em> occur in a paragraph, so to make nested lists you must structure a list item of the exterior list with a paragraph to contain the interior list.  A paragraph can contain some metadata, like index entries and mathematical notation.  It does not have a title, not is it ever numbered.  It can be the target of a cross-reference, but only with some care.</p>
 
         <p>A <term>lined paragraph</term> is a variant, for use when the line-by-line structure is necessary.  The <webwork /> variant of a <c>p</c> element allows for using the <c>var</c> element as an answer blank or generated content, possibly inside mathematics, and possibly inside lists.</p>
 
@@ -262,6 +269,7 @@
             Index)* }
         Paragraph = 
             element p {
+                UniqueID?,
                 TextParagraph
             }
         TextParagraphWW = mixed { (
@@ -285,6 +293,7 @@
             }
         ParagraphLined =
             element p {
+                UniqueID?,
                 element line {TextShort}+
             }
         </fragment>
@@ -396,7 +405,11 @@
                 attribute bass {text}?,
                 attribute suspended {"yes"|"no"}?,
                 attribute parentheses {"yes"|"no"}?,
-                element alteration {TextSimple}*
+                element alteration {
+                    (TextSimple |
+                    element sharp {empty} |
+                    element flat {empty})*
+                }*
             }
         </fragment>
 
@@ -532,7 +545,7 @@
                 attribute break {"yes" | "no"}?,
                 mixed {(Xref | FillIn)*}
             }
-        MathIntertext = element intertext {TextShort}
+        MathIntertext = element intertext {TextLong}
         MathDisplay =
             element me {
                 mixed {FillIn*}
@@ -607,7 +620,7 @@
 
         <p>A <term>text block</term> is very similar to a paragraph.  It can be an actual paragraph, a sequence of paragraphs enclosed as a block quote (with attribution, perhaps), or a large chunk of unformatted text presented typically in a monospace font.  A <c>todo</c> is text that is never printed in your output, unless you explicitly request that it be printed or inventoried.  You can put it anywhere you might put a paragraph, as a peer, but do not use it within a paragraph (or other places where you are authoring text, it can gum up processing).</p>
 
-        <p>A <term>statement block</term> is used in statements.  What are those?  Theorems have statements, exercises have statements, questions have statements.  Some of these blocks with statements also have proofs, hints, and solutions.  In statements, and their peers, we include text blocks, captioned items, asides, side-by-side layouts, and Sage computations, but exclude many of the numbered and titled division blocks.</p>
+        <p>A <term>statement block</term> is used in statements.  What are those?  Theorems have statements, exercises have statements, questions have statements.  Some of these blocks with statements also have proofs, hints, and solutions.  In statements, and their peers, we include text blocks, captioned items, asides, side-by-side layouts, and Sage computations, but exclude many of the numbered and titled division blocks.  The <c>NoCaption</c> variant prohibits all numbered items, but allows placement of items like <c>image</c>.  It also does not include <c>Sage</c>.</p>
 
         <p>A <term>division block</term> includes text blocks, statement blocks, plus topical chunks of text that can have numbered headings or numbered captions, with optional titles, and are set apart slightly from the surrounding narrative.  These are placed mostly as children of divisions, and so one cannot contain another.  They certainly contain paragraphs, and all that goes into them, such as mathematics (inline and display) and figures (and other captioned items).  The <c>sidebyside</c> element can be used to illustrate a division block with a variety of images and displayed text in flexible layouts.</p>
 
@@ -618,13 +631,16 @@
         <fragment xml:id="block">
         BlockText =
             Paragraph | BlockQuote | Preformatted | ToDo
+        BlockStatementNoCaption =
+            BlockText | Aside |
+            SideBySideNoCaption | SideBySideGroupNoCaption
         BlockStatement =
             BlockText |
             Figure | Aside |
             SideBySide | SideBySideGroup | Sage
         BlockDivision =
             BlockStatement |
-            Remark | Theorem | Proof | Definition |
+            Remark | Computation | Theorem | Proof | Definition |
             Axiom | Example | Exercise | Project |
             Poem | Assemblage | ListGenerator |
             GGB | Demonstration
@@ -673,6 +689,10 @@
             element introduction {BlockText+}
         ConclusionText =
             element conclusion {BlockText+}
+        IntroductionStatementNoCaption =
+            element introduction {BlockStatementNoCaption+}
+        ConclusionStatementNoCaption =
+            element conclusion {BlockStatementNoCaption+}
         IntroductionStatement =
             element introduction {BlockStatement+}
         ConclusionStatement =
@@ -812,7 +832,8 @@
             element cline {text}
         CodeDisplay =
             element cd {
-                text | CodeLine+
+                attribute latexsep {text}?,
+                (text | CodeLine+)
             }
         Preformatted =
             element pre {
@@ -1002,7 +1023,7 @@
                 (
                     BlockStatement+ |
                     (Statement, Hint*, Answer*, Solution*) |
-                    (IntroductionText?, Task+, ConclusionText?)
+                    (IntroductionStatement?, Task+, ConclusionStatement?)
                 )
             }
         </fragment>
@@ -1029,13 +1050,24 @@
             element warning {RemarkLike}
         |
             element insight {RemarkLike}
-        |
-            element computation {RemarkLike}
-        |
-            element technology {RemarkLike}
         </fragment>
     </section>
 
+    <section>
+        <title>Computations and Technology</title>
+
+        <p>Somewhat simple blocks, they do not have much structure, but can hold more than a Remark.</p>
+
+        <fragment xml:id="computation-like">
+        ComputationLike =
+            MetaDataTitleOptional,
+            BlockStatement+
+        Computation =
+            element computation {ComputationLike}
+        |
+            element technology {ComputationLike}
+        </fragment>
+    </section>
 
     <section>
         <title>Asides</title>
@@ -1214,7 +1246,7 @@
 
         <p>A group of side-by-sides is designed to stack vertically with common controls on widths, etc.  Its implementation is entirely experimental right now, even if we are relatively confident of the markup.</p>
 
-        <p>The <webwork /> variant allows only a single tabular or image.  The <q>NoCaption</q> variants prohibits captioned or numbered items as panels.</p>
+        <p>The <webwork /> variant allows only a single tabular or image.  The <q>NoCaption</q> variants prohibits captioned or numbered items as panels.  The <c>ParagraphsTitleOptional</c> will be removed once <c>p</c> can stack in a panel.</p>
 
         <fragment xml:id="sidebyside">
         SidebySideAttributes =
@@ -1235,6 +1267,7 @@
                     Paragraph |
                     Preformatted |
                     Paragraphs |
+                    ParagraphsTitleOptional |
                     List
                 )+
             }
@@ -1251,6 +1284,7 @@
                     Paragraph |
                     Preformatted |
                     Paragraphs |
+                    ParagraphsTitleOptional |
                     List
                 )+
             }
@@ -1446,9 +1480,9 @@
             element exercisegroup {
                 MetaDataTarget,
                 attribute cols {"2"|"3"|"4"|"5"|"6"}?,
-                IntroductionText?,
+                IntroductionStatementNoCaption?,
                 Exercise+,
-                ConclusionText?
+                ConclusionStatementNoCaption?
             }
         </fragment>
     </section>
@@ -1716,7 +1750,7 @@
     <section>
         <title>Front Matter</title>
 
-        <p>Articles and books have material at the start, which gets organized in interesting ways. <c>minilicense</c> is very restrictive, <c>shortlicense</c> allows references (<eg /> <init>URL</init>s).</p>
+        <p>Articles and books have material at the start, which gets organized in interesting ways. <c>minilicense</c> is very restrictive, <c>shortlicense</c> allows references (<eg /> <init>URL</init>s).  <c>titlepage</c> is like a very small database<mdash />for HTML it migrates to the top of the page for the <c>frontmatter</c>, and for <latex /> it migrates to the half-title and title pages.  Since it generally makes no sense as the target of a cross-reference, <c>titlepagfe</c> does not allow an <c>@xml:id</c> attribute.</p>
 
         <fragment xml:id="frontmatter">
         ArticleFrontMatter = 
@@ -1763,6 +1797,7 @@
             }
         ColophonFront =
             element colophon {
+                UniqueID?,
                 element credit {
                     element role {TextShort},
                     element entity {TextLong}
@@ -1842,8 +1877,11 @@
                 IndexDivision?,
                 ColophonBack?
             }
-        ColophonBack = 
-            element colophon {(BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+}
+        ColophonBack =
+            element colophon {
+                UniqueID?,
+                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
+            }
         </fragment>
     </section>
 
@@ -2015,6 +2053,7 @@
         <fragment ref="example-like" />
         <fragment ref="project-like" />
         <fragment ref="remark-like" />
+        <fragment ref="computation-like" />
         <fragment ref="aside" />
         <fragment ref="assemblage" />
         <fragment ref="table-figure" />

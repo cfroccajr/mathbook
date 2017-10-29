@@ -494,11 +494,40 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Subdivisions have titles, or not            -->
 <!-- and other parts have default titles         -->
 <xsl:template match="*" mode="section-header">
+    <!-- The "division-name" template accomodates non-standard -->
+    <!-- divisions like "exercises", "references", divisional  -->
+    <!-- "introduction" and "conclusion", and "appendix".      -->
+    <!-- Result is strict part -> subsubsection hierachy.      -->
+    <!-- Find it in mathbook-common.xsl                        -->
+    <xsl:variable name="normalized-division-name">
+        <xsl:apply-templates select="." mode="division-name" />
+    </xsl:variable>
+    <xsl:variable name="heading-level">
+        <xsl:choose>
+            <xsl:when test="$normalized-division-name = 'part'">
+                <xsl:text>h1</xsl:text>
+            </xsl:when>
+            <xsl:when test="$normalized-division-name = 'chapter'">
+                <xsl:text>h1</xsl:text>
+            </xsl:when>
+            <xsl:when test="$normalized-division-name = 'section'">
+                <xsl:text>h2</xsl:text>
+            </xsl:when>
+            <xsl:when test="$normalized-division-name = 'subsection'">
+                <xsl:text>h3</xsl:text>
+            </xsl:when>
+            <xsl:when test="$normalized-division-name = 'subsubsection'">
+                <xsl:text>h4</xsl:text>
+            </xsl:when>
+            <!-- any bug will be exposed by "division-name" template -->
+            <xsl:otherwise />
+        </xsl:choose>
+    </xsl:variable>
     <xsl:element name="header">
          <xsl:attribute name="title">
             <xsl:apply-templates select="." mode="tooltip-text" />
         </xsl:attribute>
-        <xsl:element name="h1">
+        <xsl:element name="{$heading-level}">
             <xsl:attribute name="class">
                 <xsl:choose>
                     <xsl:when test="self::chapter">
@@ -514,14 +543,15 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:attribute>
             <xsl:apply-templates select="." mode="header-content" />
         </xsl:element>
+        <xsl:apply-templates select="." mode="permalink" />
         <xsl:if test="author">
             <p class="byline"><xsl:apply-templates select="author" mode="name-list"/></p>
         </xsl:if>
     </xsl:element>
 </xsl:template>
 
-<!-- The front matter has its own style -->
-<xsl:template match="frontmatter" mode="section-header" />
+<!-- The front and back matter have their own style -->
+<xsl:template match="frontmatter|backmatter" mode="section-header" />
 
 <!-- A book or article is the top level, so the   -->
 <!-- masthead might suffice, else an author can   -->
@@ -548,7 +578,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <span class="title">
         <xsl:apply-templates select="." mode="title-full" />
     </span>
-    <xsl:apply-templates select="." mode="permalink" />
 </xsl:template>
 
 <!-- References and Exercises are universal subdivisions       -->
@@ -557,7 +586,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <span class="type">
         <xsl:call-template name="type-name">
             <xsl:with-param name="string-id">
-                <xsl:apply-templates select="." mode="subdivision-name" />
+                <xsl:apply-templates select="." mode="division-name" />
             </xsl:with-param>
         </xsl:call-template>
     </span>
@@ -567,7 +596,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <span class="title">
         <xsl:apply-templates select="." mode="title-full" />
     </span>
-    <xsl:apply-templates select="." mode="permalink" />
 </xsl:template>
 
 <!-- Permalinks on section headings are configurable              -->
@@ -598,12 +626,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:variable name="url">
             <xsl:apply-templates select="." mode="url" />
         </xsl:variable>
-        <!-- pilchrow plus internationalized string  -->
+        <!-- pilchrow only  -->
         <a href="{$url}" class="permalink">
-            <xsl:text>&#xb6; </xsl:text>
-            <xsl:call-template name="type-name">
-                <xsl:with-param name="string-id" select="'permalink'" />
-            </xsl:call-template>
+            <xsl:text>&#xb6;</xsl:text>
         </a>
     </xsl:if>
 </xsl:template>
@@ -676,7 +701,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- A template manages the date      -->
 <!-- Until we have better CSS for it  -->
 <xsl:template match="titlepage/date">
-    <!-- <p style="text-align:center"> -->
     <address class="contributors">
         <xsl:apply-templates />
     </address>
@@ -689,50 +713,51 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- TODO: edition, publisher, production notes, cover design, etc -->
 <!-- TODO: revision control commit hash -->
 <xsl:template match="frontmatter/colophon/credit">
-    <p>
-        <b>
+    <p class="credit">
+        <b class="title">
             <xsl:apply-templates select="role" />
         </b>
-        <xsl:text>: </xsl:text>
+        <xsl:text> </xsl:text>
         <xsl:apply-templates select="entity"/>
     </p>
 </xsl:template>
 
 <xsl:template match="frontmatter/colophon/edition">
-    <xsl:element name="p">
-        <xsl:element name="b">
+    <p class="credit">
+        <b class="title">
             <xsl:apply-templates select="." mode="type-name" />
-        </xsl:element>
-        <xsl:text>: </xsl:text>
+        </b>
+        <xsl:text> </xsl:text>
         <xsl:apply-templates />
-    </xsl:element>
+    </p>
 </xsl:template>
 
 <!-- website for the book -->
 <xsl:template match="frontmatter/colophon/website">
-    <xsl:element name="p">
-        <xsl:element name="b">
+    <p class="credit">
+        <b class="title">
             <xsl:apply-templates select="." mode="type-name" />
-        </xsl:element>
-        <xsl:text>: </xsl:text>
-        <xsl:element name="a">
-            <xsl:attribute name="href">
-                <xsl:apply-templates select="address" />
-            </xsl:attribute>
+        </b>
+        <xsl:text> </xsl:text>
+        <xsl:variable name="web-address">
+            <xsl:apply-templates select="address" />
+        </xsl:variable>
+        <a href="{$web-address}">
             <xsl:apply-templates select="name" />
-        </xsl:element>
-    </xsl:element>
+        </a>
+    </p>
 </xsl:template>
 
 <xsl:template match="frontmatter/colophon/copyright">
-    <p>
+    <p class="copyright">
+        <!-- Unicode copyright symbol -->
         <xsl:text>&#xa9;</xsl:text>
         <xsl:apply-templates select="year" />
-        <xsl:text>&#xa0;&#xa0;</xsl:text>
+        <xsl:text> </xsl:text>
         <xsl:apply-templates select="holder" />
     </p>
     <xsl:if test="shortlicense">
-        <p>
+        <p class="license">
             <xsl:apply-templates select="shortlicense" />
         </p>
     </xsl:if>
@@ -761,10 +786,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:attribute>
         </xsl:if>
         <xsl:if test="title">
-            <h5 class="heading">
+            <h6 class="heading">
                 <xsl:apply-templates select="." mode="title-full" />
                 <span> </span>
-            </h5>
+            </h6>
         </xsl:if>
         <xsl:apply-templates  select="*">
             <xsl:with-param name="b-original" select="$b-original" />
@@ -830,18 +855,18 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:apply-templates select="." mode="internal-id" />
         </xsl:variable>
         <article class="exercise-like" id="{$xref}">
-            <h5 class="heading hidden-type">
+            <h6 class="heading hidden-type">
             <span class="type"><xsl:apply-templates select="." mode="type-name" /></span>
             <span class="codenumber"><xsl:apply-templates select="." mode="serial-number" /></span>
             <xsl:if test="title">
                 <span class="title"><xsl:apply-templates select="." mode="title-full" /></span>
             </xsl:if>
-            </h5>
+            </h6>
             <xsl:if test="$exercise.backmatter.statement='yes'">
                 <xsl:apply-templates select="statement" />
             </xsl:if>
-            <!-- default templates will produce inline knowls -->
-            <span class="hidden-knowl-wrapper">
+            <!-- default templates will produce hidden knowls -->
+            <div class="hidden-knowl-wrapper solutions">
                 <xsl:if test="hint and $exercise.backmatter.hint='yes'">
                     <xsl:apply-templates select="hint" />
                 </xsl:if>
@@ -851,7 +876,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:if test="solution and $exercise.backmatter.solution='yes'">
                     <xsl:apply-templates select="solution" />
                 </xsl:if>
-            </span>
+            </div>
         </article>
     </xsl:if>
 </xsl:template>
@@ -897,9 +922,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="notation" mode="backmatter">
     <tr>
         <td style="text-align:left; vertical-align:top;">
-            <xsl:text>\(</xsl:text>
+            <xsl:call-template name="begin-inline-math" />
             <xsl:value-of select="usage" />
-            <xsl:text>\)</xsl:text>
+            <xsl:call-template name="end-inline-math" />
         </td>
         <td style="text-align:left; vertical-align:top;">
             <xsl:apply-templates select="description" />
@@ -1302,31 +1327,34 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template name="knowl-list">
     <xsl:param name="heading-group" />
     <!-- range through node-list, making cross-references -->
+    <!-- Use a comma after the heading, then prefix each  -->
+    <!-- cross-reference with a space as separators       -->
     <span class="indexknowl">
-        <xsl:text>, </xsl:text>
+        <xsl:text>,</xsl:text>
         <xsl:for-each select="$heading-group">
             <xsl:choose>
                 <xsl:when test="see">
-                    <i>
+                    <xsl:text> </xsl:text>
+                    <em class="see">
                         <xsl:call-template name="type-name">
                             <xsl:with-param name="string-id" select="'see'" />
                         </xsl:call-template>
-                    </i>
-                    <xsl:text> </xsl:text>
+                    </em>
                     <xsl:copy-of select="see/node()" />
                 </xsl:when>
                 <xsl:when test="seealso">
-                    <i>
+                    <xsl:text> </xsl:text>
+                    <em class="see">
                         <xsl:call-template name="type-name">
                             <xsl:with-param name="string-id" select="'also'" />
                         </xsl:call-template>
-                    </i>
-                    <xsl:text> </xsl:text>
+                    </em>
                     <xsl:copy-of select="seealso/node()" />
                 </xsl:when>
                 <!-- else a real content reference, knowl or hyperlink -->
                 <!-- TODO: split into two more when, otherwise as error? -->
                 <xsl:otherwise>
+                    <xsl:text> </xsl:text>
                     <xsl:element name="a">
                         <!-- knowl or traditional hyperlink     -->
                         <!-- mutually exclusive by construction -->
@@ -1409,7 +1437,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <!-- build xref-knowl, and optionally a hidden-knowl duplicate -->
-<xsl:template match="fn|li|men|md|mdn|p|blockquote|&DEFINITION-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|proof|case|&FIGURE-LIKE;|paragraphs|exercise|exercisegroup|webwork[*|@*]|hint[not(ancestor::webwork)]|answer[not(ancestor::webwork)]|solution[not(ancestor::webwork)]|biblio|biblio/note|contributor" mode="xref-knowl">
+<!-- &SOLUTION-LIKE; is replaced by WW-avoiding versions        -->
+<xsl:template match="&REMARK-LIKE;|&COMPUTATION-LIKE;|&DEFINITION-LIKE;|&ASIDE-LIKE;|poem|&FIGURE-LIKE;|assemblage|blockquote|paragraphs|objectives|&EXAMPLE-LIKE;|exercisegroup|exercise|&PROJECT-LIKE;|task|hint[not(ancestor::webwork)]|answer[not(ancestor::webwork)]|solution[not(ancestor::webwork)]|&THEOREM-LIKE;|&AXIOM-LIKE;|proof|case|fn|contributor|biblio|biblio/note|p|li|webwork[*|@*]|men|md|mdn" mode="xref-knowl">
     <!-- a generally available cross-reference knowl file, of duplicated content -->
     <xsl:apply-templates select="." mode="manufacture-knowl">
         <xsl:with-param name="knowl-type" select="'xref'" />
@@ -1528,9 +1557,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- These are convenience methods for frequently-used headings -->
 
-<!-- h5, type name, number (if exists), title (if exists) -->
+<!-- h6, type name, number (if exists), title (if exists) -->
+<!-- REMARK-LIKE, COMPUTATION-LIKE, DEFINITION-LIKE, SOLUTION-LIKE, objectives (xref-content), EXAMPLE-LIKE, PROJECT-LIKE, exercise (inline), task (xref-content), fn (xref-content), biblio/note (xref-content)-->
 <xsl:template match="*" mode="heading-full">
-    <h5 class="heading">
+    <h6 class="heading">
         <span class="type">
             <xsl:apply-templates select="." mode="type-name" />
         </span>
@@ -1547,12 +1577,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:apply-templates select="." mode="title-full" />
             </span>
         </xsl:if>
-    </h5>
+    </h6>
 </xsl:template>
 
-<!-- h5, no type name, serial number, title (if exists) -->
+<!-- h6, no type name, serial number, title (if exists) -->
+<!-- exercise (sectional, as born) -->
 <xsl:template match="*" mode="heading-sectional-exercise">
-    <h5 class="heading">
+    <h6 class="heading">
         <span class="codenumber">
             <xsl:apply-templates select="." mode="serial-number" />
         </span>
@@ -1561,13 +1592,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:apply-templates select="." mode="title-full" />
             </span>
         </xsl:if>
-    </h5>
+    </h6>
 </xsl:template>
 
-<!-- h5, type name, serial number, title (if exists) -->
-<!-- For the knowl text of a sectional exercise      -->
+<!-- h6, type name, serial number, title (if exists) -->
+<!-- exercise (sectional, xref-content)      -->
 <xsl:template match="*" mode="heading-sectional-exercise-typed">
-    <h5 class="heading">
+    <h6 class="heading">
         <span class="type">
             <xsl:apply-templates select="." mode="type-name" />
         </span>
@@ -1579,25 +1610,26 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:apply-templates select="." mode="title-full" />
             </span>
         </xsl:if>
-    </h5>
+    </h6>
 </xsl:template>
 
-<!-- h5, no type name, just simple list number, no title -->
+<!-- h6, no type name, just simple list number, no title -->
+<!-- task (when born) -->
 <xsl:template match="*" mode="heading-list-number">
-    <h5 class="heading">
+    <h6 class="heading">
         <span class="codenumber">
             <xsl:text>(</xsl:text>
             <xsl:apply-templates select="." mode="list-number" />
             <xsl:text>)</xsl:text>
         </span>
-    </h5>
+    </h6>
 </xsl:template>
 
-<!-- h5, type name, no number (even if exists), title (if exists) -->
-<!-- eg, objectives is one-per-subdivison, max,                   -->
-<!-- so no need to display at birth, but is needed in xref        -->
+<!-- h6, type name, no number (even if exists), title (if exists)              -->
+<!-- eg, objectives is one-per-subdivison, max, so no need to display at birth -->
+<!-- objectives (when born) -->
 <xsl:template match="*" mode="heading-full-implicit-number">
-    <h5 class="heading">
+    <h6 class="heading">
         <span class="type">
             <xsl:apply-templates select="." mode="type-name" />
         </span>
@@ -1607,46 +1639,68 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:apply-templates select="." mode="title-full" />
             </span>
         </xsl:if>
-    </h5>
+    </h6>
 </xsl:template>
 
-<!-- eg "Paragraph" displayed in content of an xref-knowl -->
+<!-- Not normally titled, but knowl content gives some indication -->
+<!-- blockquote, exercisegroup, proof -->
 <xsl:template match="*" mode="heading-type">
-    <h5 class="heading">
+    <h6 class="heading">
         <span class="type">
             <xsl:apply-templates select="." mode="type-name" />
         </span>
-    </h5>
+    </h6>
 </xsl:template>
 
-<!-- Title only: on assemblage, aside, or paragraphs -->
+<!-- Title only -->
+<!-- ASIDE-LIKE, paragraphs -->
+<!-- No title, then nothing happens     -->
 <xsl:template match="*" mode="heading-title">
-    <h5 class="heading">
-        <span class="title">
-            <xsl:apply-templates select="." mode="title-full" />
-        </span>
-    </h5>
+    <xsl:if test="title/*|title/text()">
+        <h6 class="heading">
+            <span class="title">
+                <xsl:apply-templates select="." mode="title-full" />
+            </span>
+        </h6>
+    </xsl:if>
 </xsl:template>
 
-<!-- eg "Solution 5" as text of knowl-clickable, no h5 wrapping -->
+<!-- Title only, paragraphs -->
+<!-- h5 for paragraphs, lowest of the low -->
+<!-- No title, then nothing happens       -->
+<!-- TODO: titles will be mandatory sometime -->
+<xsl:template match="*" mode="heading-title-paragraphs">
+    <xsl:if test="title/*|title/text()">
+        <h5 class="heading">
+            <span class="title">
+                <xsl:apply-templates select="." mode="title-full" />
+            </span>
+        </h5>
+    </xsl:if>
+</xsl:template>
+
+<!-- A type, with maybe a serial number to disambiguate, no h6 -->
+<!-- SOLUTION-LIKE (xref-text), biblio/note (xref-text) -->
 <xsl:template match="*" mode="heading-simple">
     <!-- the name of the object, its "type" -->
     <span class="type">
         <xsl:apply-templates select="." mode="type-name" />
     </span>
-    <!-- A simple number, this should be in -common perhaps? -->
-    <!-- The work here is to see if the count exceeds 1      -->
+    <!-- We are not computing the number here, that is in -common   -->
+    <!-- We are checking if there is more than one of the same type -->
+    <!-- If one, then we do not need the number "1" to disambiguate -->
+    <!-- We go to the parent, get all children, then filter by name -->
     <xsl:variable name="elt-name" select="local-name(.)" />
-    <xsl:variable name="siblings" select="parent::*/child::*[local-name(.) = $elt-name]" />
+    <xsl:variable name="siblings" select="parent::*/*[local-name(.) = $elt-name]" />
     <xsl:if test="count($siblings) > 1">
-        <xsl:text> </xsl:text>
         <span class="codenumber">
-            <xsl:number />
+            <xsl:apply-templates select="." mode="serial-number" />
         </span>
     </xsl:if>
 </xsl:template>
 
 <!-- A case in a proof, eg "(=>) Necessity." -->
+<!-- case -->
 <xsl:template match="*" mode="heading-case">
     <h6 class="heading">
         <xsl:choose>
@@ -1668,6 +1722,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>.</xsl:text>
         </xsl:if>
     </h6>
+</xsl:template>
+
+<!-- Heading (title) of a "poem" -->
+<!-- This is a hack, which should go away whence there -->
+<!-- is CSS for the class .poem which will surround    -->
+<!-- this.  Likely replace use of this template        -->
+<!-- by the template "heading-title" above             -->
+<xsl:template match="poem" mode="heading-poem">
+    <div class="poemtitle" style="font-weight: bold; text-align: center; font-size: 120%">
+        <xsl:apply-templates select="." mode="title-full"/>
+    </div>
 </xsl:template>
 
 
@@ -1721,7 +1786,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- (7) TODO: "wrapped-content" called by "body" to separate code. -->
 
-<xsl:template match="li|me|men|md|mdn|fn|biblio|p|blockquote|&DEFINITION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|&FIGURE-LIKE;|assemblage|objectives|&THEOREM-LIKE;|proof|case|&AXIOM-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|exercisegroup|webwork[*|@*]|paragraphs|exercise|hint[not(ancestor::webwork)]|answer[not(ancestor::webwork)]|solution[not(ancestor::webwork)]|biblio/note|contributor">
+<!-- &SOLUTION-LIKE; is replaced by WW-avoiding versions -->
+<xsl:template match="&REMARK-LIKE;|&COMPUTATION-LIKE;|&DEFINITION-LIKE;|&ASIDE-LIKE;|poem|&FIGURE-LIKE;|assemblage|blockquote|paragraphs|objectives|&EXAMPLE-LIKE;|exercisegroup|exercise|&PROJECT-LIKE;|task|hint[not(ancestor::webwork)]|answer[not(ancestor::webwork)]|solution[not(ancestor::webwork)]|&THEOREM-LIKE;|&AXIOM-LIKE;|proof|case|fn|contributor|biblio|biblio/note|p|li|webwork[*|@*]|men|md|mdn">
     <xsl:param name="b-original" select="true()" />
     <xsl:variable name="hidden">
         <xsl:apply-templates select="." mode="is-hidden" />
@@ -1739,6 +1805,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <!-- duplicating, so just make a xref-knowl in same style, -->
                 <!-- but therefore clean of id's or other identification   -->
                 <xsl:otherwise>
+                    <!-- perhaps we should use the "body-element" and "body-css-class" here? -->
                     <xsl:variable name="birth-elt">
                         <xsl:apply-templates select="." mode="birth-element" />
                     </xsl:variable>
@@ -1789,78 +1856,103 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:variable name="birth-elt">
         <xsl:apply-templates select="." mode="birth-element" />
     </xsl:variable>
-    <!-- First: the link that is visible on the page -->
-    <xsl:element name="{$birth-elt}">
-        <xsl:attribute name="class">
-            <xsl:text>hidden-knowl-wrapper</xsl:text>
-        </xsl:attribute>
-        <xsl:element name="a">
-            <xsl:choose>
-                <!-- Hack: WW not working from embedded knowls,     -->
-                <!-- so go with external file of duplicated content -->
-                <!-- as the form og the "a" tag, preserving styling -->
-                <xsl:when test="self::webwork">
-                    <!-- copied from "xref-link" template,  -->
-                    <!-- maybe build a 2-parameter template -->
-                    <xsl:attribute name="knowl">
-                        <xsl:apply-templates select="." mode="hidden-knowl-filename" />
-                    </xsl:attribute>
-                    <!-- TODO: check if this "knowl-id" is needed, knowl.js implies it is -->
-                    <xsl:attribute name="knowl-id">
-                        <xsl:text>hidden-</xsl:text>
-                        <xsl:apply-templates select="." mode="internal-id" />
-                    </xsl:attribute>
-                    <!-- add HTML title and alt attributes to the link -->
-                    <xsl:attribute name="alt">
-                        <xsl:apply-templates select="." mode="tooltip-text" />
-                    </xsl:attribute>
-                    <xsl:attribute name="title">
-                        <xsl:apply-templates select="." mode="tooltip-text" />
-                    </xsl:attribute>
-                    <xsl:apply-templates select="." mode="hidden-knowl-text" />
-                </xsl:when>
-                <!-- this is the "real" code, bust out once WW fixed -->
-                <xsl:otherwise>
-                    <!-- Point to the file version, which is ineffective -->
-                    <xsl:attribute name="knowl">
-                        <xsl:apply-templates select="." mode="xref-knowl-filename" />
-                    </xsl:attribute>
-                    <!-- empty, indicates content *not* in a file -->
-                    <xsl:attribute name="knowl" />
-                    <!-- class indicates content is in div referenced by id -->
-                    <xsl:attribute name="class">
-                        <xsl:text>id-ref</xsl:text>
-                    </xsl:attribute>
-                    <!-- and the id via a template for consistency -->
-                    <xsl:attribute name="refid">
-                        <xsl:apply-templates select="." mode="hidden-knowl-id" />
-                    </xsl:attribute>
-                    <!-- make the anchor a target, eg of an in-context link -->
-                    <!-- label original -->
-                    <xsl:attribute name="id">
-                        <xsl:apply-templates select="." mode="internal-id" />
-                    </xsl:attribute>
-                    <!-- marked-up knowl text link *inside* of knowl anchor to be effective -->
-                    <!-- heading in an HTML container -->
-                    <xsl:apply-templates select="." mode="hidden-knowl-text" />
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:element>
-    </xsl:element>
+    <!-- First: the link that is visible on the page         -->
+    <!-- Wrapped at the div level, not wrapped if span level -->
+    <xsl:choose>
+        <xsl:when test="$birth-elt = 'div'">
+            <xsl:element name="{$birth-elt}">
+                <xsl:attribute name="class">
+                    <xsl:text>hidden-knowl-wrapper</xsl:text>
+                </xsl:attribute>
+                <xsl:apply-templates select="." mode="hidden-knowl-link" />
+            </xsl:element>
+        </xsl:when>
+        <xsl:when test="$birth-elt = 'span'">
+            <xsl:apply-templates select="." mode="hidden-knowl-link" />
+        </xsl:when>
+    </xsl:choose>
     <!-- Second: the content of the knowl, to be revealed/parsed later -->
+    <xsl:apply-templates select="." mode="hidden-knowl-content">
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- a hidden-knowl version of a clickable -->
+<xsl:template match="*" mode="hidden-knowl-link">
+    <xsl:element name="a">
+        <xsl:choose>
+            <!-- Hack: WW not working from embedded knowls,     -->
+            <!-- so go with external file of duplicated content -->
+            <!-- as the form og the "a" tag, preserving styling -->
+            <xsl:when test="self::webwork">
+                <!-- copied from "xref-link" template,  -->
+                <!-- maybe build a 2-parameter template -->
+                <xsl:attribute name="knowl">
+                    <xsl:apply-templates select="." mode="hidden-knowl-filename" />
+                </xsl:attribute>
+                <!-- TODO: check if this "knowl-id" is needed, knowl.js implies it is -->
+                <xsl:attribute name="knowl-id">
+                    <xsl:text>hidden-</xsl:text>
+                    <xsl:apply-templates select="." mode="internal-id" />
+                </xsl:attribute>
+                <!-- add HTML title and alt attributes to the link -->
+                <xsl:attribute name="alt">
+                    <xsl:apply-templates select="." mode="tooltip-text" />
+                </xsl:attribute>
+                <xsl:attribute name="title">
+                    <xsl:apply-templates select="." mode="tooltip-text" />
+                </xsl:attribute>
+                <xsl:apply-templates select="." mode="hidden-knowl-text" />
+            </xsl:when>
+            <!-- this is the "real" code, bust out once WW fixed -->
+            <xsl:otherwise>
+                <!-- Point to the file version, which is ineffective -->
+                <xsl:attribute name="knowl">
+                    <xsl:apply-templates select="." mode="xref-knowl-filename" />
+                </xsl:attribute>
+                <!-- empty, indicates content *not* in a file -->
+                <xsl:attribute name="knowl" />
+                <!-- class indicates content is in div referenced by id -->
+                <xsl:attribute name="class">
+                    <xsl:text>id-ref</xsl:text>
+                </xsl:attribute>
+                <!-- and the id via a template for consistency -->
+                <xsl:attribute name="refid">
+                    <xsl:apply-templates select="." mode="hidden-knowl-id" />
+                </xsl:attribute>
+                <!-- make the anchor a target, eg of an in-context link -->
+                <!-- label original -->
+                <xsl:attribute name="id">
+                    <xsl:apply-templates select="." mode="internal-id" />
+                </xsl:attribute>
+                <!-- marked-up knowl text link *inside* of knowl anchor to be effective -->
+                <!-- heading in an HTML container -->
+                <xsl:apply-templates select="." mode="hidden-knowl-text" />
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:element>
+</xsl:template>
+
+
+<!-- create the hidden/embedded content  -->
+<!-- Should this just *always* be a div? -->
+<xsl:template match="*" mode="hidden-knowl-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:variable name="birth-elt">
+        <xsl:apply-templates select="." mode="birth-element" />
+    </xsl:variable>
     <xsl:element name="{$birth-elt}">
         <!-- different id, for use by the knowl mechanism -->
         <xsl:attribute name="id">
             <xsl:apply-templates select="." mode="hidden-knowl-id" />
         </xsl:attribute>
-        <!-- not "visibility," display:none takes no space -->
-        <xsl:attribute name="style">
-            <xsl:text>display: none;</xsl:text>
-        </xsl:attribute>
-        <!-- Do not process the contents on page load, wait until it is opened -->
+        <!-- .hidden-content is CSS for display: none           -->
+        <!-- Stop MathJax from processing contents on page load -->
         <xsl:attribute name="class">
-            <xsl:text>tex2jax_ignore</xsl:text>
+            <xsl:text>hidden-content tex2jax_ignore</xsl:text>
         </xsl:attribute>
+        <!-- should the b-original flag always be true() here -->
         <xsl:apply-templates select="." mode="body">
             <xsl:with-param name="block-type" select="'embed'" />
             <xsl:with-param name="b-original" select="$b-original" />
@@ -1876,6 +1968,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:attribute name="class">
             <xsl:apply-templates select="." mode="body-css-class" />
         </xsl:attribute>
+        <!-- this horrible hack should go away once better CSS is in place -->
+        <!-- likely this particular version never gets used                -->
+        <xsl:if test="self::poem">
+            <xsl:attribute name="style">
+                <xsl:text>display: table; width: auto; max-width: 90%; margin: 0 auto;</xsl:text>
+            </xsl:attribute>
+        </xsl:if>
         <xsl:apply-templates select="." mode="heading-birth" />
     </xsl:element>
 </xsl:template>
@@ -1888,28 +1987,1521 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 
-<!-- ########################### -->
-<!-- Environment Implementations -->
-<!-- ########################### -->
+<!-- ##################### -->
+<!-- Block Implementations -->
+<!-- ##################### -->
+
+<!-- We devise the more straightforward blocks first, -->
+<!-- saving the exceptions for subsequent exposition  -->
+
+<!-- REMARK-LIKE -->
+<!-- A simple block with full titles and generic contents -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="&REMARK-LIKE;" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.remark = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="&REMARK-LIKE;" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&REMARK-LIKE;" mode="body-css-class">
+    <xsl:text>remark-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="&REMARK-LIKE;" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="&REMARK-LIKE;" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="&REMARK-LIKE;" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template  -->
+<!-- Pass along b-original flag                  -->
+<!-- Simply process contents, could restict here -->
+<xsl:template match="&REMARK-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- COMPUTATION-LIKE -->
+<!-- A simple block with full titles, but more substantial contents -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="&COMPUTATION-LIKE;" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.remark = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="&COMPUTATION-LIKE;" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&COMPUTATION-LIKE;" mode="body-css-class">
+    <xsl:text>remark-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="&COMPUTATION-LIKE;" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="&COMPUTATION-LIKE;" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="&COMPUTATION-LIKE;" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template  -->
+<!-- Pass along b-original flag                  -->
+<!-- Simply process contents, could restict here -->
+<xsl:template match="&COMPUTATION-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- DEFINITION-LIKE -->
+<!-- A simple block with full titles and generic contents -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="&DEFINITION-LIKE;" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.definition = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="&DEFINITION-LIKE;" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&DEFINITION-LIKE;" mode="body-css-class">
+    <xsl:text>definition-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="&DEFINITION-LIKE;" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="&DEFINITION-LIKE;" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="&DEFINITION-LIKE;" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template  -->
+<!-- Pass along b-original flag                  -->
+<!-- Simply process contents, could restict here -->
+<xsl:template match="&DEFINITION-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- ASIDE-LIKE -->
+<!-- A simple block with a title (no number) and generic contents -->
+
+<!-- Never born-hidden, other devices partially hide -->
+<xsl:template match="&ASIDE-LIKE;" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="&ASIDE-LIKE;" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&ASIDE-LIKE;" mode="body-css-class">
+    <xsl:text>aside-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="&ASIDE-LIKE;" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="&ASIDE-LIKE;" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-title" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="&ASIDE-LIKE;" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-title" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="&ASIDE-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Poem -->
+<!-- Titled, not numbered, but with an author's name. -->
+<!-- Knowled as a cross-reference target, but never born  -->
+<!-- hidden (for now particular reason).  A complicated  -->
+<!-- implementation, which should rely more on CSS. -->
+
+<!-- Never born-hidden, other devices partially hide -->
+<xsl:template match="poem" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<!-- TODO: consider this being an article? -->
+<xsl:template match="poem" mode="body-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="poem" mode="body-css-class">
+    <xsl:text>poem</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="poem" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="poem" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-poem" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="poem" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-poem" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="poem" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="stanza" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+    <!-- author comes early in schema, but is rendered below -->
+    <xsl:apply-templates select="author" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+<!-- TODO: Address GitHub issues regarding poetry output:   -->
+<!-- https://github.com/BooksHTML/mathbook-assets/issues/65 -->
+
+<xsl:template match="poem/author">
+    <xsl:variable name="alignment">
+        <xsl:apply-templates select="." mode="poem-halign"/>
+    </xsl:variable>
+    <xsl:element name="div">
+        <xsl:attribute name="class">
+            <xsl:text>poemauthor</xsl:text>
+            <xsl:value-of select="$alignment" />
+        </xsl:attribute>
+        <xsl:attribute name="style">
+            <xsl:text>font-style: italic; padding-bottom: 20px; text-align: </xsl:text>
+            <xsl:value-of select="$alignment" />
+        </xsl:attribute>
+        <xsl:apply-templates/>
+    </xsl:element>
+</xsl:template>
+
+<xsl:template match="stanza">
+    <div class="stanza" style="padding-bottom: 20px">
+        <xsl:if test="title">
+            <div class="stanzatitle" style="font-weight: bold; text-align: center">
+                <xsl:apply-templates select="." mode="title-full"/>
+            </div>
+        </xsl:if>
+        <xsl:apply-templates select="line"/>
+    </div>
+</xsl:template>
+
+<xsl:template match="stanza/line">
+    <xsl:variable name="alignment">
+        <xsl:apply-templates select="." mode="poem-halign"/>
+    </xsl:variable>
+    <xsl:variable name="indentation">
+        <xsl:apply-templates select="." mode="poem-indent"/>
+    </xsl:variable>
+    <xsl:element name="div">
+        <xsl:attribute name="class">
+            <xsl:text>poemline</xsl:text>
+            <xsl:value-of select="$alignment" />
+        </xsl:attribute>
+        <xsl:attribute name="style">
+            <!-- Hanging indentation for overly long lines -->
+            <xsl:text>margin-left: 4em; text-indent: -4em; </xsl:text>
+            <xsl:text>text-align: </xsl:text>
+            <xsl:value-of select="$alignment" />
+        </xsl:attribute>
+        <xsl:if test="$alignment='left'"><!-- Left Alignment: Indent from Left -->
+            <xsl:call-template name="poem-line-indenting">
+                <xsl:with-param name="count"><xsl:value-of select="$indentation"/></xsl:with-param>
+            </xsl:call-template>
+        </xsl:if>
+        <xsl:apply-templates/><!-- Center Alignment: Ignore Indentation -->
+        <xsl:if test="$alignment='right'"><!-- Right Alignment: Indent from Right -->
+            <xsl:call-template name="poem-line-indenting">
+                <xsl:with-param name="count"><xsl:value-of select="$indentation"/></xsl:with-param>
+            </xsl:call-template>
+        </xsl:if>
+    </xsl:element>
+</xsl:template>
+
+<xsl:template name="poem-line-indenting">
+    <xsl:param name="count"/>
+    <xsl:choose>
+        <xsl:when test="(0 >= $count)"/>
+        <xsl:otherwise>
+            <span class="tab" style="margin-left: 2em"></span>
+            <xsl:call-template name="poem-line-indenting">
+                <xsl:with-param name="count" select="$count - 1"/>
+            </xsl:call-template>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+
+<!-- FIGURE-LIKE -->
+<!-- Captioned, titled (heading) -->
+
+<!-- Born-hidden behavior is configurable -->
+<!-- On a per-element basis               -->
+<xsl:template match="figure" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.figure = 'yes'" />
+</xsl:template>
+
+<xsl:template match="table" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.table = 'yes'" />
+</xsl:template>
+
+<xsl:template match="listing" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.listing = 'yes'" />
+</xsl:template>
+
+<xsl:template match="list" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.list = 'yes'" />
+</xsl:template>
+
+<!-- The optionally born-hidden items can be panels of -->
+<!-- a sidebyside, where we should not be hiding them. -->
+<!-- A figure wrapping the sidebyside could be knowled -->
+<!-- if they need to be hidden.                        -->
+<xsl:template match="sidebyside/figure|sidebyside/table|sidebyside/listing|sidebyside/list" mode="is-hidden">
+    <xsl:value-of select="false()" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<!-- Natural HTML element      -->
+<xsl:template match="&FIGURE-LIKE;" mode="body-element">
+    <xsl:text>figure</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&FIGURE-LIKE;" mode="body-css-class">
+    <xsl:text>figure-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="&FIGURE-LIKE;" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- TODO - sort out title/caption -->
+<!-- Use title for xref-link text  -->
+
+<!-- When born use this heading -->
+<!-- no heading, since captioned -->
+<xsl:template match="&FIGURE-LIKE;" mode="heading-birth" />
+<!-- Sort of for backward compatibility, &FIGURE-LIKE; should be similar -->
+<xsl:template match="list" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-title" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<!-- no heading, since captioned -->
+<xsl:template match="&FIGURE-LIKE;" mode="heading-xref-knowl" />
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Handle "caption" exceptionally               -->
+<!-- "list" is historically different, integrate? -->
+<xsl:template match="&FIGURE-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:choose>
+        <xsl:when test="self::figure or self::table or self::listing">
+            <!-- could we just kill captions as metadata?             -->
+            <!-- and make a modal template to process them as needed? -->
+            <xsl:apply-templates select="*[not(self::caption)]">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+            <xsl:apply-templates select="caption" />
+        </xsl:when>
+        <xsl:when test="self::list">
+            <div class="named-list-content">
+                <xsl:apply-templates select="*[not(self::caption)]">
+                    <xsl:with-param name="b-original" select="$b-original" />
+                </xsl:apply-templates>
+            </div>
+            <!-- Exceptional for backward compatibility, 2017-08-25 -->
+            <xsl:if test="title and not(caption)">
+                <figcaption>
+                    <span class="heading">
+                        <xsl:apply-templates select="." mode="type-name"/>
+                    </span>
+                    <span class="codenumber">
+                        <xsl:apply-templates select="." mode="number"/>
+                    </span>
+                    <xsl:apply-templates select="." mode="title-full" />
+                </figcaption>
+            </xsl:if>
+            <xsl:apply-templates select="caption" />
+        </xsl:when>
+    </xsl:choose>
+</xsl:template>
+
+
+<!-- Assemblage -->
+<!-- A simple block with an optional title and limited contents -->
+
+<!-- Never born-hidden, simply by design -->
+<xsl:template match="assemblage" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="assemblage" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="assemblage" mode="body-css-class">
+    <xsl:text>assemblage-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="assemblage" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="assemblage" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-title" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="assemblage" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-title" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="assemblage" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Block Quote -->
+<!-- A very simple block with just an enclosing div -->
+
+<!-- Never born-hidden, does not make sense -->
+<xsl:template match="blockquote" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<!-- Natural HTML element      -->
+<xsl:template match="blockquote" mode="body-element">
+    <xsl:text>blockquote</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="blockquote" mode="body-css-class">
+    <xsl:text>blockquote</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="blockquote" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading         -->
+<!-- Never hidden, never gets a heading -->
+<xsl:template match="blockquote" mode="heading-birth" />
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="blockquote" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-type" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="blockquote" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Paragraphs -->
+<!-- Technically a division, but small enough to xref knowl -->
+
+<!-- Never born-hidden, does not make sense -->
+<xsl:template match="paragraphs" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="paragraphs" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="paragraphs" mode="body-css-class">
+    <xsl:text>paragraphs</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="paragraphs" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="paragraphs" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-title-paragraphs" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="paragraphs" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-title-paragraphs" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="paragraphs" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Objectives -->
+<!-- A special, and restricted block -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="objectives" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.objectives = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="objectives" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="objectives" mode="body-css-class">
+    <xsl:text>objectives</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="objectives" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="objectives" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-full-implicit-number" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="objectives" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template        -->
+<!-- Pass along b-original flag                        -->
+<!-- Simply process contents, with partial restriction -->
+<xsl:template match="objectives" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="introduction|ol|ul|dl|conclusion" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- The next few implementations have hints, answers, -->
+<!-- or solutions hanging off the ends.  Examples may  -->
+<!-- elect to have these.  Exercises may have them and -->
+<!-- they are more configurable.  Projects may have    -->
+<!-- them prima facie, or associated with tasks.  In   -->
+<!-- all cases the hints, answers, and solutions are   -->
+<!-- presented as knowls.                              -->
+
+<!-- EXAMPLE-LIKE -->
+<!-- A simple block, but with possible appendages -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="&EXAMPLE-LIKE;" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.example = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="&EXAMPLE-LIKE;" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&EXAMPLE-LIKE;" mode="body-css-class">
+    <xsl:text>example-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="&EXAMPLE-LIKE;" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="&EXAMPLE-LIKE;" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="&EXAMPLE-LIKE;" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template  -->
+<!-- Pass along b-original flag                  -->
+<!-- Process according to structure              -->
+<xsl:template match="&EXAMPLE-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:choose>
+        <!-- structured version with appendages -->
+        <xsl:when test="statement">
+            <xsl:apply-templates select="statement/*" >
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+            <xsl:if test="hint|answer|solution">
+                <div class="hidden-knowl-wrapper solutions">
+                    <xsl:apply-templates select="hint|answer|solution">
+                        <xsl:with-param name="b-original" select="$b-original" />
+                    </xsl:apply-templates>
+                </div>
+            </xsl:if>
+        </xsl:when>
+        <!-- Potential common mistake: no statement, but other structure -->
+        <xsl:when test="prelude|hint|answer|solution|postlude">
+            <xsl:message>MBX:WARNING: a &lt;prelude&gt;, &lt;hint&gt;, &lt;answer&gt;, &lt;solution&gt;, or &lt;postlude&gt; in an example-like block will need to also be structured with a &lt;statement&gt;.  Content will be missing from output.</xsl:message>
+            <xsl:apply-templates select="." mode="location-report" />
+        </xsl:when>
+        <!-- unstructured, no need to avoid dangerous misunderstandings -->
+        <xsl:otherwise>
+            <xsl:apply-templates select="*">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+
+<!-- Exercise Group -->
+<!-- A very simple block with just an enclosing div -->
+
+<!-- Never born-hidden, does not make sense -->
+<xsl:template match="exercisegroup" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<!-- Natural HTML element      -->
+<xsl:template match="exercisegroup" mode="body-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="exercisegroup" mode="body-css-class">
+    <xsl:text>exercisegroup</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="exercisegroup" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading         -->
+<!-- Never hidden, never gets a heading -->
+<xsl:template match="exercisegroup" mode="heading-birth" />
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="exercisegroup" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-type" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="exercisegroup" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="introduction">
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+    <xsl:element name="div">
+        <xsl:attribute name="class">
+            <xsl:text>exercisegroup-exercises</xsl:text>
+            <xsl:if test="@cols">
+                <xsl:text> </xsl:text>
+                <!-- HTML-specific, but in mathbook-common.xsl -->
+                <xsl:apply-templates select="." mode="number-cols-CSS-class" />
+            </xsl:if>
+        </xsl:attribute>
+        <xsl:apply-templates select="exercise">
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+    </xsl:element>
+    <xsl:apply-templates select="conclusion">
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Exercise -->
+<!-- Inline and sectional, with appendages -->
+
+<!-- Born-hidden behavior is configurable -->
+<!-- Note match first on inline first, override if sectional -->
+<xsl:template match="exercise" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.exercise.inline = 'yes'" />
+</xsl:template>
+<xsl:template match="exercises//exercise" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.exercise.sectional = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="exercise" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="exercise" mode="body-css-class">
+    <xsl:text>exercise-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="exercise" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<!-- Note match first on inline, override if sectional -->
+<xsl:template match="exercise" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+<xsl:template match="exercises//exercise" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-sectional-exercise" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<!-- Note match first on inline, override if sectional -->
+<xsl:template match="exercise" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+<xsl:template match="exercises//exercise" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-sectional-exercise-typed" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template  -->
+<!-- Pass along b-original flag                  -->
+<!-- Process according to structure              -->
+<xsl:template match="exercise" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:choose>
+        <!-- just an unstructured statement, no solutions -->
+        <xsl:when test="not(statement or webwork)">
+            <xsl:apply-templates select="*|text()">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:when>
+        <!-- structured case -->
+        <xsl:when test="statement">
+            <xsl:if test="$exercise.text.statement='yes'">
+                <xsl:apply-templates select="statement">
+                    <xsl:with-param name="b-original" select="$b-original" />
+                </xsl:apply-templates>
+            </xsl:if>
+            <!-- after statement, div of hidden knowls -->
+            <xsl:if test="(hint and $exercise.text.hint='yes') or (answer and $exercise.text.answer='yes') or (solution and $exercise.text.solution='yes')">
+                <div class="hidden-knowl-wrapper solutions">
+                    <xsl:if test="$exercise.text.hint='yes'">
+                        <xsl:apply-templates select="hint">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                    <xsl:if test="$exercise.text.answer='yes'">
+                        <xsl:apply-templates select="answer">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                    <xsl:if test="$exercise.text.solution='yes'">
+                        <xsl:apply-templates select="solution">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                </div>
+            </xsl:if>
+        </xsl:when>
+        <!-- webwork case -->
+        <xsl:when test="webwork">
+            <xsl:apply-templates select="introduction|webwork|conclusion">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:when>
+    </xsl:choose>
+</xsl:template>
+
+
+<!-- Project-LIKE -->
+<!-- A complex block, possibly structured with task -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="&PROJECT-LIKE;" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.project = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="&PROJECT-LIKE;" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&PROJECT-LIKE;" mode="body-css-class">
+    <xsl:text>example-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="&PROJECT-LIKE;" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="&PROJECT-LIKE;" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="&PROJECT-LIKE;" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template  -->
+<!-- Pass along b-original flag                  -->
+<!-- Process according to structure              -->
+<xsl:template match="&PROJECT-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:choose>
+        <!-- structured versions first      -->
+        <!-- prelude?, introduction?, task+,   -->
+        <!-- conclusion?, postlude? -->
+        <xsl:when test="task">
+            <xsl:apply-templates select="introduction|task|conclusion">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:when>
+        <!-- Now no project/task possibility -->
+        <!-- prelude?, statement, hint*,   -->
+        <!-- answer*, solution*, postlude? -->
+        <xsl:when test="statement">
+            <xsl:apply-templates select="statement">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+            <!-- this could be a useful three-parameter template -->
+            <xsl:if test="(hint and $project.text.hint='yes') or (answer and $project.text.answer='yes') or (solution and $project.text.solution='yes')">
+                <!-- then can populate div full of solution -->
+                <div class="hidden-knowl-wrapper solutions">
+                    <xsl:if test="$project.text.hint='yes'">
+                        <xsl:apply-templates select="hint">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                    <xsl:if test="$project.text.answer='yes'">
+                        <xsl:apply-templates select="answer">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                    <xsl:if test="$project.text.solution='yes'">
+                        <xsl:apply-templates select="solution">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                </div>
+            </xsl:if>
+        </xsl:when>
+        <!-- Potential common mistake: no statement, but other structure -->
+        <xsl:when test="prelude|hint|answer|solution|postlude">
+            <xsl:message>MBX:WARNING: a &lt;prelude&gt;, &lt;hint&gt;, &lt;answer&gt;, &lt;solution&gt;, or &lt;postlude&gt; in a project-like block will need to also be structured with a &lt;statement&gt;.  Content will be missing from output.</xsl:message>
+            <xsl:apply-templates select="." mode="location-report" />
+        </xsl:when>
+        <!-- unstructured, no need to avoid dangerous misunderstandings -->
+        <xsl:otherwise>
+            <xsl:apply-templates select="*">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+
+<!-- Task -->
+<!-- A division of a PROJECT-LIKE, with appendages -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="task" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.task = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="task" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="task" mode="body-css-class">
+    <xsl:text>exercise-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, inline-level -->
+<xsl:template match="task" mode="birth-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="task" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-list-number" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="task" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Process according to structure               -->
+<xsl:template match="task" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:choose>
+        <!-- introduction?, task+, conclusion? -->
+        <xsl:when test="task">
+            <xsl:apply-templates select="introduction|task|conclusion">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:when>
+        <!-- statement, hint*, answer*, solution* -->
+        <xsl:when test="statement">
+            <xsl:if test="$task.text.statement='yes'">
+                <xsl:apply-templates select="statement">
+                    <xsl:with-param name="b-original" select="$b-original" />
+                </xsl:apply-templates>
+            </xsl:if>
+            <!-- this could be a useful three-parameter template -->
+            <xsl:if test="(hint and $project.text.hint='yes') or (answer and $project.text.answer='yes') or (solution and $project.text.solution='yes')">
+                <!-- then can populate div full of solution -->
+                <div class="hidden-knowl-wrapper solutions">
+                    <xsl:if test="$project.text.hint='yes'">
+                        <xsl:apply-templates select="hint">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                    <xsl:if test="$project.text.answer='yes'">
+                        <xsl:apply-templates select="answer">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                    <xsl:if test="$project.text.solution='yes'">
+                        <xsl:apply-templates select="solution">
+                            <xsl:with-param name="b-original" select="$b-original" />
+                        </xsl:apply-templates>
+                    </xsl:if>
+                </div>
+            </xsl:if>
+        </xsl:when>
+        <!-- Potential common mistake: no statement, or no task, but other structure -->
+        <xsl:when test="prelude|introduction|hint|answer|solution|conclusion|postlude">
+            <xsl:message>MBX:WARNING: a &lt;prelude&gt;, &lt;introduction&gt;, &lt;hint&gt;, &lt;answer&gt;, &lt;solution&gt;, &lt;conclusion&gt;, or &lt;postlude&gt; in a task will need to also be structured with a &lt;statement&gt; or as a sequence of &lt;task&gt; with optional , &lt;introduction&gt; or &lt;conclusion&gt;.  Content will be missing from output.</xsl:message>
+            <xsl:apply-templates select="." mode="location-report" />
+        </xsl:when>
+        <!-- unstructured, no need to avoid dangerous misunderstandings -->
+        <xsl:otherwise>
+            <xsl:apply-templates select="*">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+
+<!-- SOLUTION-LIKE -->
+<!-- A simple item hanging off others -->
+
+<!-- Always born-hidden, by design -->
+<xsl:template match="&SOLUTION-LIKE;" mode="is-hidden">
+    <xsl:text>true</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="&SOLUTION-LIKE;" mode="body-element">
+    <xsl:text>span</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&SOLUTION-LIKE;" mode="body-css-class">
+    <xsl:text>solution</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, inline-level -->
+<xsl:template match="&SOLUTION-LIKE;" mode="birth-element">
+    <xsl:text>span</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="&SOLUTION-LIKE;" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-simple" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="&SOLUTION-LIKE;" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="&SOLUTION-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- The next few implementions support theorems,       -->
+<!-- which may have knowls containing proofs hanging    -->
+<!-- off them.  A proof can be a block in its own right -->
+<!-- (a "detached" proof).                              -->
+
+
+<!-- THEOREM-LIKE, AXIOM-LIKE -->
+<!-- Similar blocks, former may have a proof appendage -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.theorem = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="body-css-class">
+    <xsl:text>theorem-like</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template  -->
+<!-- Pass along b-original flag                  -->
+<!-- Simply process contents, could restict here -->
+<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*[not(self::proof)]" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Proof -->
+<!-- A fairly simple block, though configurable -->
+
+<!-- Born-hidden behavior is configurable -->
+<xsl:template match="proof" mode="is-hidden">
+    <xsl:value-of select="$html.knowl.proof = 'yes'" />
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="proof" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<!-- Only subsidiary item that is configurable -->
+<!-- as visible or hidden in a knowl           -->
+<xsl:template match="proof" mode="body-css-class">
+    <xsl:choose>
+        <xsl:when test="$html.knowl.proof = 'yes'">
+            <xsl:text>hiddenproof</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:text>proof</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- Trailing as a hidden knowl, or plainly  -->
+<!-- visible, a proof is a block level item  -->
+<xsl:template match="proof" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="proof" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-type" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="proof" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-type" />
+</xsl:template>
+
+
+<!-- Primary content of generic "body" template  -->
+<!-- Pass along b-original flag                  -->
+<!-- Simply process contents, could restict here -->
+<xsl:template match="proof" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Case (of a proof) -->
+<!-- A simple block with an inline heading -->
+
+<!-- Never born-hidden, does not make sense -->
+<xsl:template match="case" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<!-- Natural HTML element      -->
+<xsl:template match="case" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="case" mode="body-css-class">
+    <xsl:text>case</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, block-level -->
+<xsl:template match="case" mode="birth-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- When born use this specialized heading -->
+<xsl:template match="case" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-case" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="case" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-case" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="case" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Next few implementations fit into general -->
+<!-- framework, but have some one-off flavor   -->
+
+
+<!-- Footnotes -->
+<!-- A bit unusual, as inline with minimal appearance -->
+
+<!-- Always born-hidden, by design -->
+<xsl:template match="fn" mode="is-hidden">
+    <xsl:text>true</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="fn" mode="body-element">
+    <xsl:text>span</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="fn" mode="body-css-class">
+    <xsl:text>footnote</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, inline-level -->
+<xsl:template match="fn" mode="birth-element">
+    <xsl:text>span</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<!-- This could move to headings, but is one-off -->
+<xsl:template match="fn" mode="heading-birth">
+    <xsl:element name="sup">
+        <xsl:text>&#x2009;</xsl:text>
+        <xsl:apply-templates select="." mode="serial-number" />
+        <xsl:text>&#x2009;</xsl:text>
+    </xsl:element>
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="fn" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<!-- Schema is TextLong, so need to process mixed -->
+<xsl:template match="fn" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="*|text()" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- Contributor -->
+<!-- A block with no subsidiary elements, no duplication -->
+
+<!-- Never born-hidden, does not make sense -->
+<xsl:template match="contributor" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<!-- Natural HTML element      -->
+<xsl:template match="contributor" mode="body-element">
+    <xsl:text>div</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="contributor" mode="body-css-class">
+    <xsl:text>contributor</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, inline-level -->
+<xsl:template match="contributor" mode="birth-element">
+    <xsl:text>span</xsl:text>
+</xsl:template>
+
+<!-- Heading is not needed -->
+<xsl:template match="contributor" mode="heading-birth" />
+
+<!-- xref-knowl content makes it obvious-->
+<xsl:template match="contributor" mode="heading-xref-knowl" />
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<xsl:template match="contributor" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <!-- not interpreting duplication flag here -->
+    <div class="contributor-name">
+        <xsl:apply-templates select="personname" />
+    </div>
+    <div class="contributor-info">
+        <xsl:if test="department">
+            <xsl:apply-templates select="department" />
+            <xsl:if test="department/following-sibling::*">
+                <br />
+            </xsl:if>
+        </xsl:if>
+        <xsl:if test="institution">
+            <xsl:apply-templates select="institution" />
+            <xsl:if test="institution/following-sibling::*">
+                <br />
+            </xsl:if>
+        </xsl:if>
+        <xsl:if test="location">
+            <xsl:apply-templates select="location" />
+            <xsl:if test="location/following-sibling::*">
+                <br />
+            </xsl:if>
+        </xsl:if>
+        <xsl:if test="email">
+            <xsl:apply-templates select="email" />
+            <xsl:if test="email/following-sibling::*">
+                <br />
+            </xsl:if>
+        </xsl:if>
+    </div>
+</xsl:template>
+
+
+<!-- Bibliographic Entries -->
+<!-- An obvious use for knowls, but occur inline -->
+
+<!-- Never born-hidden, always in references -->
+<xsl:template match="biblio" mode="is-hidden">
+    <xsl:text>false</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="biblio" mode="body-element">
+    <xsl:text>article</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<xsl:template match="biblio" mode="body-css-class">
+    <xsl:text>bib</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, inline-level -->
+<xsl:template match="biblio" mode="birth-element">
+    <xsl:text>span</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="biblio" mode="heading-birth" />
+
+<!-- Heading for interior of xref-knowl content -->
+<!-- Not necessary, obvious by appearance       -->
+<xsl:template match="biblio" mode="heading-xref-knowl" />
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<!-- Schema is TextLong, so need to process mixed -->
+<xsl:template match="biblio" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <!-- ignoring original flag at first, -->
+    <!-- nothing interior gets duplicated -->
+    <div class="bibitem">
+        <xsl:text>[</xsl:text>
+        <xsl:apply-templates select="." mode="serial-number" />
+        <xsl:text>]</xsl:text>
+    </div>
+    <xsl:text>&#xa0;&#xa0;</xsl:text>
+    <div class="bibentry">
+        <xsl:apply-templates select="text()|*[not(self::note)]">
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+    </div>
+    <xsl:if test="note">
+        <div class="hidden-knowl-wrapper solutions">
+            <xsl:apply-templates select="note">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </div>
+    </xsl:if>
+</xsl:template>
+
+<!-- Bibliographic Note -->
+<!-- A simple item hanging off others -->
+
+<!-- Always born-hidden, by design -->
+<xsl:template match="biblio/note" mode="is-hidden">
+    <xsl:text>true</xsl:text>
+</xsl:template>
+
+<!-- Overall enclosing element -->
+<xsl:template match="biblio/note" mode="body-element">
+    <xsl:text>span</xsl:text>
+</xsl:template>
+
+<!-- And its CSS class -->
+<!-- This is a temporary hack, which should go away -->
+<xsl:template match="biblio/note" mode="body-css-class">
+    <xsl:text>solution</xsl:text>
+</xsl:template>
+
+<!-- When born hidden, inline-level -->
+<xsl:template match="biblio/note" mode="birth-element">
+    <xsl:text>span</xsl:text>
+</xsl:template>
+
+<!-- When born use this heading -->
+<xsl:template match="biblio/note" mode="heading-birth">
+    <xsl:apply-templates select="." mode="heading-simple" />
+</xsl:template>
+
+<!-- Heading for interior of xref-knowl content -->
+<xsl:template match="biblio/note" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
+
+<!-- Primary content of generic "body" template   -->
+<!-- Pass along b-original flag                   -->
+<!-- Simply process contents, could restrict here -->
+<!-- Schema says just paragraphs, "p"             -->
+<xsl:template match="biblio/note" mode="wrapped-content">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:apply-templates select="p" >
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+</xsl:template>
+
+
+<!-- All of the implementations above use the same   -->
+<!-- template for their body, it relies on various   -->
+<!-- templates but most of the work comes via the    -->
+<!-- "wrapped-content" template.  Here is that       -->
+<!-- "body" template.  The items in the "match"      -->
+<!-- are in the order presented above: simple first, -->
+<!-- and top-down when components are also knowled.  -->
+
+
+<xsl:template match="&REMARK-LIKE;|&COMPUTATION-LIKE;|&DEFINITION-LIKE;|&ASIDE-LIKE;|poem|&FIGURE-LIKE;|assemblage|blockquote|paragraphs|objectives|&EXAMPLE-LIKE;|exercisegroup|exercise|&PROJECT-LIKE;|task|&SOLUTION-LIKE;|&THEOREM-LIKE;|&AXIOM-LIKE;|proof|case|fn|contributor|biblio|biblio/note" mode="body">
+    <xsl:param name="block-type" />
+    <xsl:param name="b-original" select="true()" />
+    <!-- prelude beforehand, when original -->
+    <xsl:if test="$b-original">
+        <xsl:apply-templates select="prelude">
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+    </xsl:if>
+    <xsl:variable name="body-elt">
+        <xsl:apply-templates select="." mode="body-element" />
+    </xsl:variable>
+    <xsl:element name="{$body-elt}">
+        <xsl:attribute name="class">
+            <xsl:apply-templates select="." mode="body-css-class" />
+        </xsl:attribute>
+        <!-- Label original, but not if embedded            -->
+        <!-- Then id goes onto the knowl text, so locatable -->
+        <xsl:if test="$b-original and not($block-type = 'embed')">
+            <xsl:attribute name="id">
+                <xsl:apply-templates select="." mode="internal-id" />
+            </xsl:attribute>
+        </xsl:if>
+        <!-- this horrible hack should go away once better CSS is in place -->
+        <xsl:if test="self::poem">
+            <xsl:attribute name="style">
+                <xsl:text>display: table; width: auto; max-width: 90%; margin: 0 auto;</xsl:text>
+            </xsl:attribute>
+        </xsl:if>
+        <!-- If visible, heading interior to article -->
+        <xsl:if test="$block-type = 'visible'">
+            <xsl:apply-templates select="." mode="heading-birth" />
+        </xsl:if>
+        <!-- If xref-knowl, heading interior to article -->
+        <xsl:if test="$block-type = 'xref'">
+            <xsl:apply-templates select="." mode="heading-xref-knowl" />
+        </xsl:if>
+        <!-- Then actual content, respecting b-original flag -->
+        <xsl:apply-templates select="." mode="wrapped-content">
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+    </xsl:element>
+    <!-- Extraordinary: proofs are not displayed within their    -->
+    <!-- parent theorem, but as a sibling, following.  It might  -->
+    <!-- be a hidden knowl, it might just be the proof visible.  -->
+    <!-- The conditional simply prevents abuse.                  -->
+    <xsl:if test="(&THEOREM-FILTER;)">
+        <xsl:apply-templates select="proof">
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+    </xsl:if>
+    <!-- postlude afterward, when original -->
+    <xsl:if test="$b-original">
+        <xsl:apply-templates select="postlude">
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+    </xsl:if>
+</xsl:template>
+
+
+<!-- The following feed into the same framework,   -->
+<!-- but have their own specific "body" templates  -->
+<!-- due to their unique characteristics.  We have -->
+<!-- paragraphs ("p"), list items ("li"), webwork  -->
+<!-- exercises ("webwork"), and numbered           -->
+<!-- mathematics ("men", "md", "mdn")              -->
+
 
 <!-- Paragraph -->
-<!-- An id is needed as target of in-context links  -->
-<!-- that arise from knowling paragraphs routinely  -->
-<!-- for notation, term index cross-references      -->
+<!-- These are never born hidden.  They are     -->
+<!-- often xref targets (such as in the index). -->
+<!-- Because we bust up some paragraphs into    -->
+<!-- smaller ones, interleaved with displays    -->
+<!-- (lists, math), and because they do not     -->
+<!-- have titles or heading, we everything      -->
+<!-- in the body.                               -->
 
 <xsl:template match="p" mode="is-hidden">
     <xsl:text>false</xsl:text>
 </xsl:template>
 
-<!-- With no body-element, there is no automatic -->
-<!-- wrapping so we can let the body,            -->
-<!-- body-duplicate templates provide everything -->
-<!-- Never born embedded, so OK if this is empty -->
 <xsl:template match="p" mode="body-element" />
 
 <xsl:template match="p" mode="body-css-class" />
 
 <xsl:template match="p" mode="heading-birth" />
+
+<xsl:template match="p" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-type" />
+</xsl:template>
 
 <!-- Paragraphs, without lists within -->
 <xsl:template match="p" mode="body">
@@ -2013,831 +3605,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:for-each>
 </xsl:template>
 
-<xsl:template match="p" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-type" />
-</xsl:template>
-
-<!-- Paragraphs, the pseudo-section -->
-<!-- Never numbered, never subdivided, -->
-<!-- placed in any other division      -->
-<!-- We knowl for xref target, etc     -->
-
-<xsl:template match="paragraphs" mode="is-hidden">
-    <xsl:text>false</xsl:text>
-</xsl:template>
-
-<xsl:template match="paragraphs" mode="body-element">
-    <xsl:text>article</xsl:text>
-</xsl:template>
-
-<xsl:template match="paragraphs" mode="body-css-class">
-    <xsl:text>paragraphs</xsl:text>
-</xsl:template>
-
-<xsl:template match="paragraphs" mode="birth-element">
-    <xsl:text>div</xsl:text>
-</xsl:template>
-
-<xsl:template match="paragraphs" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-title" />
-</xsl:template>
-
-<!-- Never numbered, so can't be a target of an xref          -->
-<!-- without having a title (so "type" alone is never useful) -->
-<xsl:template match="paragraphs" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-title" />
-</xsl:template>
-
-
-
-<!-- Definitions, Remarks, Asides, Assemblage, -->
-<!-- Case, Proof, Footnotes, Block Quotes      -->
-<!-- Examples, Projects, Lists, Objectives     -->
-<!-- Theorems, Axioms, Figure, Table, Listing  -->
-<!-- Side-By-Side, Exercise Group,             -->
-<!-- Exercises: sectional, inline, webwork     -->
-<!-- Hints, Answers, Solutions                 -->
-<!-- Biblio, Note, Contributors                -->
-<!-- Runs of paragraphs, etc,  xor  statement + solution -->
-<!-- Examples and projects are identical, but for        -->
-<!-- knowlification, independent numbering (elsewhere)   -->
-<!-- Named lists and objectives are like examples, but   -->
-<!-- have introduction/list/conclusion structure         -->
-<!-- NB: Side-By-Side are like figures (captioned), but this -->
-<!-- behavior will change (refactored), so &FIGURE-LIKE;     -->
-<!-- will get adjusted, split out                            -->
-
-<xsl:template match="fn" mode="is-hidden">
-    <xsl:text>true</xsl:text>
-</xsl:template>
-
-<xsl:template match="blockquote" mode="is-hidden">
-    <xsl:text>false</xsl:text>
-</xsl:template>
-
-<xsl:template match="&DEFINITION-LIKE;" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.definition = 'yes'" />
-</xsl:template>
-
-<xsl:template match="&REMARK-LIKE;" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.remark = 'yes'" />
-</xsl:template>
-
-<xsl:template match="&ASIDE-LIKE;" mode="is-hidden">
-    <xsl:text>false</xsl:text>
-</xsl:template>
-
-<xsl:template match="assemblage" mode="is-hidden">
-    <xsl:text>false</xsl:text>
-</xsl:template>
-
-<xsl:template match="case" mode="is-hidden">
-    <xsl:text>false</xsl:text>
-</xsl:template>
-
-<xsl:template match="proof" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.proof = 'yes'" />
-</xsl:template>
-
-<xsl:template match="&EXAMPLE-LIKE;" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.example = 'yes'" />
-</xsl:template>
-
-<xsl:template match="&PROJECT-LIKE;" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.project = 'yes'" />
-</xsl:template>
-
-<xsl:template match="task" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.task = 'yes'" />
-</xsl:template>
-
-<xsl:template match="objectives" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.objectives = 'yes'" />
-</xsl:template>
-
-<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.theorem = 'yes'" />
-</xsl:template>
-
-<xsl:template match="figure" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.figure = 'yes'" />
-</xsl:template>
-
-<xsl:template match="table" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.table = 'yes'" />
-</xsl:template>
-
-<xsl:template match="listing" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.listing = 'yes'" />
-</xsl:template>
-
-<xsl:template match="list" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.list = 'yes'" />
-</xsl:template>
-
-<xsl:template match="sidebyside/figure|sidebyside/table|sidebyside/listing|sidebyside/list" mode="is-hidden">
-    <xsl:value-of select="false()" />
-</xsl:template>
-
-<xsl:template match="hint|answer|solution|biblio/note" mode="is-hidden">
-    <xsl:text>true</xsl:text>
-</xsl:template>
-
-<!-- Never hidden -->
-<xsl:template match="exercisegroup" mode="is-hidden">
-    <xsl:text>false</xsl:text>
-</xsl:template>
-
-<!-- Note matchs on inline first, override if sectional -->
-<xsl:template match="exercise" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.exercise.inline = 'yes'" />
-</xsl:template>
-
-<xsl:template match="exercises//exercise" mode="is-hidden">
-    <xsl:value-of select="$html.knowl.exercise.sectional = 'yes'" />
-</xsl:template>
-
-<xsl:template match="contributor" mode="is-hidden">
-    <xsl:text>false</xsl:text>
-</xsl:template>
-
-<xsl:template match="biblio" mode="is-hidden">
-    <xsl:text>false</xsl:text>
-</xsl:template>
-
-
-
-<xsl:template match="fn" mode="body-element">
-    <xsl:text>span</xsl:text>
-</xsl:template>
-
-<xsl:template match="blockquote" mode="body-element">
-    <xsl:text>blockquote</xsl:text>
-</xsl:template>
-
-<xsl:template match="&DEFINITION-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|case|proof" mode="body-element">
-    <xsl:text>article</xsl:text>
-</xsl:template>
-
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;" mode="body-element">
-    <xsl:text>article</xsl:text>
-</xsl:template>
-
-<xsl:template match="&FIGURE-LIKE;" mode="body-element">
-    <xsl:text>figure</xsl:text>
-</xsl:template>
-
-<xsl:template match="hint|answer|solution|biblio/note" mode="body-element">
-    <xsl:text>span</xsl:text>
-</xsl:template>
-
-<xsl:template match="exercisegroup" mode="body-element">
-    <xsl:text>div</xsl:text>
-</xsl:template>
-
-<xsl:template match="exercise" mode="body-element">
-    <xsl:text>article</xsl:text>
-</xsl:template>
-
-<xsl:template match="contributor" mode="body-element">
-    <xsl:text>div</xsl:text>
-</xsl:template>
-
-<xsl:template match="biblio" mode="body-element">
-    <xsl:text>article</xsl:text>
-</xsl:template>
-
-
-
-<xsl:template match="fn" mode="body-css-class">
-    <xsl:text>footnote</xsl:text>
-</xsl:template>
-
-<xsl:template match="blockquote" mode="body-css-class">
-    <xsl:text>blockquote</xsl:text>
-</xsl:template>
-
-<xsl:template match="&DEFINITION-LIKE;" mode="body-css-class">
-    <xsl:text>definition-like</xsl:text>
-</xsl:template>
-
-<xsl:template match="&REMARK-LIKE;" mode="body-css-class">
-    <xsl:text>remark-like</xsl:text>
-</xsl:template>
-
-<xsl:template match="&ASIDE-LIKE;" mode="body-css-class">
-    <xsl:text>aside-like</xsl:text>
-</xsl:template>
-
-<xsl:template match="assemblage" mode="body-css-class">
-    <xsl:text>assemblage-like</xsl:text>
-</xsl:template>
-
-<xsl:template match="case" mode="body-css-class">
-    <xsl:text>case</xsl:text>
-</xsl:template>
-
-<!-- Only subsidiary item that is visible/hidden -->
-<xsl:template match="proof" mode="body-css-class">
-    <xsl:choose>
-        <xsl:when test="$html.knowl.proof = 'yes'">
-            <xsl:text>hiddenproof</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:text>proof</xsl:text>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;" mode="body-css-class">
-    <xsl:text>example-like</xsl:text>
-</xsl:template>
-
-<xsl:template match="task" mode="body-css-class">
-    <xsl:text>exercise-like</xsl:text>
-</xsl:template>
-
-<xsl:template match="objectives" mode="body-css-class">
-    <xsl:text>objectives</xsl:text>
-</xsl:template>
-
-<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="body-css-class">
-    <xsl:text>theorem-like</xsl:text>
-</xsl:template>
-
-<xsl:template match="&FIGURE-LIKE;" mode="body-css-class">
-    <xsl:text>figure-like</xsl:text>
-</xsl:template>
-
-<!-- TOD: overall, even, this is not really right -->
-<xsl:template match="hint|answer|solution" mode="body-css-class">
-    <xsl:text>solution</xsl:text>
-</xsl:template>
-
-<!-- Mildly inaccurate for a bibliographic note? Adjust on bibliography refactor -->
-<xsl:template match="biblio/note" mode="body-css-class">
-    <xsl:text>solution</xsl:text>
-</xsl:template>
-
-<xsl:template match="exercisegroup" mode="body-css-class">
-    <xsl:text>exercisegroup</xsl:text>
-</xsl:template>
-
-<xsl:template match="exercise" mode="body-css-class">
-    <xsl:text>exercise-like</xsl:text>
-</xsl:template>
-
-<xsl:template match="contributor" mode="body-css-class">
-    <xsl:text>contributor</xsl:text>
-</xsl:template>
-
-<xsl:template match="biblio" mode="body-css-class">
-    <xsl:text>bib</xsl:text>
-</xsl:template>
-
-
-<xsl:template match="fn" mode="birth-element">
-    <xsl:text>span</xsl:text>
-</xsl:template>
-
-<xsl:template match="blockquote" mode="birth-element">
-    <xsl:text>div</xsl:text>
-</xsl:template>
-
-<xsl:template match="&DEFINITION-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|case" mode="birth-element">
-    <xsl:text>div</xsl:text>
-</xsl:template>
-
-<!-- in a posterior as a knowl, we use a span       -->
-<!-- else the proof is a div, or a detached knowl -->
-<xsl:template match="proof" mode="birth-element">
-    <xsl:choose>
-        <xsl:when test="$html.knowl.proof = 'yes' and parent::*[self::theorem]">
-            <xsl:text>span</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:text>div</xsl:text>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|&FIGURE-LIKE;" mode="birth-element">
-    <xsl:text>div</xsl:text>
-</xsl:template>
-
-<!-- always a list of knowls inside a div -->
-<xsl:template match="hint|answer|solution|biblio/note" mode="birth-element">
-    <xsl:text>span</xsl:text>
-</xsl:template>
-
-<xsl:template match="exercisegroup" mode="birth-element">
-    <xsl:text>div</xsl:text>
-</xsl:template>
-
-<xsl:template match="exercise" mode="birth-element">
-    <xsl:text>div</xsl:text>
-</xsl:template>
-
-<xsl:template match="contributor" mode="birth-element">
-    <xsl:text>span</xsl:text>
-</xsl:template>
-
-<!-- This is a guess, missing before refactor -->
-<xsl:template match="biblio" mode="birth-element">
-    <xsl:text>span</xsl:text>
-</xsl:template>
-
-
-
-<xsl:template match="fn" mode="heading-birth">
-    <xsl:element name="sup">
-        <xsl:text>&#x2009;</xsl:text>
-        <xsl:apply-templates select="." mode="serial-number" />
-        <xsl:text>&#x2009;</xsl:text>
-    </xsl:element>
-</xsl:template>
-
-<xsl:template match="blockquote" mode="heading-birth" />
-
-<xsl:template match="&DEFINITION-LIKE;|&REMARK-LIKE;" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<xsl:template match="&ASIDE-LIKE;|assemblage" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-title" />
-</xsl:template>
-
-<xsl:template match="case" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-case" />
-</xsl:template>
-
-<xsl:template match="proof" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-type" />
-</xsl:template>
-
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<xsl:template match="task" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-list-number" />
-</xsl:template>
-
-<xsl:template match="objectives" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-full-implicit-number" />
-</xsl:template>
-
-<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<!-- no heading, since captioned -->
-<xsl:template match="&FIGURE-LIKE;" mode="heading-birth" />
-
-<!-- Sort of for backward compatibility, &FIGURE-LIKE; should be similar -->
-<xsl:template match="list" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-title" />
-</xsl:template>
-
-<!-- always a knowl attached to an example -->
-<xsl:template match="hint|answer|solution|biblio/note" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-simple" />
-</xsl:template>
-
-<xsl:template match="exercisegroup" mode="heading-birth" />
-
-<!-- Note matchs on inline first, override if sectional -->
-<xsl:template match="exercise" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<xsl:template match="exercises//exercise" mode="heading-birth">
-    <xsl:apply-templates select="." mode="heading-sectional-exercise" />
-</xsl:template>
-
-<xsl:template match="contributor" mode="heading-birth" />
-
-<xsl:template match="biblio" mode="heading-birth" />
-
-
-<xsl:template match="&PROJECT-LIKE;" mode="wrapped-content">
-    <xsl:param name="b-original" select="true()" />
-    <xsl:choose>
-        <!-- structured versions first      -->
-        <!-- prelude?, introduction?, task+,   -->
-        <!-- conclusion?, postlude? -->
-        <xsl:when test="(&PROJECT-FILTER;) and task">
-            <xsl:apply-templates select="introduction"/>
-            <xsl:apply-templates select="task"/>
-            <xsl:apply-templates select="conclusion"/>
-        </xsl:when>
-        <!-- Now no project/task possibility -->
-        <!-- prelude?, statement, hint*,   -->
-        <!-- answer*, solution*, postlude? -->
-        <xsl:when test="statement">
-            <xsl:apply-templates select="statement">
-                <xsl:with-param name="b-original" select="$b-original" />
-            </xsl:apply-templates>
-            <!-- this could be a useful three-parameter template -->
-            <xsl:if test="(hint and $project.text.hint='yes') or (answer and $project.text.answer='yes') or (solution and $project.text.solution='yes')">
-                <!-- then can populate posterior -->
-                <div class="posterior">
-                    <xsl:if test="$project.text.hint='yes'">
-                        <xsl:apply-templates select="hint">
-                            <xsl:with-param name="b-original" select="$b-original" />
-                        </xsl:apply-templates>
-                    </xsl:if>
-                    <xsl:if test="$project.text.answer='yes'">
-                        <xsl:apply-templates select="answer">
-                            <xsl:with-param name="b-original" select="$b-original" />
-                        </xsl:apply-templates>
-                    </xsl:if>
-                    <xsl:if test="$project.text.solution='yes'">
-                        <xsl:apply-templates select="solution">
-                            <xsl:with-param name="b-original" select="$b-original" />
-                        </xsl:apply-templates>
-                    </xsl:if>
-                </div>
-            </xsl:if>
-        </xsl:when>
-        <!-- Potential common mistake, no content results-->
-        <xsl:when test="prelude|hint|answer|solution|postlude">
-            <xsl:message>MBX:WARNING: a &lt;prelude&gt;, &lt;hint&gt;, &lt;answer&gt;, &lt;solution&gt;, or &lt;postlude&gt; in a remark-like, example-like, or project-like block will need to also be structured with a &lt;statement&gt;.  Content will be missing from output.</xsl:message>
-            <xsl:apply-templates select="." mode="location-report" />
-        </xsl:when>
-        <!-- unstructured, no need to avoid dangerous misunderstandings -->
-        <xsl:otherwise>
-            <xsl:apply-templates select="*">
-                <xsl:with-param name="b-original" select="$b-original" />
-            </xsl:apply-templates>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
-
-<xsl:template match="fn|blockquote|&DEFINITION-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|case|proof|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives|&THEOREM-LIKE;|&AXIOM-LIKE;|&FIGURE-LIKE;|paragraphs|exercisegroup|exercise|hint|answer|solution|biblio|biblio/note|contributor" mode="body">
-    <xsl:param name="block-type" />
-    <xsl:param name="b-original" select="true()" />
-    <!-- prelude beforehand, when original -->
-    <xsl:if test="$b-original">
-        <xsl:apply-templates select="prelude">
-            <xsl:with-param name="b-original" select="$b-original" />
-        </xsl:apply-templates>
-    </xsl:if>
-    <xsl:variable name="body-elt">
-        <xsl:apply-templates select="." mode="body-element" />
-    </xsl:variable>
-    <xsl:element name="{$body-elt}">
-        <xsl:attribute name="class">
-            <xsl:apply-templates select="." mode="body-css-class" />
-        </xsl:attribute>
-        <!-- Label original, but not if embedded            -->
-        <!-- Then id goes onto the knowl text, so locatable -->
-        <xsl:if test="$b-original and not($block-type = 'embed')">
-            <xsl:attribute name="id">
-                <xsl:apply-templates select="." mode="internal-id" />
-            </xsl:attribute>
-        </xsl:if>
-        <!-- If visible, heading interior to article -->
-        <xsl:if test="$block-type = 'visible'">
-            <xsl:apply-templates select="." mode="heading-birth" />
-        </xsl:if>
-        <!-- If xref-knowl, heading interior to article -->
-        <xsl:if test="$block-type = 'xref'">
-            <xsl:apply-templates select="." mode="heading-xref-knowl" />
-        </xsl:if>
-        <!-- Then actual content -->
-        <!-- We are semi-rigorous about the combined structures -->
-        <xsl:choose>
-            <xsl:when test="self::fn">
-                <xsl:apply-templates select="*|text()">
-                    <xsl:with-param name="b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="self::blockquote">
-                <xsl:apply-templates select="*" >
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="self::paragraphs">
-                <xsl:apply-templates select="*[not(self::index)]" >
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="self::assemblage">
-                <xsl:apply-templates select="p|&FIGURE-LIKE;|sidebyside" >
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="&ASIDE-FILTER;">
-                <xsl:apply-templates select="p|&FIGURE-LIKE;|sidebyside" >
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="&DEFINITION-FILTER; or &REMARK-FILTER; or self::case or self::proof">
-                <xsl:apply-templates select="*" >
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="self::objectives">
-                <xsl:apply-templates select="introduction">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-                <xsl:apply-templates select="ol|ul|dl">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-                <xsl:apply-templates select="conclusion">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <!-- the two following could best be -->
-            <!-- combined as test="&FIGURE-FILTER;" -->
-            <xsl:when test="self::figure or self::table or self::listing">
-                <!-- do we just kill captions as metadata? -->
-                <xsl:apply-templates select="*[not(self::caption)]">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-                <xsl:apply-templates select="caption" />
-            </xsl:when>
-            <xsl:when test="self::list">
-                <div class="named-list-content">
-                    <xsl:apply-templates select="*[not(self::caption)]">
-                        <xsl:with-param name="b-original" select="$b-original" />
-                    </xsl:apply-templates>
-                </div>
-                <!-- Exceptional for backward compatibility, 2017-08-25 -->
-                <xsl:if test="title and not(caption)">
-                    <figcaption>
-                        <span class="heading">
-                            <xsl:apply-templates select="." mode="type-name"/>
-                        </span>
-                        <span class="codenumber">
-                            <xsl:apply-templates select="." mode="number"/>
-                        </span>
-                        <xsl:apply-templates select="." mode="title-full" />
-                    </figcaption>
-                </xsl:if>
-                <xsl:apply-templates select="caption" />
-            </xsl:when>
-            <xsl:when test="self::hint or self::answer or self::solution or self::note">
-                <xsl:apply-templates select="*|text()">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="self::task">
-                <!-- more structured versions first -->
-                <xsl:choose>
-                    <!-- introduction?, task+, conclusion? -->
-                    <xsl:when test="task">
-                        <xsl:apply-templates select="introduction"/>
-                        <xsl:apply-templates select="task"/>
-                        <xsl:apply-templates select="conclusion"/>
-                    </xsl:when>
-                    <!-- statement, hint*, answer*, solution* -->
-                    <xsl:when test="statement">
-                        <xsl:if test="$task.text.statement='yes'">
-                            <xsl:apply-templates select="statement">
-                                <xsl:with-param name="b-original" select="$b-original" />
-                            </xsl:apply-templates>
-                        </xsl:if>
-                        <xsl:if test="$task.text.hint='yes'">
-                            <xsl:for-each select="hint">
-                                <xsl:apply-templates select=".">
-                                    <xsl:with-param name="b-original" select="$b-original" />
-                                </xsl:apply-templates>
-                            </xsl:for-each>
-                        </xsl:if>
-                        <xsl:if test="$task.text.answer='yes'">
-                            <xsl:for-each select="answer">
-                                <xsl:apply-templates select=".">
-                                    <xsl:with-param name="b-original" select="$b-original" />
-                                </xsl:apply-templates>
-                                <xsl:text> </xsl:text>
-                            </xsl:for-each>
-                        </xsl:if>
-                        <xsl:if test="$task.text.solution='yes'">
-                            <xsl:for-each select="solution">
-                                <xsl:apply-templates select=".">
-                                    <xsl:with-param name="b-original" select="$b-original" />
-                                </xsl:apply-templates>
-                                <xsl:text> </xsl:text>
-                            </xsl:for-each>
-                        </xsl:if>
-                    </xsl:when>
-                    <!-- unstructured -->
-                    <xsl:otherwise>
-                        <xsl:apply-templates />
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:when>
-            <xsl:when test="self::exercisegroup">
-                <!-- Then actual content -->
-                <xsl:apply-templates select="introduction">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-                <xsl:element name="div">
-                    <xsl:attribute name="class">
-                        <xsl:text>exercisegroup-exercises</xsl:text>
-                        <xsl:if test="@cols">
-                            <xsl:text> </xsl:text>
-                            <!-- HTML-specific, but in mathbook-common.xsl -->
-                            <xsl:apply-templates select="." mode="number-cols-CSS-class" />
-                        </xsl:if>
-                    </xsl:attribute>
-                    <xsl:apply-templates select="exercise">
-                        <xsl:with-param name="b-original" select="$b-original" />
-                    </xsl:apply-templates>
-                </xsl:element>
-                <xsl:apply-templates select="conclusion">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="self::exercise and not(statement or webwork)">
-                <xsl:apply-templates select="*|text()">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <!-- structured case -->
-            <!-- for-each necessary for spaces, so this in CSS? -->
-            <xsl:when test="self::exercise and statement">
-                <xsl:if test="$exercise.text.statement='yes'">
-                    <xsl:apply-templates select="statement">
-                        <xsl:with-param name="b-original" select="$b-original" />
-                    </xsl:apply-templates>
-                </xsl:if>
-                <xsl:if test="$exercise.text.hint='yes'">
-                    <xsl:for-each select="hint">
-                        <xsl:apply-templates select=".">
-                            <xsl:with-param name="b-original" select="$b-original" />
-                        </xsl:apply-templates>
-                        <xsl:text> </xsl:text>
-                    </xsl:for-each>
-                </xsl:if>
-                <xsl:if test="$exercise.text.answer='yes'">
-                    <xsl:for-each select="answer">
-                        <xsl:apply-templates select=".">
-                            <xsl:with-param name="b-original" select="$b-original" />
-                        </xsl:apply-templates>
-                        <xsl:text> </xsl:text>
-                    </xsl:for-each>
-                </xsl:if>
-                <xsl:if test="$exercise.text.solution='yes'">
-                    <xsl:for-each select="solution">
-                        <xsl:apply-templates select=".">
-                            <xsl:with-param name="b-original" select="$b-original" />
-                        </xsl:apply-templates>
-                        <xsl:text> </xsl:text>
-                    </xsl:for-each>
-                </xsl:if>
-            </xsl:when>
-            <!-- webwork case -->
-            <xsl:when test="self::exercise and webwork">
-                <xsl:apply-templates select="introduction">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-                <xsl:apply-templates select="webwork">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-                <xsl:apply-templates select="conclusion">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:when test="self::contributor">
-                <!-- not interpreting duplication flag here -->
-                <div class="contributor-name">
-                    <xsl:apply-templates select="personname" />
-                </div>
-                <div class="contributor-info">
-                    <xsl:if test="department">
-                        <xsl:apply-templates select="department" />
-                        <xsl:if test="department/following-sibling::*">
-                            <br />
-                        </xsl:if>
-                    </xsl:if>
-                    <xsl:if test="institution">
-                        <xsl:apply-templates select="institution" />
-                        <xsl:if test="institution/following-sibling::*">
-                            <br />
-                        </xsl:if>
-                    </xsl:if>
-                    <xsl:if test="location">
-                        <xsl:apply-templates select="location" />
-                        <xsl:if test="location/following-sibling::*">
-                            <br />
-                        </xsl:if>
-                    </xsl:if>
-                    <xsl:if test="email">
-                        <xsl:apply-templates select="email" />
-                        <xsl:if test="email/following-sibling::*">
-                            <br />
-                        </xsl:if>
-                    </xsl:if>
-                </div>
-            </xsl:when>
-            <xsl:when test="self::biblio">
-                <div class="bibitem">
-                    <xsl:text>[</xsl:text>
-                    <xsl:apply-templates select="." mode="serial-number" />
-                    <xsl:text>]</xsl:text>
-                </div>
-                <xsl:text>&#xa0;&#xa0;</xsl:text>
-                <div class="bibentry">
-                    <xsl:apply-templates select="text()|*[not(self::note)]">
-                        <xsl:with-param name="b-original" select="$b-original" />
-                    </xsl:apply-templates>
-                </div>
-            </xsl:when>
-            <!-- migrate elements here until none left -->
-            <xsl:when test="&PROJECT-FILTER;">
-                <xsl:apply-templates select="." mode="wrapped-content">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:apply-templates select="*[not(self::hint or self::answer or self::solution or self::proof)]">
-                    <xsl:with-param name="b-original" select="$b-original" />
-                </xsl:apply-templates>
-            </xsl:otherwise>
-        </xsl:choose>
-    </xsl:element>
-    <!-- create posterior for appendages                  -->
-    <!-- could condition on block too, rather than schema -->
-    <!-- exercises have selectors, activities do not, think how to refactor this -->
-    <xsl:if test="(hint|answer|solution and not(self::exercise) and not(&PROJECT-FILTER;) and not(self::task)) or proof or note">
-        <div class="posterior">
-            <xsl:apply-templates select="hint|answer|solution|proof|note">
-                <xsl:with-param name="b-original" select="$b-original" />
-            </xsl:apply-templates>
-        </div>
-    </xsl:if>
-    <!-- postlude afterward, when original -->
-    <xsl:if test="$b-original">
-        <xsl:apply-templates select="postlude">
-            <xsl:with-param name="b-original" select="$b-original" />
-        </xsl:apply-templates>
-    </xsl:if>
-</xsl:template>
-
-<xsl:template match="fn" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<xsl:template match="blockquote" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-type" />
-</xsl:template>
-
-<xsl:template match="&DEFINITION-LIKE;|&REMARK-LIKE;" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<xsl:template match="&ASIDE-LIKE;|assemblage" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-title" />
-</xsl:template>
-
-<xsl:template match="case" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-case" />
-</xsl:template>
-
-<!-- Generic type, where number is meaningless -->
-<xsl:template match="proof" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-type" />
-</xsl:template>
-
-<xsl:template match="&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|objectives" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<!-- no heading, since captioned -->
-<xsl:template match="&FIGURE-LIKE;" mode="heading-xref-knowl" />
-
-<xsl:template match="hint|answer|solution|biblio/note" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<xsl:template match="exercisegroup" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-type" />
-</xsl:template>
-
-
-<xsl:template match="exercise" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
-<xsl:template match="exercises//exercise" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-sectional-exercise-typed" />
-</xsl:template>
-
-<!-- no heading on duplicate, self-explanatory  -->
-<xsl:template match="contributor" mode="heading-xref-knowl" />
-
-<xsl:template match="biblio" mode="heading-xref-knowl" />
-
 
 <!-- List Items -->
-<!-- List items can become xref knowls -->
+<!-- A list item can be the target of a        -->
+<!-- cross-reference, so we need to make       -->
+<!-- a xref-knowl for that scenario.  Also,    -->
+<!-- we produce the original versions here     -->
+<!-- too.  The "ol, "ul", "dl" are pure        -->
+<!-- containers and are implemented elsewhere. -->
 
 <!-- Not applicable -->
 <xsl:template match="li" mode="is-hidden" />
@@ -2854,12 +3629,19 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Not applicable -->
 <xsl:template match="li" mode="birth-element" />
 
+<!-- Not applicable -->
+<xsl:template match="li" mode="heading-birth" />
+
+<xsl:template match="li" mode="heading-xref-knowl">
+    <xsl:apply-templates select="." mode="heading-full" />
+</xsl:template>
 
 <!-- Pass-through regular list items    -->
 <!-- Allow paragraphs in larger items,  -->
 <!-- or just snippets for smaller items -->
-<!-- radically diffferent looks if part of overall list -->
-<!-- versus being a standalone display of one item -->
+<!-- radically diffferent looks if part -->
+<!-- of overall list versus being a     -->
+<!-- standalone display of one item     -->
 <xsl:template match="ol/li|ul/li" mode="body">
     <xsl:param name="block-type" />
     <xsl:param name="b-original" select="true()" />
@@ -2933,13 +3715,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 
-<!-- Not applicable -->
-<xsl:template match="li" mode="heading-birth" />
-
-<xsl:template match="li" mode="heading-xref-knowl">
-    <xsl:apply-templates select="." mode="heading-full" />
-</xsl:template>
-
 <!-- ################# -->
 <!-- WeBWorK Exercises -->
 <!-- ################# -->
@@ -2976,9 +3751,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>div</xsl:text>
 </xsl:template>
 
+<!-- WeBWork exercises do not have titles of their own -->
 <xsl:template match="webwork" mode="heading-birth">
     <xsl:text>WeBWorK Exercise</xsl:text>
 </xsl:template>
+
+<!-- When the knowl is opened, it is obvious what it is -->
+<xsl:template match="webwork" mode="heading-xref-knowl" />
 
 <!-- The guts of a WeBWork problem realized in HTML -->
 <!-- This is heart of an external knowl version, or -->
@@ -3063,8 +3842,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <script type="text/javascript">iFrameResize({log:true,inPageLinks:true,resizeFrom:'child'})</script>
 </xsl:template>
 
-<xsl:template match="webwork" mode="heading-xref-knowl" />
-
 
 <!-- ########### -->
 <!-- Mathematics -->
@@ -3114,8 +3891,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <!-- look ahead to absorb immediate clause-ending punctuation -->
         <xsl:apply-templates select="." mode="get-clause-punctuation" />
     </xsl:variable>
-    <!-- wrap tightly in math delimiters -->
-    <xsl:text>\(</xsl:text>
+    <!-- wrap tightly in inline-math delimiters -->
+    <xsl:call-template name="begin-inline-math" />
     <!-- we clean whitespace that is irrelevant      -->
     <!-- MathJax is more tolerant than Latex, but    -->
     <!-- we choose to treat math bits identically    -->
@@ -3125,11 +3902,21 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:call-template name="sanitize-latex">
         <xsl:with-param name="text" select="$raw-latex" />
     </xsl:call-template>
+    <xsl:call-template name="end-inline-math" />
+</xsl:template>
+
+<!-- These two templates provide the delimiters for -->
+<!-- inline math, so we can adjust with overides.   -->
+<xsl:template name="begin-inline-math">
+    <xsl:text>\(</xsl:text>
+</xsl:template>
+
+<xsl:template name="end-inline-math">
     <xsl:text>\)</xsl:text>
 </xsl:template>
 
 <!-- Minimal templates for general environments       -->
-<!-- These are necessary since we can xross-reference -->
+<!-- These are necessary since we can cross-reference -->
 <!-- numbered equations within a math display         -->
 
 <!-- always visible -->
@@ -3141,17 +3928,15 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="men|md|mdn" mode="body-css-class" />
 
 <!-- No title; type and number obvious from content -->
-<xsl:template match="me|men|md|mdn" mode="heading-xref-knowl" />
+<xsl:template match="men|md|mdn" mode="heading-xref-knowl" />
 
 <!-- Displayed Single-Line Math, Unnumbered ("me") -->
-<!-- Never numbered, so never knowled              -->
-<xsl:template match="me" mode="body">
-    <!-- block-type parameter is ignored, since the           -->
-    <!-- representation never varies, no heading, no wrapper  -->
-    <!-- Never numbered, so no xref knowl, so always original -->
-    <!-- top-level flag is critical for dropping punctuation  -->
-    <!-- TODO: Included in same scheme as "men" for later consolidation -->
-    <xsl:param name="block-type" />
+<!-- Never numbered, so never a xref-knowl         -->
+<!-- TODO: move up by template for "m" -->
+<xsl:template match="me">
+    <!-- Never numbered, so no xref knowl, so always original   -->
+    <!-- But it could be part of a larger item being duplicated -->
+    <!-- In either case, we need to preserve punctuation        -->
     <xsl:param name="b-original" select="true()" />
     <xsl:param name="b-top-level" select="false()" />
     <!-- build and save for later manipulation                      -->
@@ -3159,12 +3944,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:variable name="raw-latex">
         <xsl:apply-templates select="." mode="alignat-columns" />
         <xsl:apply-templates select="text()|var|fillin" />
-        <!-- look ahead to absorb immediate clause-ending punctuation      -->
-        <!-- for original versions, and as a child of a duplicated element -->
-        <!-- but not in a duplicate that is entirely the display math      -->
-        <xsl:if test="$b-original or not($b-top-level)">
-            <xsl:apply-templates select="." mode="get-clause-punctuation" />
-        </xsl:if>
+        <!-- look ahead to absorb immediate clause-ending punctuation -->
+        <xsl:apply-templates select="." mode="get-clause-punctuation" />
     </xsl:variable>
     <!-- we provide a newline for visual appeal -->
     <xsl:text>&#xa;</xsl:text>
@@ -3349,7 +4130,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Intertext -->
 <!-- A LaTeX construct really, we just jump out/in of    -->
 <!-- the align/gather environment and process the text   -->
-<!-- "md" and "mdn" can only occur in a "p" so no wrap   -->
+<!-- "md" and "mdn" can only occur in a "p" and          -->
+<!-- we break a logical PreTeXt "p" into multiple HTML   -->
+<!-- "p" at places where displays occur, such as math    -->
+<!-- and lists.  So we can wrap the "intertext" in a     -->
+<!-- p.intertext, giving xref knowls a place to open.    -->
 <!-- This breaks the alignment, but MathJax has no good  -->
 <!-- solution for this.                                  -->
 <!-- NB: we check the *parent* for alignment information -->
@@ -3358,7 +4143,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\end{</xsl:text>
     <xsl:apply-templates select="parent::*" mode="displaymath-alignment" />
     <xsl:text>}&#xa;</xsl:text>
-    <xsl:apply-templates />
+    <p class="intertext">
+        <xsl:apply-templates />
+    </p>
     <xsl:text>&#xa;</xsl:text>
     <xsl:text>\begin{</xsl:text>
     <xsl:apply-templates select="parent::*" mode="displaymath-alignment" />
@@ -3366,6 +4153,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates select="parent::*" mode="alignat-columns" />
     <xsl:text>&#xa;</xsl:text>
 </xsl:template>
+
+
+<!-- ############################# -->
+<!-- End: Block Production, Knowls -->
+<!-- ############################# -->
+
 
 <!-- #################### -->
 <!-- Components of Blocks -->
@@ -3375,7 +4168,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- As components of blocks.      -->
 <xsl:template match="introduction[not(parent::*[&STRUCTURAL-FILTER;])]|conclusion[not(parent::*[&STRUCTURAL-FILTER;])]">
     <xsl:param name="b-original" select="true()" />
-    <xsl:element name="article">
+    <xsl:element name="div">
         <xsl:attribute name="class">
             <xsl:value-of select="local-name(.)" />
         </xsl:attribute>
@@ -3385,10 +4178,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:attribute>
         </xsl:if>
         <xsl:if test="title">
-            <h5 class="heading">
+            <h6 class="heading">
                 <xsl:apply-templates select="." mode="title-full" />
                 <span> </span>
-            </h5>
+            </h6>
         </xsl:if>
         <xsl:apply-templates select="*">
             <xsl:with-param name="b-original" select="$b-original" />
@@ -3810,7 +4603,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:param name="width" />
     <xsl:param name="left-margin" />
     <xsl:param name="right-margin" />
-    <xsl:element name="h5">
+    <xsl:element name="h6">
         <xsl:attribute name="class">
             <xsl:text>sbsheader</xsl:text>
         </xsl:attribute>
@@ -3988,14 +4781,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:attribute name="class">
             <xsl:text>sidebyside</xsl:text>
         </xsl:attribute>
-        <xsl:attribute name="style">
-            <xsl:if test="$sbsdebug">
+        <xsl:if test="$sbsdebug">
+            <xsl:attribute name="style">
                 <xsl:text>box-sizing: border-box;</xsl:text>
                 <xsl:text>-moz-box-sizing: border-box;</xsl:text>
                 <xsl:text>-webkit-box-sizing: border-box;</xsl:text>
                 <xsl:text>border: 2px solid purple;</xsl:text>
-            </xsl:if>
-        </xsl:attribute>
+            </xsl:attribute>
+        </xsl:if>
 
         <!-- this will need work to differentiate sbs from sbsrow -->
         <xsl:if test="self::sidebyside and $b-original">
@@ -4438,8 +5231,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:call-template name="latex-macros" />
                  <header id="masthead" class="smallbuttons">
                     <div class="banner">
-                        <!-- Seems to help clean up navigation some         -->
-                        <!-- <xsl:call-template name="google-search-box" /> -->
                         <div class="container">
                             <xsl:call-template name="brand-logo" />
                             <div class="title-container">
@@ -4502,7 +5293,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:with-param name="height" select="$height" />
         </xsl:call-template>
     </div>
-    <div style="display:none">
+    <div class="hidden-content">
         <!-- Hidden content in here -->
         <xsl:apply-templates select="." mode="video-embed">
             <xsl:with-param name="width"  select="$width" />
@@ -4636,11 +5427,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:with-param name="autoplay" select="$autoplay" />
         </xsl:apply-templates>
     </xsl:variable>
+    <!-- allowfullscreen is an iframe parameter, -->
+    <!-- not a YouTube embed parameter, but it's -->
+    <!-- use enables the "full screen" button    -->
+    <!-- http://w3c.github.io/test-results/html51/implementation-report.html -->
     <iframe id="{$int-id}"
             type="text/html"
             width="{$width}"
             height="{$height}"
             frameborder="0"
+            allowfullscreen=""
             src="{$source-url}" />
 </xsl:template>
 
@@ -5117,7 +5913,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Override to turn off cross-references as knowls          -->
 <!-- NB: this device makes it easy to turn off knowlification -->
 <!-- entirely, since some renders cannot use knowl JavaScript -->
-<xsl:template match="fn|p|blockquote|biblio|biblio/note|&DEFINITION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|&FIGURE-LIKE;|&THEOREM-LIKE;|proof|case|&AXIOM-LIKE;|&REMARK-LIKE;|&ASIDE-LIKE;|assemblage|paragraphs|objectives|exercise|webwork|hint|answer|solution|exercisegroup|me|men|mrow|li|contributor" mode="xref-as-knowl">
+<xsl:template match="fn|p|blockquote|biblio|biblio/note|&DEFINITION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;|task|&FIGURE-LIKE;|&THEOREM-LIKE;|proof|case|&AXIOM-LIKE;|&REMARK-LIKE;|&COMPUTATION-LIKE;|&ASIDE-LIKE;|poem|assemblage|paragraphs|objectives|exercise|webwork|hint|answer|solution|exercisegroup|me|men|mrow|li|contributor" mode="xref-as-knowl">
     <xsl:value-of select="true()" />
 </xsl:template>
 <xsl:template match="*" mode="xref-as-knowl">
@@ -5255,7 +6051,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:variable name="mag">
         <xsl:apply-templates />
     </xsl:variable>
-    <xsl:value-of select="str:replace($mag,'\pi','\(\pi\)')"/>
+    <xsl:variable name="math-pi">
+        <xsl:call-template name="begin-inline-math" />
+        <xsl:text>\pi</xsl:text>
+        <xsl:call-template name="end-inline-math" />
+    </xsl:variable>
+    <xsl:value-of select="str:replace($mag,'\pi',$math-pi)"/>
 </xsl:template>
 
 <!-- unit and per children of a quantity element    -->
@@ -5353,10 +6154,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
 </xsl:template>
 
-
 <!-- Defined terms (bold) -->
 <xsl:template match="term">
-    <em class="terminology"><xsl:apply-templates /></em>
+    <b class="terminology">
+        <xsl:apply-templates />
+    </b>
 </xsl:template>
 
 <!-- Acronyms, Initialisms, Abbreviations -->
@@ -5367,34 +6169,36 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Would a screen reader know the difference?                     -->
 <xsl:template match="abbr">
     <abbr class="abbreviation">
-        <xsl:comment>Style me</xsl:comment>
         <xsl:apply-templates />
     </abbr>
 </xsl:template>
 
 <xsl:template match="acro">
     <abbr class="acronym">
-        <xsl:comment>Style me</xsl:comment>
         <xsl:apply-templates />
     </abbr>
 </xsl:template>
 
 <xsl:template match="init">
     <abbr class="initialism">
-        <xsl:comment>Style me</xsl:comment>
         <xsl:apply-templates />
     </abbr>
 </xsl:template>
 
 <!-- Emphasis -->
 <xsl:template match="em">
-    <xsl:comment>Style me with CSS</xsl:comment>
-    <em><xsl:apply-templates /></em>
+    <em class="emphasis">
+        <xsl:apply-templates />
+    </em>
 </xsl:template>
 
 <!-- Alert -->
 <xsl:template match="alert">
-    <b><i><xsl:apply-templates /></i></b>
+    <b>
+        <i>
+            <xsl:apply-templates />
+        </i>
+    </b>
 </xsl:template>
 
 <!-- CSS for ins, del, s -->
@@ -5403,32 +6207,23 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- Insert (an edit) -->
 <xsl:template match="insert">
-    <xsl:element name="ins">
-        <xsl:attribute name="class">
-            <xsl:text>insert</xsl:text>
-        </xsl:attribute>
+    <ins class="insert">
         <xsl:apply-templates />
-    </xsl:element>
+    </ins>
 </xsl:template>
 
 <!-- Delete (an edit) -->
 <xsl:template match="delete">
-    <xsl:element name="del">
-        <xsl:attribute name="class">
-            <xsl:text>delete</xsl:text>
-        </xsl:attribute>
+    <del class="delete">
         <xsl:apply-templates />
-    </xsl:element>
+    </del>
 </xsl:template>
 
 <!-- Stale (no longer relevant) -->
 <xsl:template match="stale">
-    <xsl:element name="s">
-        <xsl:attribute name="class">
-            <xsl:text>stale</xsl:text>
-        </xsl:attribute>
+    <s class="stale">
         <xsl:apply-templates />
-    </xsl:element>
+    </s>
 </xsl:template>
 
 <!-- Copyright symbol -->
@@ -5554,7 +6349,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="email">
     <xsl:element name="a">
         <xsl:attribute name="href">
-            mailto:<xsl:value-of select="." />
+            <xsl:text>mailto:</xsl:text>
+            <xsl:value-of select="." />
         </xsl:attribute>
         <xsl:value-of select="." />
     </xsl:element>
@@ -5912,95 +6708,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>&#8212;</xsl:text>
 </xsl:template>
 
-<!--        -->
-<!-- Poetry -->
-<!--        -->
 
-<!-- TODO: Address GitHub issues regarding poetry output:   -->
-<!-- https://github.com/BooksHTML/mathbook-assets/issues/65 -->
-
-<xsl:template match="poem">
-    <div class="poem" style="display: table; width: auto; max-width: 90%; margin: 0 auto;">
-        <div class="poemtitle" style="font-weight: bold; text-align: center; font-size: 120%">
-            <xsl:apply-templates select="." mode="title-full"/>
-        </div>
-        <xsl:apply-templates select="stanza"/>
-        <xsl:apply-templates select="author"/>
-    </div>
-</xsl:template>
-
-<xsl:template match="poem/author">
-    <xsl:variable name="alignment">
-        <xsl:apply-templates select="." mode="poem-halign"/>
-    </xsl:variable>
-    <xsl:element name="div">
-        <xsl:attribute name="class">
-            <xsl:text>poemauthor</xsl:text>
-            <xsl:value-of select="$alignment" />
-        </xsl:attribute>
-        <xsl:attribute name="style">
-            <xsl:text>font-style: italic; padding-bottom: 20px; text-align: </xsl:text>
-            <xsl:value-of select="$alignment" />
-        </xsl:attribute>
-        <xsl:apply-templates/>
-    </xsl:element>
-</xsl:template>
-
-<xsl:template match="stanza">
-    <div class="stanza" style="padding-bottom: 20px">
-        <xsl:if test="title">
-            <div class="stanzatitle" style="font-weight: bold; text-align: center">
-                <xsl:apply-templates select="." mode="title-full"/>
-            </div>
-        </xsl:if>
-        <xsl:apply-templates select="line"/>
-    </div>
-</xsl:template>
-
-<xsl:template match="stanza/line">
-    <xsl:variable name="alignment">
-        <xsl:apply-templates select="." mode="poem-halign"/>
-    </xsl:variable>
-    <xsl:variable name="indentation">
-        <xsl:apply-templates select="." mode="poem-indent"/>
-    </xsl:variable>
-    <xsl:element name="div">
-        <xsl:attribute name="class">
-            <xsl:text>poemline</xsl:text>
-            <xsl:value-of select="$alignment" />
-        </xsl:attribute>
-        <xsl:attribute name="style">
-            <!-- Hanging indentation for overly long lines -->
-            <xsl:text>margin-left: 4em; text-indent: -4em; </xsl:text>
-            <xsl:text>text-align: </xsl:text>
-            <xsl:value-of select="$alignment" />
-        </xsl:attribute>
-        <xsl:if test="$alignment='left'"><!-- Left Alignment: Indent from Left -->
-            <xsl:call-template name="poem-line-indenting">
-                <xsl:with-param name="count"><xsl:value-of select="$indentation"/></xsl:with-param>
-            </xsl:call-template>
-        </xsl:if>
-        <xsl:apply-templates/><!-- Center Alignment: Ignore Indentation -->
-        <xsl:if test="$alignment='right'"><!-- Right Alignment: Indent from Right -->
-            <xsl:call-template name="poem-line-indenting">
-                <xsl:with-param name="count"><xsl:value-of select="$indentation"/></xsl:with-param>
-            </xsl:call-template>
-        </xsl:if>
-    </xsl:element>
-</xsl:template>
-
-<xsl:template name="poem-line-indenting">
-    <xsl:param name="count"/>
-    <xsl:choose>
-        <xsl:when test="(0 >= $count)"/>
-        <xsl:otherwise>
-            <span class="tab" style="margin-left: 2em"></span>
-            <xsl:call-template name="poem-line-indenting">
-                <xsl:with-param name="count" select="$count - 1"/>
-            </xsl:call-template>
-        </xsl:otherwise>
-    </xsl:choose>
-</xsl:template>
 
 <!--       -->
 <!-- Music -->
@@ -6219,11 +6927,15 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- Bits of Javascript for the top and bottom of the web page -->
 <xsl:template name="pytutor-header">
-    <script type="text/javascript" src="http://pythontutor.com/build/pytutor-embed.bundle.js?cc25af72af" charset="utf-8"></script>
+    <xsl:if test="$document-root//program[@interactive='pythontutor']">
+        <script type="text/javascript" src="http://pythontutor.com/build/pytutor-embed.bundle.js?cc25af72af" charset="utf-8"></script>
+    </xsl:if>
 </xsl:template>
 
 <xsl:template name="pytutor-footer">
-    <script type="text/javascript">createAllVisualizersFromHtmlAttrs();</script>
+    <xsl:if test="$document-root//program[@interactive='pythontutor']">
+        <script type="text/javascript">createAllVisualizersFromHtmlAttrs();</script>
+    </xsl:if>
 </xsl:template>
 
 <!-- Console Session -->
@@ -6473,8 +7185,8 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
             <xsl:call-template name="latex-macros" />
              <header id="masthead" class="smallbuttons">
                 <div class="banner">
-                    <xsl:call-template name="google-search-box" />
                     <div class="container">
+                        <xsl:call-template name="google-search-box" />
                         <xsl:call-template name="brand-logo" />
                         <div class="title-container">
                             <h1 class="heading">
@@ -7688,7 +8400,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <xsl:template name="jsxgraph">
     <xsl:if test="$b-has-jsxgraph">
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jsxgraph/0.99.6/jsxgraph.css" />
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsxgraph/latest/jsxgraphcore.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsxgraph/0.99.6/jsxgraphcore.js"></script>
     </xsl:if>
 </xsl:template>
 
@@ -7764,11 +8476,11 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <!-- sneaking in packages, which load first, in       -->
 <!-- case authors want to build on these macros       -->
 <xsl:template name="latex-macros">
-    <div style="display:none;">
-    <xsl:text>\(</xsl:text>
+    <div class="hidden-content">
+    <xsl:call-template name="begin-inline-math" />
     <xsl:value-of select="$latex-packages-mathjax" />
     <xsl:value-of select="$latex-macros" />
-    <xsl:text>\)</xsl:text>
+    <xsl:call-template name="end-inline-math" />
     </div>
 </xsl:template>
 
@@ -7809,6 +8521,21 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 <xsl:comment>End: Google code</xsl:comment>
 </xsl:template>
 
+<xsl:template match="google-universal">
+    <xsl:comment>Start: Google Universal code</xsl:comment>
+    <script>
+        <xsl:text>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){&#xa;</xsl:text>
+        <xsl:text>(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),&#xa;</xsl:text>
+        <xsl:text>m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)&#xa;</xsl:text>
+        <xsl:text>})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');&#xa;</xsl:text>
+        <xsl:text>ga('create', '</xsl:text>
+            <xsl:value-of select="@tracking" />
+        <xsl:text>', 'auto');&#xa;</xsl:text>
+        <xsl:text>ga('send', 'pageview');&#xa;</xsl:text>
+    </script>
+    <xsl:comment>End: Google Universal code</xsl:comment>
+</xsl:template>
+
 <!-- StatCounter                                -->
 <!-- Set sc_invisible to 1                      -->
 <!-- In noscript URL, final 1 is an edit from 0 -->
@@ -7835,6 +8562,47 @@ var scJsHost = (("https:" == document.location.protocol) ? "https://secure." : "
 </div>
 </noscript>
 <xsl:comment>End: StatCounter code</xsl:comment>
+</xsl:template>
+
+<!-- ############# -->
+<!-- Serialization -->
+<!-- ############# -->
+
+<!-- Convert a node (perhaps the root of a node-set       -->
+<!-- built from an RTF) into its string representation.   -->
+<!-- Used initially for conversion of PreTeXt markup to   -->
+<!-- the JSON format of a Jupyter notebook.  Identical to -->
+<!-- https://stackoverflow.com/questions/6696382 at       -->
+<!-- comment https://stackoverflow.com/a/15783514         -->
+
+<xsl:template match="*" mode="serialize">
+    <xsl:text>&lt;</xsl:text>
+    <xsl:value-of select="name()"/>
+    <xsl:apply-templates select="@*" mode="serialize" />
+    <xsl:choose>
+        <xsl:when test="node()">
+            <xsl:text>&gt;</xsl:text>
+            <xsl:apply-templates mode="serialize" />
+            <xsl:text>&lt;/</xsl:text>
+            <xsl:value-of select="name()"/>
+            <xsl:text>&gt;</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:text> /&gt;</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<xsl:template match="@*" mode="serialize">
+    <xsl:text> </xsl:text>
+    <xsl:value-of select="name()"/>
+    <xsl:text>="</xsl:text>
+    <xsl:value-of select="."/>
+    <xsl:text>"</xsl:text>
+</xsl:template>
+
+<xsl:template match="text()" mode="serialize">
+    <xsl:value-of select="."/>
 </xsl:template>
 
 <!-- Miscellaneous -->

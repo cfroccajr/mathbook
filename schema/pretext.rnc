@@ -12,7 +12,7 @@
         Article =
             element article {
                 MetaDataSubtitle,
-                ArticleFrontMatter,
+                ArticleFrontMatter?,
                 Section,
                 (Section | Exercises | References)*,
                 BackMatter?
@@ -21,7 +21,7 @@
             ## Here is what a book looks like.
             element book {
                 MetaDataSubtitle,
-                BookFrontMatter,
+                BookFrontMatter?,
                 Chapter,
                 (Chapter | Exercises | References)*,
                 BackMatter?
@@ -157,6 +157,7 @@
             }
         ColophonFront =
             element colophon {
+                UniqueID?,
                 element credit {
                     element role {TextShort},
                     element entity {TextLong}
@@ -206,11 +207,20 @@
                 IndexDivision?,
                 ColophonBack?
             }
-        ColophonBack = 
-            element colophon {(BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+}
+        ColophonBack =
+            element colophon {
+                UniqueID?,
+                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
+            }
         
         
-        Paragraphs = 
+        Paragraphs =
+            element paragraphs {
+                MetaDataTitle,
+                Index*,
+                BlockDivision+
+            }
+        ParagraphsTitleOptional =
             element paragraphs {
                 MetaDataTitleOptional,
                 Index*,
@@ -236,13 +246,16 @@
         
         BlockText =
             Paragraph | BlockQuote | Preformatted | ToDo
+        BlockStatementNoCaption =
+            BlockText | Aside |
+            SideBySideNoCaption | SideBySideGroupNoCaption
         BlockStatement =
             BlockText |
             Figure | Aside |
             SideBySide | SideBySideGroup | Sage
         BlockDivision =
             BlockStatement |
-            Remark | Theorem | Proof | Definition |
+            Remark | Computation | Theorem | Proof | Definition |
             Axiom | Example | Exercise | Project |
             Poem | Assemblage | ListGenerator |
             GGB | Demonstration
@@ -279,6 +292,10 @@
             element introduction {BlockText+}
         ConclusionText =
             element conclusion {BlockText+}
+        IntroductionStatementNoCaption =
+            element introduction {BlockStatementNoCaption+}
+        ConclusionStatementNoCaption =
+            element conclusion {BlockStatementNoCaption+}
         IntroductionStatement =
             element introduction {BlockStatement+}
         ConclusionStatement =
@@ -318,7 +335,8 @@
             element cline {text}
         CodeDisplay =
             element cd {
-                text | CodeLine+
+                attribute latexsep {text}?,
+                (text | CodeLine+)
             }
         Preformatted =
             element pre {
@@ -482,7 +500,7 @@
                 (
                     BlockStatement+ |
                     (Statement, Hint*, Answer*, Solution*) |
-                    (IntroductionText?, Task+, ConclusionText?)
+                    (IntroductionStatement?, Task+, ConclusionStatement?)
                 )
             }
         
@@ -502,10 +520,15 @@
             element warning {RemarkLike}
         |
             element insight {RemarkLike}
+        
+        
+        ComputationLike =
+            MetaDataTitleOptional,
+            BlockStatement+
+        Computation =
+            element computation {ComputationLike}
         |
-            element computation {RemarkLike}
-        |
-            element technology {RemarkLike}
+            element technology {ComputationLike}
         
         
         AsideLike =
@@ -580,6 +603,7 @@
                     Paragraph |
                     Preformatted |
                     Paragraphs |
+                    ParagraphsTitleOptional |
                     List
                 )+
             }
@@ -596,6 +620,7 @@
                     Paragraph |
                     Preformatted |
                     Paragraphs |
+                    ParagraphsTitleOptional |
                     List
                 )+
             }
@@ -810,9 +835,9 @@
             element exercisegroup {
                 MetaDataTarget,
                 attribute cols {"2"|"3"|"4"|"5"|"6"}?,
-                IntroductionText?,
+                IntroductionStatementNoCaption?,
                 Exercise+,
-                ConclusionText?
+                ConclusionStatementNoCaption?
             }
         
         
@@ -1032,6 +1057,7 @@
             Index)* }
         Paragraph = 
             element p {
+                UniqueID?,
                 TextParagraph
             }
         TextParagraphWW = mixed { (
@@ -1055,6 +1081,7 @@
             }
         ParagraphLined =
             element p {
+                UniqueID?,
                 element line {TextShort}+
             }
         
@@ -1159,7 +1186,7 @@
                 attribute break {"yes" | "no"}?,
                 mixed {(Xref | FillIn)*}
             }
-        MathIntertext = element intertext {TextShort}
+        MathIntertext = element intertext {TextLong}
         MathDisplay =
             element me {
                 mixed {FillIn*}
@@ -1379,7 +1406,11 @@
                 attribute bass {text}?,
                 attribute suspended {"yes"|"no"}?,
                 attribute parentheses {"yes"|"no"}?,
-                element alteration {TextSimple}*
+                element alteration {
+                    (TextSimple |
+                    element sharp {empty} |
+                    element flat {empty})*
+                }*
             }
         
         

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- This file is part of the documentation of MathBook XML   -->
+<!--   This file is part of the documentation of PreTeXt      -->
 <!--                                                          -->
-<!--    MathBook XML Author's Guide                           -->
+<!--      PreTeXt Author's Guide                              -->
 <!--                                                          -->
 <!-- Copyright (C) 2013-2016  Robert A. Beezer                -->
 <!-- See the file COPYING for copying conditions.             -->
@@ -30,10 +30,12 @@
 
         <p>An example:</p>
 
-        <console>
-            <prompt>$ </prompt>
-            <input>~/mathbook/script/mbx -vv -c sageplot -f svg -d images ~/mathbook/examples/sample-article/sample-article.xml</input>
-        </console>
+        <sidebyside>
+            <console>
+                <prompt>$ </prompt>
+                <input>~/mathbook/script/mbx -vv -c sageplot -f svg -d images ~/mathbook/examples/sample-article/sample-article.xml</input>
+            </console>
+        </sidebyside>
 
         <p>This will extract every image described in <c>sample-article</c> by a <tag>sageplot</tag> element and produce output as SVG files (if possible), which will be deposited in the <c>images</c> subdirectory of the current working directory.</p>
 
@@ -46,6 +48,16 @@
 
             <li>Much of the work of this script happens in the temporary directory described above.  We leave a lot of intermediate work behind in this directory.  Sometimes exploring this directory is helpful when debugging problems.</li>
         </ul></p>
+    </section>
+
+    <section xml:id="debugging-mbx-image-generation">
+        <title>Debugging Image Generation</title>
+
+        <p>A principal use of the <c>mbx</c> script is to isolate source code from <c>latex-image-code</c> sections, package them up as proper <c>*.tex</c> files, run <latex /> to make cropped <init>PDF</init> versions, and then convert these to other formats such as <init>SVG</init> or <init>PNG</init>.</p>
+
+        <p>Much of this activity happens in a temporary directory.  If you use the <c>-vv</c> switch described above, then one of the messages early in the output describing the initialization will be the name of this directory.  Looking to see what files end up there, and what those files contain, is often useful in determining the step where this toolchain fails, and maybe even why.</p>
+
+        <p>Another option is to ask for the actual <c>*.tex</c> files as the result of a run.  This is accomplished with the <c>-f source</c> flag when invoking <c>mbx</c>.  If the right packages or macros are not being employed in these files, this is an easy way to get at the source files for inspection and analysis.</p>
     </section>
 
     <section xml:id="restrict-mbx-scope">

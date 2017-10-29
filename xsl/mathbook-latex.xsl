@@ -138,15 +138,19 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:variable>
 
-<!-- LaTeX always puts sections at level "1"            -->
-<!-- MBX has sections at level "2", so off by one       -->
-<!-- Furthermore, param's are relative to document root -->
-<!-- So we translate MBX-speak to LaTeX-speak (twice)   -->
+<!-- LaTeX always puts sections at level "1", while PTX         -->
+<!-- has sections at level "2", so we provide adjusted,         -->
+<!-- LaTeX-only variables for packages/macros that crudely      -->
+<!-- expect these kinds of numbers (rather than division names) -->
 <xsl:variable name="latex-toc-level">
-    <xsl:value-of select="$root-level + $toc-level - 1" />
+    <xsl:call-template name="level-to-latex-level">
+        <xsl:with-param name="level" select="$toc-level" />
+    </xsl:call-template>
 </xsl:variable>
 <xsl:variable name="latex-numbering-maxlevel">
-    <xsl:value-of select="$root-level + $numbering-maxlevel - 1" />
+    <xsl:call-template name="level-to-latex-level">
+        <xsl:with-param name="level" select="$numbering-maxlevel" />
+    </xsl:call-template>
 </xsl:variable>
 
 <!-- We override the default ToC structure    -->
@@ -673,8 +677,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- See numbering-theorems variable being set in mathbook-common.xsl -->
     <xsl:if test="not($numbering-theorems = 0)">
         <xsl:text>[</xsl:text>
-        <xsl:call-template name="level-number-to-latex-name">
-            <xsl:with-param name="level" select="$numbering-theorems + $root-level" />
+        <xsl:call-template name="level-to-name">
+            <xsl:with-param name="level" select="$numbering-theorems" />
         </xsl:call-template>
         <xsl:text>]&#xa;</xsl:text>
     </xsl:if>
@@ -761,7 +765,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:if>
     </xsl:if>
     <!-- REMARK-LIKE blocks, environments -->
-    <xsl:if test="//remark or //convention or //note or //observation or //warning or //insight or //computation or //technology">
+    <xsl:if test="//remark or //convention or //note or //observation or //warning or //insight">
         <xsl:text>%% Remark-like environments, normal text&#xa;</xsl:text>
         <xsl:text>%% Numbering is in sync with theorems, etc&#xa;</xsl:text>
         <xsl:text>\theoremstyle{definition}&#xa;</xsl:text>
@@ -795,6 +799,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:call-template name="type-name"><xsl:with-param name="string-id" select="'insight'" /></xsl:call-template>
             <xsl:text>}&#xa;</xsl:text>
         </xsl:if>
+    </xsl:if>
+    <!-- COMPUTATION-LIKE blocks, environments -->
+    <xsl:if test="//computation or //technology">
+        <xsl:text>%% Computation-like environments, normal text&#xa;</xsl:text>
+        <xsl:text>%% Numbering is in sync with theorems, etc&#xa;</xsl:text>
+        <xsl:text>\theoremstyle{definition}&#xa;</xsl:text>
         <xsl:if test="//computation">
             <xsl:text>\newtheorem{computation}[theorem]{</xsl:text>
             <xsl:call-template name="type-name"><xsl:with-param name="string-id" select="'computation'" /></xsl:call-template>
@@ -840,8 +850,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <!-- See numbering-theorems variable being set in mathbook-common.xsl -->
         <xsl:if test="not($numbering-projects = 0)">
             <xsl:text>[</xsl:text>
-            <xsl:call-template name="level-number-to-latex-name">
-                <xsl:with-param name="level" select="$numbering-projects + $root-level" />
+            <xsl:call-template name="level-to-name">
+                <xsl:with-param name="level" select="$numbering-projects" />
             </xsl:call-template>
             <xsl:text>]&#xa;</xsl:text>
         </xsl:if>
@@ -951,8 +961,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:text>%% Equation Numbering&#xa;</xsl:text>
         <xsl:text>%% Controlled by  numbering.equations.level  processing parameter&#xa;</xsl:text>
         <xsl:text>\numberwithin{equation}{</xsl:text>
-        <xsl:call-template name="level-number-to-latex-name">
-            <xsl:with-param name="level" select="$numbering-equations + $root-level" />
+        <xsl:call-template name="level-to-name">
+            <xsl:with-param name="level" select="$numbering-equations" />
         </xsl:call-template>
         <xsl:text>}&#xa;</xsl:text>
     </xsl:if>
@@ -1060,8 +1070,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     <xsl:text>none</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:call-template name="level-number-to-latex-name">
-                        <xsl:with-param name="level" select="$figure-levels + $root-level" />
+                    <xsl:call-template name="level-to-name">
+                        <xsl:with-param name="level" select="$figure-levels" />
                     </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
@@ -1085,8 +1095,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     <xsl:text>none</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:call-template name="level-number-to-latex-name">
-                        <xsl:with-param name="level" select="$figure-levels + $root-level" />
+                    <xsl:call-template name="level-to-name">
+                        <xsl:with-param name="level" select="$figure-levels" />
                     </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
@@ -1127,8 +1137,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     <xsl:text>none</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:call-template name="level-number-to-latex-name">
-                        <xsl:with-param name="level" select="$figure-levels + $root-level" />
+                    <xsl:call-template name="level-to-name">
+                        <xsl:with-param name="level" select="$figure-levels" />
                     </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
@@ -1162,8 +1172,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     <xsl:text>none</xsl:text>
                 </xsl:when>
                 <xsl:otherwise>
-                    <xsl:call-template name="level-number-to-latex-name">
-                        <xsl:with-param name="level" select="$figure-levels + $root-level" />
+                    <xsl:call-template name="level-to-name">
+                        <xsl:with-param name="level" select="$figure-levels" />
                     </xsl:call-template>
                 </xsl:otherwise>
             </xsl:choose>
@@ -1193,8 +1203,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:text>%% Footnote Numbering&#xa;</xsl:text>
         <xsl:text>%% We reset the footnote counter, as given by numbering.footnotes.level&#xa;</xsl:text>
         <xsl:text>\makeatletter\@addtoreset{footnote}{</xsl:text>
-        <xsl:call-template name="level-number-to-latex-name">
-            <xsl:with-param name="level" select="$numbering-footnotes + $root-level" />
+        <xsl:call-template name="level-to-name">
+            <xsl:with-param name="level" select="$numbering-footnotes" />
         </xsl:call-template>
         <xsl:text>}\makeatother&#xa;</xsl:text>
     </xsl:if>
@@ -1946,6 +1956,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- ISBN, Cover Design, Publisher -->
     <xsl:text>%% begin: copyright-page&#xa;</xsl:text>
     <xsl:text>\thispagestyle{empty}&#xa;</xsl:text>
+    <!-- This is the most obvious place for   -->
+    <!-- a target to the front colophon       -->
+    <!-- NB: only a book has a front colophon -->
+    <xsl:apply-templates select="frontmatter/colophon" mode="label" />
     <xsl:if test="not(../docinfo/author-biographies/@length = 'long')">
         <xsl:apply-templates select="frontmatter/biography" mode="copyright-page" />
     </xsl:if>
@@ -2395,8 +2409,19 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>{\setlength{\tabcolsep}{1ex}%&#xa;</xsl:text>
     <!-- Second column at textwidth is slightly too much -->
     <xsl:text>\begin{tabular}{rp{0.97\textwidth}}&#xa;</xsl:text>
-    <xsl:text>\textsf{To:}&amp;</xsl:text>
-    <xsl:apply-templates select="to" /><xsl:text>\\&#xa;</xsl:text>
+    <xsl:text>\textsf{To:}</xsl:text>
+    <xsl:choose>
+        <!-- multiline structured -->
+        <xsl:when test="to/line">
+            <xsl:apply-templates select="to/line" />
+        </xsl:when>
+        <!-- always a newline, even if blank -->
+        <xsl:otherwise>
+            <xsl:text>&amp;</xsl:text>
+            <xsl:apply-templates select="to" />
+            <xsl:text>\\&#xa;</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
     <xsl:text>\textsf{From:}</xsl:text>
     <xsl:choose>
         <!-- multiline structured -->
@@ -2457,17 +2482,31 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates />
 </xsl:template>
 
-<!-- The back colophon goes on a recto page all by itself       -->
+<!-- The back colophon of a book goes on its own recto page     -->
 <!-- the centering is on the assumption it is a simple sentence -->
 <!-- Maybe a parbox, centered, etc is necessary                 -->
 <xsl:template match="book/backmatter/colophon">
     <xsl:text>\cleardoublepage&#xa;</xsl:text>
     <xsl:text>\pagestyle{empty}&#xa;</xsl:text>
+    <xsl:apply-templates select="." mode="label" />
     <xsl:text>\vspace*{\stretch{1}}&#xa;</xsl:text>
     <xsl:text>\centerline{</xsl:text>
     <xsl:apply-templates />
     <xsl:text>}&#xa;</xsl:text>
     <xsl:text>\vspace*{\stretch{2}}&#xa;</xsl:text>
+</xsl:template>
+
+<!-- The back colophon of an article is an -->
+<!-- unnumbered section, not centered, etc -->
+<!-- but it is titled (not to ToC, though) -->
+<xsl:template match="article/backmatter/colophon">
+    <xsl:text>\section*{</xsl:text>
+    <xsl:call-template name="type-name">
+        <xsl:with-param name="string-id" select="'colophon'" />
+    </xsl:call-template>
+    <xsl:text>}&#xa;</xsl:text>
+    <xsl:apply-templates select="." mode="label" />
+    <xsl:apply-templates />
 </xsl:template>
 
 <!-- Appendices are handled in the general subdivision template -->
@@ -2783,7 +2822,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates select="." mode="begin-language" />
     <!-- Construct the header of the subdivision -->
     <xsl:text>\</xsl:text>
-    <xsl:apply-templates select="." mode="subdivision-name" />
+    <xsl:apply-templates select="." mode="division-name" />
     <!-- Handle section titles carefully.  Sanitized versions    -->
     <!-- as optional argument to table of contents, headers.     -->
     <!-- http://www.tex.ac.uk/cgi-bin/texfaq2html?label=ftnsect  -->
@@ -2824,7 +2863,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- TODO: maybe colophon should not be in ToC for book either (need to star it?)    -->
     <xsl:if test="ancestor::article and parent::backmatter and self::references">
         <xsl:text>\addcontentsline{toc}{</xsl:text>
-        <xsl:apply-templates select="." mode="subdivision-name" />
+        <xsl:apply-templates select="." mode="division-name" />
         <xsl:text>}{</xsl:text>
         <xsl:apply-templates select="." mode="title-simple" />
         <xsl:text>}&#xa;</xsl:text>
@@ -2866,7 +2905,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:apply-templates select="." mode="console-typeout" />
     </xsl:if>
     <xsl:text>\</xsl:text>
-    <xsl:apply-templates select="." mode="subdivision-name" />
+    <xsl:apply-templates select="." mode="division-name" />
     <xsl:text>*{</xsl:text>
     <xsl:apply-templates select="." mode="title-full" />
     <xsl:text>}&#xa;</xsl:text>
@@ -3188,7 +3227,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:variable name="nonempty" select="(.//hint and $exercise.backmatter.hint='yes') or (.//answer and $exercise.backmatter.answer='yes') or (.//solution and $exercise.backmatter.solution='yes')" />
     <xsl:if test="$nonempty='true'">
         <xsl:text>\</xsl:text>
-        <xsl:apply-templates select="." mode="subdivision-name" />
+        <xsl:apply-templates select="." mode="division-name" />
         <xsl:text>*{</xsl:text>
         <xsl:apply-templates select="." mode="number" />
         <xsl:text> </xsl:text>
@@ -3513,10 +3552,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 
-<!-- Remark Like, Example Like, Project Like -->
+<!-- Remark Like, Computation Like Example Like, Project Like -->
 <!-- Simpler than theorems, definitions, etc            -->
 <!-- Information comes from self, so slightly different -->
-<xsl:template match="&REMARK-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;">
+<xsl:template match="&REMARK-LIKE;|&COMPUTATION-LIKE;|&EXAMPLE-LIKE;|&PROJECT-LIKE;">
     <xsl:if test="statement or ((&PROJECT-FILTER;) and task)">
         <xsl:apply-templates select="prelude" />
     </xsl:if>
@@ -3554,7 +3593,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:when>
         <!-- Potential common mistake, no content results-->
         <xsl:when test="prelude|hint|answer|solution|postlude">
-            <xsl:message>MBX:WARNING: a &lt;prelude&gt;, &lt;hint&gt;, &lt;answer&gt;, &lt;solution&gt;, or &lt;postlude&gt; in a remark-like, example-like, or project-like block will need to also be structured with a &lt;statement&gt;.  Content will be missing from output.</xsl:message>
+            <xsl:message>MBX:WARNING: a &lt;prelude&gt;, &lt;hint&gt;, &lt;answer&gt;, &lt;solution&gt;, or &lt;postlude&gt; in a remark-like, computation-like, example-like, or project-like block will need to also be structured with a &lt;statement&gt;.  Content will be missing from output.</xsl:message>
             <xsl:apply-templates select="." mode="location-report" />
         </xsl:when>
         <!-- unstructured, no need to avoid dangerous misunderstandings -->
@@ -3680,17 +3719,20 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\end{objectives}&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="solution[parent::*[&EXAMPLE-FILTER;]]">
+<!-- Examples can have hints, answers or solutions, -->
+<!-- but as examples we don't turn them on or off   -->
+<xsl:template match="hint[parent::*[&EXAMPLE-FILTER;]]|answer[parent::*[&EXAMPLE-FILTER;]]|solution[parent::*[&EXAMPLE-FILTER;]]|">
     <xsl:text>\par\medskip\noindent%&#xa;</xsl:text>
     <xsl:text>\textbf{</xsl:text>
-    <xsl:call-template name="type-name">
-        <xsl:with-param name="string-id" select="'solution'" />
-    </xsl:call-template>
+    <xsl:apply-templates select="." mode="type-name" />
     <xsl:text>.}\quad </xsl:text>
     <xsl:apply-templates />
 </xsl:template>
 
-<!-- A project may have a hint -->
+<!-- TODO: consolidate three tests twice,      -->
+<!-- and use modal template (ala EXAMPLE-LIKE) -->
+
+<!-- A project may have a hint, with switch control -->
 <xsl:template match="hint[parent::*[&PROJECT-FILTER;]]">
     <xsl:if test="$project.text.hint = 'yes'">
         <xsl:text>\par\medskip\noindent%&#xa;</xsl:text>
@@ -3703,7 +3745,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
 </xsl:template>
 
-<!-- A project may have an answer -->
+<!-- A project may have an answer, with switch control-->
 <xsl:template match="answer[parent::*[&PROJECT-FILTER;]]">
     <xsl:if test="$project.text.answer = 'yes'">
         <xsl:text>\par\medskip\noindent%&#xa;</xsl:text>
@@ -3716,7 +3758,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
 </xsl:template>
 
-<!-- A project may have a solution -->
+<!-- A project may have a solution, with switch control -->
 <xsl:template match="solution[parent::*[&PROJECT-FILTER;]]">
     <xsl:if test="$project.text.solution = 'yes'">
         <xsl:text>\par\medskip\noindent%&#xa;</xsl:text>
@@ -3729,7 +3771,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
 </xsl:template>
 
-<!-- A task may have a hint -->
+<!-- A task may have a hint, with switch control -->
 <xsl:template match="hint[parent::task]">
     <xsl:if test="$task.text.hint = 'yes'">
         <xsl:text>\par\medskip\noindent%&#xa;</xsl:text>
@@ -3742,7 +3784,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
 </xsl:template>
 
-<!-- A project may have an answer -->
+<!-- A task may have an answer, with switch control -->
 <xsl:template match="answer[parent::task]">
     <xsl:if test="$task.text.answer = 'yes'">
         <xsl:text>\par\medskip\noindent%&#xa;</xsl:text>
@@ -3755,7 +3797,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
 </xsl:template>
 
-<!-- A project may have a solution -->
+<!-- A task may have a solution, with switch control -->
 <xsl:template match="solution[parent::task]">
     <xsl:if test="$task.text.solution = 'yes'">
         <xsl:text>\par\medskip\noindent%&#xa;</xsl:text>
@@ -3781,7 +3823,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:if test="title and not(caption)">
         <xsl:text>\captionof{namedlist}{</xsl:text>
         <xsl:apply-templates select="." mode="title-full" />
-        <xsl:apply-templates select="parent::*" mode="label" />
+        <xsl:apply-templates select="." mode="label" />
         <xsl:text>}&#xa;</xsl:text>
     </xsl:if>
     <xsl:apply-templates select="caption" />
@@ -3807,6 +3849,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:if test="preceding-sibling::*[not(&SUBDIVISION-METADATA-FILTER;)][1][self::p or self::paragraphs or self::sidebyside]">
         <xsl:text>\par&#xa;</xsl:text>
     </xsl:if>
+    <xsl:apply-templates select="." mode="label" />
+    <xsl:text>%&#xa;</xsl:text>
     <xsl:apply-templates />
     <xsl:text>%&#xa;</xsl:text>
 </xsl:template>
@@ -3816,6 +3860,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- TODO: maybe memo header should set this up          -->
 <xsl:template match="memo/p[1]">
     <xsl:text>\noindent{}</xsl:text>
+    <xsl:apply-templates select="." mode="label" />
+    <xsl:text>%&#xa;</xsl:text>
     <xsl:apply-templates />
     <xsl:text>%&#xa;</xsl:text>
 </xsl:template>
@@ -5592,8 +5638,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Unique (element + count), all letters for LaTeX -->
 <!-- Alphabetic numbers are like base 26 notation    -->
 <xsl:template match="*" mode="panel-id">
+    <!-- with no "count", will only count same element name -->
+    <!-- with count="*" even cells of a table contribute    -->
+    <!-- level="single" will not account for figure hack    -->
     <!-- sanitize any dashes in local names? -->
-    <xsl:number level="any" format="A" />
+    <xsl:number from="sidebyside" level="any" format="A" />
     <xsl:value-of select="local-name(.)" />
 </xsl:template>
 
@@ -5608,9 +5657,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- http://tex.stackexchange.com/questions/11943/         -->
 <xsl:template match="*" mode="panel-setup">
     <xsl:param name="width" />
+    <xsl:text>\ifdefined\panelbox</xsl:text>
+    <xsl:apply-templates select="." mode="panel-id" />
+    <xsl:text>\else</xsl:text>
     <xsl:text>\newsavebox{\panelbox</xsl:text>
     <xsl:apply-templates select="." mode="panel-id" />
-    <xsl:text>}&#xa;</xsl:text>
+    <xsl:text>}\fi%&#xa;</xsl:text>
     <!-- If the "panel-latex-box" creates something actually  -->
     <!-- in a box of predictable overall width (such as a     -->
     <!-- BVerbatim, or an \includegraphics), then an "lrbox"  -->
@@ -5642,9 +5694,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>&#xa;</xsl:text>
         </xsl:otherwise>
     </xsl:choose>
+    <xsl:text>\ifdefined\ph</xsl:text>
+    <xsl:apply-templates select="." mode="panel-id" />
+    <xsl:text>\else</xsl:text>
     <xsl:text>\newlength{\ph</xsl:text>
     <xsl:apply-templates select="." mode="panel-id" />
-    <xsl:text>}</xsl:text>
+    <xsl:text>}\fi%&#xa;</xsl:text>
     <xsl:text>\setlength{\ph</xsl:text>
     <xsl:apply-templates select="." mode="panel-id" />
     <xsl:text>}{\ht\panelbox</xsl:text>
@@ -5892,7 +5947,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:when>
         <!-- like main "poem" template, but sans title -->
         <xsl:when test="self::poem">
-            <xsl:text>\begin{poem}&#xa;</xsl:text>
+            <xsl:text>\begin{poem}</xsl:text>
+            <xsl:apply-templates select="." mode="label" />
+            <xsl:text>&#xa;</xsl:text>
             <xsl:apply-templates select="stanza"/>
             <xsl:apply-templates select="author" />
             <xsl:text>\end{poem}&#xa;</xsl:text>
@@ -6985,6 +7042,32 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Cross-References -->
 <!-- ################ -->
 
+<!-- Labels  (cross-reference target)-->
+
+<!-- Insert an identifier as a LaTeX label on anything       -->
+<!-- Calls to this template need come from where LaTeX likes -->
+<!-- a \label, generally someplace that can be numbered      -->
+<xsl:template match="*" mode="label">
+    <xsl:text>\label{</xsl:text>
+    <xsl:apply-templates select="." mode="internal-id" />
+    <xsl:text>}</xsl:text>
+</xsl:template>
+
+<!-- We hard-code some numbers (sectional exercises) and          -->
+<!-- we institute some numberings that LaTeX does not do          -->
+<!-- naturally (references in extra sections, proofs,             -->
+<!-- items in ordered lists (alone or in an exercise),            -->
+<!-- hints, answers, solutions).  We also point to                -->
+<!-- items without numbers, like a "p". For a "label"             -->
+<!-- hyperref's hypertarget mechanism fits the bill.              -->
+<!-- \null target text was unnecessary and visible (2015-12-12)   -->
+<!-- (See also modal templates for "xref-link" and "xref-number") -->
+<xsl:template match="p|paragraphs|blockquote|exercises//exercise|biblio|biblio/note|proof|exercisegroup|case|ol/li|dl/li|hint|answer|solution|contributor|colophon" mode="label">
+    <xsl:text>\hypertarget{</xsl:text>
+    <xsl:apply-templates select="." mode="internal-id" />
+    <xsl:text>}{}</xsl:text>
+</xsl:template>
+
 <!-- Much of the cross-reference mechanism is -->
 <!-- implemented in the common routines,      -->
 <!-- here we implement two abstract templates -->
@@ -7079,7 +7162,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}</xsl:text>
 </xsl:template>
 
-
 <!-- We hard-code some numbers (sectional exercises) and      -->
 <!-- we institute some numberings that LaTeX does not do      -->
 <!-- naturally - references in extra sections, proofs,        -->
@@ -7091,7 +7173,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- anchors/labels below and then we must point to           -->
 <!-- them with \hyperlink{}{} (nee hyperref[]{}).             -->
 <!-- (See also modal templates for "label" and "xref-number") -->
-<xsl:template match="paragraphs|blockquote|exercises//exercise|biblio|biblio/note|proof|case|ol/li|dl/li|hint|answer|solution|exercisegroup|book|article" mode="xref-link">
+<xsl:template match="p|paragraphs|blockquote|exercises//exercise|biblio|biblio/note|proof|case|ol/li|dl/li|hint|answer|solution|exercisegroup|book|article" mode="xref-link">
     <xsl:param name="content" />
     <xsl:text>\hyperlink{</xsl:text>
     <xsl:apply-templates select="." mode="internal-id" />
@@ -7110,27 +7192,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}{</xsl:text>
     <xsl:value-of select="personname" />
     <xsl:text>}</xsl:text>
-</xsl:template>
-
-<!-- Labels -->
-<!-- The template to supply a LaTeX "\label{}" is provided -->
-<!-- in the common file since it is employed in MathJax's  -->
-<!-- equation labeling scheme, so find that there.         -->
-
-<!-- We hard-code some numbers (sectional exercises) and          -->
-<!-- we institute some numberings that LaTeX does not do          -->
-<!-- naturally (references in extra sections, proofs,             -->
-<!-- items in ordered lists (alone or in an exercise),            -->
-<!-- hints, answers, solutions).  For a "label"                   -->
-<!-- hyperref's hypertarget mechanism fits the bill.              -->
-<!-- Removed the \null target text, as it was introducing         -->
-<!-- vertical space when used in list items and it seems          -->
-<!-- to now behave well without it  (2015-12-12)                  -->
-<!-- (See also modal templates for "xref-link" and "xref-number") -->
-<xsl:template match="paragraphs|blockquote|exercises//exercise|biblio|biblio/note|proof|exercisegroup|case|ol/li|dl/li|hint|answer|solution|contributor" mode="label">
-    <xsl:text>\hypertarget{</xsl:text>
-    <xsl:apply-templates select="." mode="internal-id" />
-    <xsl:text>}{}</xsl:text>
 </xsl:template>
 
 <!-- ################## -->
@@ -7197,7 +7258,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!--        -->
 
 <xsl:template match="poem">
-    <xsl:text>\begin{poem}&#xa;</xsl:text>
+    <xsl:text>\begin{poem}</xsl:text>
+    <xsl:apply-templates select="." mode="label" />
+    <xsl:text>&#xa;</xsl:text>
     <xsl:text>\poemTitle{</xsl:text>
     <xsl:apply-templates select="." mode="title-full" />
     <xsl:text>}&#xa;</xsl:text>

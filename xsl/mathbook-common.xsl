@@ -185,7 +185,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Improve source readability with whitespace control in text output mode   -->
 <!-- Newlines with &#xa; : http://stackoverflow.com/questions/723226/producing-a-new-line-in-xslt -->
 <!-- Removing whitespace: http://stackoverflow.com/questions/1468984/xslt-remove-whitespace-from-template -->
-<xsl:strip-space elements="mathbook book article memo letter" />
+<xsl:strip-space elements="mathbook pretext book article memo letter" />
 <xsl:strip-space elements="frontmatter chapter appendix index-part index section subsection subsubsection exercises references introduction conclusion paragraphs subparagraph backmatter" />
 <xsl:strip-space elements="docinfo author abstract" />
 <xsl:strip-space elements="titlepage preface acknowledgement biography foreword dedication colophon" />
@@ -262,16 +262,20 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Flag Table of Contents, or not, with boolean variable -->
 <xsl:variable name="b-has-toc" select="$toc-level != 0" />
 
+<!-- A book must have a chapter         -->
+<!-- An article need not have a section -->
 <xsl:variable name="toc-level">
     <xsl:choose>
         <xsl:when test="$toc.level != ''">
             <xsl:value-of select="$toc.level" />
         </xsl:when>
-        <xsl:when test="/mathbook/book">2</xsl:when>
-        <xsl:when test="/mathbook/article/section">1</xsl:when>
-        <xsl:when test="/mathbook/article">0</xsl:when>
-        <xsl:when test="/mathbook/letter">0</xsl:when>
-        <xsl:when test="/mathbook/memo">0</xsl:when>
+        <xsl:when test="$root/book/chapter/section">2</xsl:when>
+        <xsl:when test="$root/book/chapter">1</xsl:when>
+        <xsl:when test="$root/article/section/subsection">2</xsl:when>
+        <xsl:when test="$root/article/section">1</xsl:when>
+        <xsl:when test="$root/article">0</xsl:when>
+        <xsl:when test="$root/letter">0</xsl:when>
+        <xsl:when test="$root/memo">0</xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:ERROR: Table of Contents level not determined</xsl:message>
         </xsl:otherwise>
@@ -285,12 +289,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$numbering.theorems.level != ''">
             <xsl:value-of select="$numbering.theorems.level" />
         </xsl:when>
-        <xsl:when test="/mathbook/book/part">3</xsl:when>
-        <xsl:when test="/mathbook/book">2</xsl:when>
-        <xsl:when test="/mathbook/article/section">1</xsl:when>
-        <xsl:when test="/mathbook/article">0</xsl:when>
-        <xsl:when test="/mathbook/letter">0</xsl:when>
-        <xsl:when test="/mathbook/memo">0</xsl:when>
+        <xsl:when test="$root/book/part">3</xsl:when>
+        <xsl:when test="$root/book">2</xsl:when>
+        <xsl:when test="$root/article/section">1</xsl:when>
+        <xsl:when test="$root/article">0</xsl:when>
+        <xsl:when test="$root/letter">0</xsl:when>
+        <xsl:when test="$root/memo">0</xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:ERROR: Theorem numbering level not determined</xsl:message>
         </xsl:otherwise>
@@ -305,12 +309,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$numbering.projects.level != ''">
             <xsl:value-of select="$numbering.projects.level" />
         </xsl:when>
-        <xsl:when test="/mathbook/book/part">3</xsl:when>
-        <xsl:when test="/mathbook/book">2</xsl:when>
-        <xsl:when test="/mathbook/article/section">1</xsl:when>
-        <xsl:when test="/mathbook/article">0</xsl:when>
-        <xsl:when test="/mathbook/letter">0</xsl:when>
-        <xsl:when test="/mathbook/memo">0</xsl:when>
+        <xsl:when test="$root/book/part">3</xsl:when>
+        <xsl:when test="$root/book">2</xsl:when>
+        <xsl:when test="$root/article/section">1</xsl:when>
+        <xsl:when test="$root/article">0</xsl:when>
+        <xsl:when test="$root/letter">0</xsl:when>
+        <xsl:when test="$root/memo">0</xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:ERROR: Theorem numbering level not determined</xsl:message>
         </xsl:otherwise>
@@ -324,12 +328,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$numbering.equations.level != ''">
             <xsl:value-of select="$numbering.equations.level" />
         </xsl:when>
-        <xsl:when test="/mathbook/book/part">3</xsl:when>
-        <xsl:when test="/mathbook/book">2</xsl:when>
-        <xsl:when test="/mathbook/article/section">1</xsl:when>
-        <xsl:when test="/mathbook/article">0</xsl:when>
-        <xsl:when test="/mathbook/letter">0</xsl:when>
-        <xsl:when test="/mathbook/memo">0</xsl:when>
+        <xsl:when test="$root/book/part">3</xsl:when>
+        <xsl:when test="$root/book">2</xsl:when>
+        <xsl:when test="$root/article/section">1</xsl:when>
+        <xsl:when test="$root/article">0</xsl:when>
+        <xsl:when test="$root/letter">0</xsl:when>
+        <xsl:when test="$root/memo">0</xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:ERROR: Equation numbering level not determined</xsl:message>
         </xsl:otherwise>
@@ -343,12 +347,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$numbering.footnotes.level != ''">
             <xsl:value-of select="$numbering.footnotes.level" />
         </xsl:when>
-        <xsl:when test="/mathbook/book/part">3</xsl:when>
-        <xsl:when test="/mathbook/book">2</xsl:when>
-        <xsl:when test="/mathbook/article/section">1</xsl:when>
-        <xsl:when test="/mathbook/article">0</xsl:when>
-        <xsl:when test="/mathbook/letter">0</xsl:when>
-        <xsl:when test="/mathbook/memo">0</xsl:when>
+        <xsl:when test="$root/book/part">3</xsl:when>
+        <xsl:when test="$root/book">2</xsl:when>
+        <xsl:when test="$root/article/section">1</xsl:when>
+        <xsl:when test="$root/article">0</xsl:when>
+        <xsl:when test="$root/letter">0</xsl:when>
+        <xsl:when test="$root/memo">0</xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:ERROR: Footnote numbering level not determined</xsl:message>
         </xsl:otherwise>
@@ -360,12 +364,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:variable name="numbering-maxlevel">
     <xsl:variable name="max-feasible">
         <xsl:choose>
-            <xsl:when test="/mathbook/book/part">5</xsl:when>
-            <xsl:when test="/mathbook/book">4</xsl:when>
-            <xsl:when test="/mathbook/article/section">3</xsl:when>
-            <xsl:when test="/mathbook/article">0</xsl:when>
-            <xsl:when test="/mathbook/letter">0</xsl:when>
-            <xsl:when test="/mathbook/memo">0</xsl:when>
+            <xsl:when test="$root/book/part">5</xsl:when>
+            <xsl:when test="$root/book">4</xsl:when>
+            <xsl:when test="$root/article/section">3</xsl:when>
+            <xsl:when test="$root/article">0</xsl:when>
+            <xsl:when test="$root/letter">0</xsl:when>
+            <xsl:when test="$root/memo">0</xsl:when>
             <xsl:otherwise>
                 <xsl:message>MBX:BUG: New document type for maximum level defaults</xsl:message>
             </xsl:otherwise>
@@ -410,8 +414,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- or defaults to US English if not present          -->
 <xsl:variable name="document-language">
     <xsl:choose>
-        <xsl:when test="/mathbook/@xml:lang">
-            <xsl:value-of select="/mathbook/@xml:lang" />
+        <xsl:when test="$root/@xml:lang">
+            <xsl:value-of select="$root/@xml:lang" />
         </xsl:when>
         <xsl:otherwise>
             <xsl:value-of select="'en-US'" />
@@ -420,12 +424,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:variable>
 
 <!-- The main "mathbook" element only has two possible children     -->
+<!-- Or the main element could be "pretext" after name change       -->
 <!-- One is "docinfo", the other is "book", "article", etc.         -->
 <!-- This is of interest by itself, or the root of content searches -->
 <!-- And docinfo is the other child                                 -->
 <!-- These help prevent searching the wrong half                    -->
-<xsl:variable name="document-root" select="/mathbook/*[not(self::docinfo)]" />
-<xsl:variable name="docinfo" select="/mathbook/docinfo" />
+<xsl:variable name="root" select="/mathbook|/pretext" />
+<xsl:variable name="docinfo" select="$root/docinfo" />
+<xsl:variable name="document-root" select="$root/*[not(self::docinfo)]" />
 
 <!-- Source Analysis -->
 <!-- Some boolean variables ("b-*") for -->
@@ -467,7 +473,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:value-of select="$address.html" />
         </xsl:when>
         <xsl:otherwise>
-            <xsl:value-of select="/mathbook/docinfo/address/html" />
+            <xsl:value-of select="$docinfo/address/html" />
         </xsl:otherwise>
     </xsl:choose>
 </xsl:variable>
@@ -478,7 +484,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:value-of select="$address.pdf" />
         </xsl:when>
         <xsl:otherwise>
-            <xsl:value-of select="/mathbook/docinfo/address/pdf" />
+            <xsl:value-of select="$docinfo/address/pdf" />
         </xsl:otherwise>
     </xsl:choose>
 </xsl:variable>
@@ -640,13 +646,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- NB: 2017-09-05, three places, keep as variable  -->
 <xsl:variable name="root-level">
     <xsl:choose>
-        <xsl:when test="/mathbook/book/part">-1</xsl:when>
-        <xsl:when test="/mathbook/book/chapter">0</xsl:when>
+        <xsl:when test="$root/book/part">-1</xsl:when>
+        <xsl:when test="$root/book/chapter">0</xsl:when>
         <!-- An article is rooted just above sections, -->
         <!-- on par with chapters of a book            -->
-        <xsl:when test="/mathbook/article">1</xsl:when>
-        <xsl:when test="/mathbook/letter">1</xsl:when>
-        <xsl:when test="/mathbook/memo">1</xsl:when>
+        <xsl:when test="$root/article">1</xsl:when>
+        <xsl:when test="$root/letter">1</xsl:when>
+        <xsl:when test="$root/memo">1</xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:BUG: Level offset undefined for this document type</xsl:message>
         </xsl:otherwise>
@@ -715,21 +721,176 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Mathematics -->
 <!-- ########### -->
 
-<!-- Mathematics authored in LaTeX syntax will be        -->
-<!-- independent of output format.  Despite MathJax's    -->
-<!-- broad array of capabilities, there are enough       -->
-<!-- differences that it is easier to maintain separate  -->
-<!-- routines for different outputs.  Still, we try to   -->
-<!-- isolate some routines in "xsl/mathbook-common.xsl". -->
+<!-- Mathematics authored in LaTeX syntax should be       -->
+<!-- independent of output format.  Despite MathJax's     -->
+<!-- broad array of capabilities, there are still some    -->
+<!-- differences which we need to accomodate via abstract -->
+<!-- templates.  Those abstractions are documented here   -->
+<!-- and also where implemented.  Elsewhere are low-level -->
+<!-- manipulations of whitespace in processed versions    -->
+<!-- of LaTeX output                                      -->
 
-<!-- Certain options and variants are common in both     -->
-<!-- cases, so we provide templates for those decisions  -->
-<!-- Elsewhere are low-level manipulation of whitespace  -->
-<!-- in processed version of  LaTeX output               -->
 
-<!-- Always an "equation" for an me-variant -->
-<!-- The equation* is AMS-Math-specific,    -->
-<!-- "displaymath" is base-LaTeX equivalent -->
+<!-- Inline Mathematics ("m") -->
+<!--                                                     -->
+<!-- This is fairly simple.  Differences are             -->
+<!--   (1) Some conversions require different delimiters -->
+<!--   (2) We adjust punctuation for HTML, but not Latex -->
+<!--                                                     -->
+<!-- Abstract Templates                                  -->
+<!--                                                     -->
+<!-- (1) begin-inline-math, end-inline-math              -->
+<!--       The delimiters for inline mathematics         -->
+<!-- (2) get-clause-punctuation                          -->
+<!--       Look at next node, and if a text node,        -->
+<!--       then look for leading punctuation, and        -->
+<!--       bring into math with \text() wrapper          -->
+
+<xsl:template match= "m">
+    <!-- Build a textual version of the latex,  -->
+    <!-- applying the rare templates allowed,   -->
+    <!-- save for minor manipulation later.     -->
+    <!-- Note: generic text() template here in  -->
+    <!-- -common should always pass through the -->
+    <!-- text nodes within "m" with no changes  -->
+    <xsl:variable name="raw-latex">
+        <xsl:choose>
+            <xsl:when test="ancestor::webwork">
+                <xsl:apply-templates select="text()|var" />
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates select="text()|fillin" />
+            </xsl:otherwise>
+        </xsl:choose>
+        <!-- look ahead to absorb immediate clause-ending punctuation   -->
+        <!-- this is useful for HTML/MathJax to prevent bad line breaks -->
+        <!-- The template here in -common is generally useful, but      -->
+        <!-- for LaTeX we override to be a no-op, since not necessary   -->
+        <xsl:apply-templates select="." mode="get-clause-punctuation" />
+    </xsl:variable>
+    <!-- wrap tightly in math delimiters -->
+    <xsl:call-template name="begin-inline-math" />
+    <!-- we clean whitespace that is irrelevant to LaTeX so that we -->
+    <!--   (1) avoid LaTeX compilation errors                       -->
+    <!--   (2) avoid spurious blank lines leading to new paragraphs -->
+    <!--   (3) provide human-readable source of high quality        -->
+    <!-- sanitize-latex template does not provide a final newline   -->
+    <!-- and we do not add one here either, since it is inline math -->
+    <!-- MathJax is more tolerant, but readability is still useful  -->
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text" select="$raw-latex" />
+    </xsl:call-template>
+    <xsl:call-template name="end-inline-math" />
+</xsl:template>
+
+
+<!-- Displayed Single-Line Math ("me", "men") -->
+<!-- Single equations ("math equation"), contained within paragraphs -->
+<!-- or captions, but not in titles, or other places a 2-D layout    -->
+<!-- would be a problem.  Some vertical spacing above and below,     -->
+<!-- and centered.  "men" is the numbered variant, which suggests    -->
+<!-- it is the target of a cross-reference, which means it needs     -->
+<!-- unique identification in its original appearand, and not in     -->
+<!-- a duplicate copy.  There is enough in common between these      -->
+<!-- variants, but note that "me" could stand alone and be much      -->
+<!-- simpler, since it is not numbered.                              -->
+<!--                                                                 -->
+<!-- Abstract Templates                                              -->
+<!--                                                                 -->
+<!-- (1) display-math-visual-blank-line                              -->
+<!--       Just a line in source to help visually (% for LaTeX)      -->
+<!--                                                                 -->
+<!-- (2) tag                                                         -->
+<!--       Equation-numbering, per equation                          -->
+<!--       Never for "men", always for "me"                          -->
+<!--                                                                 -->
+<!-- (3) qed-here                                                    -->
+<!--       Slick device, LaTeX only                                  -->
+<!--       But avoid clobbering numbers on right                     -->
+<!--                                                                 -->
+<!-- This is the HTML "body" template, which other conversions       -->
+<!-- can just call trivially with some implementations of the        -->
+<!-- abstract templates                                              -->
+
+<xsl:template match="me|men" mode="body">
+    <!-- block-type parameter is ignored, since the          -->
+    <!-- representation never varies, no heading, no wrapper -->
+    <xsl:param name="block-type" />
+    <!-- If original content, or a duplication -->
+    <xsl:param name="b-original" select="true()" />
+    <!-- If the only content of a knowl ("men") then we  -->
+    <!-- do not include adjacent (trailing) punctuation, -->
+    <!-- since it is meaningless                         -->
+    <xsl:param name="b-top-level" select="false()" />
+    <!-- Build a textual version of the latex,       -->
+    <!-- applying the rare templates allowed,        -->
+    <!-- save for minor manipulation later.          -->
+    <!-- Note: generic text() template here in       -->
+    <!-- -common should always pass through the text -->
+    <!-- nodes within "me" and "men" with no changes -->
+    <xsl:variable name="raw-latex">
+        <xsl:choose>
+            <xsl:when test="ancestor::webwork">
+                <xsl:apply-templates select="text()|var" />
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates select="text()|fillin" />
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <!-- we provide a newline for visual appeal -->
+    <xsl:call-template name="display-math-visual-blank-line" />
+    <xsl:text>\begin{</xsl:text>
+    <xsl:apply-templates select="." mode="displaymath-alignment" />
+    <xsl:text>}</xsl:text>
+    <xsl:apply-templates select="." mode="alignat-columns" />
+    <!-- leading whitespace not present, or stripped -->
+    <xsl:text>&#xa;</xsl:text>
+    <!-- we clean whitespace that is irrelevant to LaTeX so that we -->
+    <!--   (1) avoid LaTeX compilation errors                       -->
+    <!--   (2) avoid spurious blank lines leading to new paragraphs -->
+    <!--   (3) provide human-readable source of high quality        -->
+    <!-- sanitize-latex template does not provide a final newline   -->
+    <!-- and we do not add one here either, since it is inline math -->
+    <!-- MathJax is more tolerant, but readability is still useful  -->
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text" select="$raw-latex" />
+    </xsl:call-template>
+    <!-- look ahead to absorb immediate clause-ending punctuation      -->
+    <!-- for original versions, and as a child of a duplicated element -->
+    <!-- but not in a duplicate that is entirely the display math      -->
+    <xsl:if test="$b-original or not($b-top-level)">
+        <xsl:apply-templates select="." mode="get-clause-punctuation" />
+    </xsl:if>
+    <!-- For "men" in LaTeX we supply a \label{},       -->
+    <!-- and for HTML we hard-code the equation number, -->
+    <!-- plus a label if it has an xml:id               -->
+    <!-- This is a no-op for "me"                       -->
+    <xsl:apply-templates select="." mode="tag">
+        <xsl:with-param name="b-original" select="$b-original" />
+    </xsl:apply-templates>
+    <!-- For "me" and LaTeX output we perhaps sneak  -->
+    <!-- in a \qedhere for tombstone placement       -->
+    <!-- Inappropriate if numbers exist to the right -->
+    <xsl:apply-templates select="." mode="qed-here" />
+    <!-- We add a newline for visually appealing source -->
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:text>\end{</xsl:text>
+    <xsl:apply-templates select="." mode="displaymath-alignment" />
+    <xsl:text>}</xsl:text>
+    <!-- We must return to a paragraph, so                     -->
+    <!-- we can add an unprotected newline                     -->
+    <!-- Note: clause-ending punctuation has been absorbed,    -->
+    <!-- so is not left orphaned at the start of the next line -->
+    <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
+<!-- Always an "equation" for an "me"              -->
+<!-- The equation* is AMS-Math-specific,           -->
+<!-- "displaymath" is base-LaTeX equivalent        -->
+<!-- *Extensive* discussion at                     -->
+<!-- http://tex.stackexchange.com/questions/40492/ -->
+
 <xsl:template match="me" mode="displaymath-alignment">
     <xsl:text>equation*</xsl:text>
 </xsl:template>
@@ -738,15 +899,75 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>equation</xsl:text>
 </xsl:template>
 
+
+<!-- Displayed Multi-Line Math ("md", "mdn") -->
+<!-- These are containers for "mrow" and intermediate "intertext".  -->
+<!-- The containers are fairly simple, are similar to above,        -->
+<!-- and only use one abstract template.                            -->
+<!--                                                                -->
+<!-- Abstract Templates                                             -->
+<!--                                                                -->
+<!-- (1) display-math-visual-blank-line                             -->
+<!--       Just a line in source to help visually (% for LaTeX)     -->
+<!--                                                                -->
+<!-- This is the HTML "body" template, which other conversions      -->
+<!-- can just call trivially with some implementations of the       -->
+<!-- abstract templates                                             -->
+
+<xsl:template match="md|mdn" mode="body">
+    <!-- block-type parameter is ignored, since the          -->
+    <!-- representation never varies, no heading, no wrapper -->
+    <xsl:param name="block-type" />
+    <!-- If original content, or a duplication -->
+    <xsl:param name="b-original" select="true()" />
+    <!-- If the only content of a knowl ("men") then we  -->
+    <!-- do not include adjacent (trailing) punctuation, -->
+    <!-- since it is meaningless                         -->
+    <xsl:param name="b-top-level" select="false()" />
+    <!-- Look across all mrow for 100% no-number rows              -->
+    <!-- This just allows for slightly nicer human-readable source -->
+    <xsl:variable name="b-nonumbers" select="self::md and not(mrow[@number='yes' or @tag])" />
+    <!-- we provide a newline for visual appeal -->
+    <xsl:call-template name="display-math-visual-blank-line" />
+    <xsl:text>\begin{</xsl:text>
+    <xsl:apply-templates select="." mode="displaymath-alignment">
+        <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
+    </xsl:apply-templates>
+    <xsl:text>}</xsl:text>
+    <xsl:apply-templates select="." mode="alignat-columns" />
+    <!-- leading whitespace not present, or stripped -->
+    <xsl:text>&#xa;</xsl:text>
+    <!-- We don't sanitize, but instead sanitize text versions of  -->
+    <!-- each individual "mrow", while not sanitizing "intertext", -->
+    <!-- which may be a non-text format (eg HTML).                 -->
+    <xsl:apply-templates select="mrow|intertext">
+        <xsl:with-param name="b-original" select="$b-original" />
+        <xsl:with-param name="b-top-level" select="$b-top-level" />
+        <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
+    </xsl:apply-templates>
+    <!-- each mrow provides a newline, so unlike  -->
+    <!-- above, we do not need to add one here    -->
+    <xsl:text>\end{</xsl:text>
+    <xsl:apply-templates select="." mode="displaymath-alignment">
+        <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
+    </xsl:apply-templates>
+    <xsl:text>}</xsl:text>
+    <!-- We must return to a paragraph, so                     -->
+    <!-- we can add an unprotected newline                     -->
+    <!-- Note: clause-ending punctuation has been absorbed,    -->
+    <!-- so is not left orphaned at the start of the next line -->
+    <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
 <!-- We sniff around for ampersands, to decide between "align"    -->
 <!-- and "gather", plus an asterisk for the unnumbered version    -->
-<!-- Note: this is overridden for LaTeX to make slightly          -->
-<!-- cleaner output for the *-version (no numbering)              -->
-<!-- User intervention is necessary/desired in some situations,   -->
-<!-- such as a LaTeX macro hiding &amp;, \amp, or spacing control -->
-<!-- @alignment = align|gather|alignat as a specific override     -->
+<!-- AMSMath has no easy way to make a one-off number within      -->
+<!-- the *-form, so we lean toward always using the un-starred    -->
+<!-- versions, except when we flag 100% no numbers inside an "md" -->
 <xsl:template match="md|mdn" mode="displaymath-alignment">
+    <xsl:param name="b-nonumbers" select="false()" />
     <xsl:choose>
+        <!-- look for @alignment override, possibly bad -->
         <xsl:when test="@alignment='gather'">
             <xsl:text>gather</xsl:text>
         </xsl:when>
@@ -769,9 +990,38 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:text>gather</xsl:text>
         </xsl:otherwise>
     </xsl:choose>
-    <xsl:if test="self::md">
+    <!-- if absolutely no numbers, we'll economize -->
+    <!-- in favor of human-readability             -->
+    <xsl:if test="$b-nonumbers">
         <xsl:text>*</xsl:text>
     </xsl:if>
+</xsl:template>
+
+<!-- With alignment="alignat" we need the number of columns     -->
+<!-- as an argument, complete with the LaTeX group (braces)     -->
+<!-- Mostly we call this regularly, and it usually does nothing -->
+<xsl:template match="me|men|md|mdn" mode="alignat-columns" />
+
+<xsl:template match="md[@alignment='alignat']|mdn[@alignment='alignat']" mode="alignat-columns">
+    <xsl:variable name="number-equation-columns">
+        <xsl:choose>
+            <!-- override first -->
+            <xsl:when test="@alignat-columns">
+                <xsl:value-of select="@alignat-columns" />
+            </xsl:when>
+            <!-- count ampersands, compute columns -->
+            <xsl:otherwise>
+                <xsl:variable name="number-ampersands">
+                    <xsl:apply-templates select="mrow[1]" mode="max-ampersands" />
+                </xsl:variable>
+                <!-- amps + 1, divide by 2, round up; 0.5 becomes 0.25, round behaves -->
+                <xsl:value-of select="round(($number-ampersands + 1.5) div 2)" />
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <xsl:text>{</xsl:text>
+    <xsl:value-of select="$number-equation-columns" />
+    <xsl:text>}</xsl:text>
 </xsl:template>
 
 <!-- count ampersands in a string              -->
@@ -834,32 +1084,170 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
-<!-- With alignment="alignat" we need the number of columns     -->
-<!-- as an argument, complete with the LaTeX group (braces)     -->
-<!-- Mostly we call this regularly, and it usually does nothing -->
-<xsl:template match="me|men|md|mdn" mode="alignat-columns" />
+<!-- Rows of Displayed Multi-Line Math ("mrow") -->
+<!-- Each mrow finishes with a newline, for visual output      -->
+<!-- We perform LaTeX sanitization on each "mrow" here;        -->
+<!-- "intertext" will have HTML output that might get          -->
+<!-- stripped out in generic text processing.                  -->
+<!--                                                           -->
+<!-- Abstract Templates                                        -->
+<!--                                                           -->
+<!-- (1) display-page-break                                    -->
+<!--       LaTeX scheme, no-op in HTML                         -->
+<!-- (2) qed-here                                              -->
+<!--       Identical to "me", "men" behavior                   -->
+<!--       So defined in the vicinity of those                 -->
 
-<xsl:template match="md[@alignment='alignat']|mdn[@alignment='alignat']" mode="alignat-columns">
-    <xsl:variable name="number-equation-columns">
+<xsl:template match="mrow">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:param name="b-top-level" select="false()" />
+    <xsl:param name="b-nonumbers" />
+    <!-- Build a textual version of the latex,       -->
+    <!-- applying the rare templates allowed,        -->
+    <!-- save for minor manipulation later.          -->
+    <!-- Note: generic text() template here in       -->
+    <!-- -common should always pass through the text -->
+    <!-- nodes within "me" and "men" with no changes -->
+    <xsl:variable name="raw-latex">
         <xsl:choose>
-            <!-- override first -->
-            <xsl:when test="@alignat-columns">
-                <xsl:value-of select="@alignat-columns" />
+            <xsl:when test="ancestor::webwork">
+                <xsl:apply-templates select="text()|xref|var" />
             </xsl:when>
-            <!-- count ampersands, compute columns -->
             <xsl:otherwise>
-                <xsl:variable name="number-ampersands">
-                    <xsl:apply-templates select="mrow[1]" mode="max-ampersands" />
-                </xsl:variable>
-                <!-- amps + 1, divide by 2, round up; 0.5 becomes 0.25, round behaves -->
-                <xsl:value-of select="round(($number-ampersands + 1.5) div 2)" />
+                <xsl:apply-templates select="text()|xref|fillin" />
             </xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
-    <xsl:text>{</xsl:text>
-    <xsl:value-of select="$number-equation-columns" />
-    <xsl:text>}</xsl:text>
+    <xsl:call-template name="sanitize-latex">
+        <xsl:with-param name="text" select="$raw-latex" />
+    </xsl:call-template>
+    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
+        <!-- look ahead to absorb immediate clause-ending punctuation         -->
+        <!-- for original versions, and as a child of a duplicated element    -->
+        <!-- but not in a duplicate that is entirely the display math         -->
+        <!-- pass the context as enclosing environment (parent::*, md or mdn) -->
+        <xsl:if test="$b-original or not($b-top-level)">
+            <xsl:apply-templates select="parent::*" mode="get-clause-punctuation" />
+        </xsl:if>
+    </xsl:if>
+    <!-- If we built a pure no-number environment, then we add nothing   -->
+    <!-- Otherwise, we are in a non-starred environment and get a number -->
+    <!-- unless we "\notag" it, which is the better choice under AMSmath -->
+    <!-- The modal "tag" template is more complicated than just forming  -->
+    <!-- a tag, it is everything associated with an equation, like a     -->
+    <!-- \label{} for LaTeX, and also for HTML/MathJax.  It does depend  -->
+    <!-- on if the display is the original version or not                -->
+    <!-- http://tex.stackexchange.com/questions/48965                    -->
+    <!-- The @tag attribute trumps almost everything                     -->
+    <xsl:choose>
+        <xsl:when test="$b-nonumbers" />
+        <xsl:when test="@tag">
+            <xsl:apply-templates select="." mode="tag">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:when>
+        <xsl:when test="parent::md">
+            <xsl:choose>
+                <xsl:when test="@number='yes'">
+                    <xsl:apply-templates select="." mode="tag">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:text>\notag</xsl:text>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+        <xsl:when test="parent::mdn">
+            <xsl:choose>
+                <xsl:when test="@number='no'">
+                    <xsl:text>\notag</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:apply-templates select="." mode="tag">
+                    <xsl:with-param name="b-original" select="$b-original" />
+                </xsl:apply-templates>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:when>
+    </xsl:choose>
+    <!-- we have a discretionary page break scheme for LaTeX -->
+    <xsl:if test="following-sibling::mrow">
+       <xsl:text>\\</xsl:text>
+       <xsl:apply-templates select="." mode="display-page-break" />
+    </xsl:if>
+    <!-- check last row as very end of entire proof      -->
+    <!-- and sneak in a \qedhere from the amsthm package -->
+    <xsl:if test="not(following-sibling::*)">
+        <xsl:apply-templates select="." mode="qed-here" />
+    </xsl:if>
+    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
+
+<!-- We convert a token into the LaTeX for a symbol     -->
+<!-- for use as a local tag. Since we need this to work -->
+<!-- in MathJax, we need symbols that are available in  -->
+<!-- its limited set of supported commands.  Generally, -->
+<!-- AMSMath symbols are the best description.  See     -->
+<!-- http://docs.mathjax.org/en/latest/tex.html         -->
+<!--     #supported-latex-commands                      -->
+<!-- Note: \tag{} expects text mode                     -->
+<!-- More? \checkmark, \bullet?                         -->
+<!-- TODO: if some text symbols are used, perhaps from  -->
+<!-- the textcomp package, then math delimiters will    -->
+<!-- move down into the "when" parts of the "choose"    -->
+<xsl:template match="@tag" mode="tag-symbol">
+    <xsl:call-template name="begin-inline-math" />
+    <xsl:choose>
+        <!-- Stars -->
+        <xsl:when test=". = 'star'">
+            <xsl:text>\star</xsl:text>
+        </xsl:when>
+        <xsl:when test=". = 'dstar'">
+            <xsl:text>\star\star</xsl:text>
+        </xsl:when>
+        <xsl:when test=". = 'tstar'">
+            <xsl:text>\star\star\star</xsl:text>
+        </xsl:when>
+        <!-- Dagger -->
+        <xsl:when test=". = 'dagger'">
+            <xsl:text>\dagger</xsl:text>
+        </xsl:when>
+        <xsl:when test=". = 'ddagger'">
+            <xsl:text>\dagger\dagger</xsl:text>
+        </xsl:when>
+        <xsl:when test=". = 'tdagger'">
+            <xsl:text>\dagger\dagger\dagger</xsl:text>
+        </xsl:when>
+        <!-- Hash -->
+        <xsl:when test=". = 'hash'">
+            <xsl:text>\#</xsl:text>
+        </xsl:when>
+        <xsl:when test=". = 'dhash'">
+            <xsl:text>\#\#</xsl:text>
+        </xsl:when>
+        <xsl:when test=". = 'thash'">
+            <xsl:text>\#\#\#</xsl:text>
+        </xsl:when>
+        <!-- Maltese -->
+        <xsl:when test=". = 'maltese'">
+            <xsl:text>\maltese</xsl:text>
+        </xsl:when>
+        <xsl:when test=". = 'dmaltese'">
+            <xsl:text>\maltese\maltese</xsl:text>
+        </xsl:when>
+        <xsl:when test=". = 'tmaltese'">
+            <xsl:text>\maltese\maltese\maltese</xsl:text>
+        </xsl:when>
+    </xsl:choose>
+    <xsl:call-template name="end-inline-math" />
+</xsl:template>
+
+
+<!-- Intertext -->
+<!-- "intertext" needs wildly different implementations, -->
+<!-- so we do not even try to provide a base             -->
+<!-- implementation with abstract portions.              -->
 
 
 <!-- ############## -->
@@ -870,7 +1258,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- a big string, in LaTeX syntax.  It will need  -->
 <!-- manipulation to be usable on the MathJax side -->
 <xsl:variable name="latex-packages">
-    <xsl:for-each select="/mathbook/docinfo/latex-preamble/package">
+    <xsl:for-each select="$docinfo/latex-preamble/package">
         <xsl:text>\usepackage{</xsl:text>
         <xsl:apply-templates />
         <xsl:text>}</xsl:text>
@@ -899,7 +1287,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:variable name="latex-left-justified">
         <xsl:call-template name="sanitize-text">
             <xsl:with-param name="text">
-                <xsl:value-of select="/mathbook/docinfo/macros" />
+                <xsl:value-of select="$docinfo/macros" />
             </xsl:with-param>
         </xsl:call-template>
     </xsl:variable>
@@ -1727,39 +2115,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
 </xsl:template>
 
-<!-- QED Here -->
-<!-- Analyze a final "mrow" or any "me"                            -->
-<!-- Strictly LaTeX/amsthm, not a MathJax feature (yet? ever?)     -->
-<!--   (1) Locate enclosing proof, quit if no such thing           -->
-<!--   (2) Check an mrow for being numbered, do not clobber that   -->
-<!--   (3) Locate all trailing element, text nodes                 -->
-<!--       strip-space: between "mrow" and "md" or "mdn"           -->
-<!--       strip-space: between final "p" and "proof"              -->
-<!--   (4) Form nodes interior to proof, and trailing ("remnants") -->
-<!--   (5) At very end of proof                                    -->
-<!--      (a) if no more nodes, or                                 -->
-<!--      (b) one node, totally whitespace and punctuation         -->
-<!--          (we don't differentiate whitespace policy here)      -->
-<!--   (6) Having survived all this write a \qedhere               -->
-<!-- TODO: \qedhere also functions at the end of a list            -->
-<xsl:template match="mrow|me" mode="qed-here">
-    <!-- <xsl:message>here</xsl:message> -->
-    <xsl:variable name="enclosing-proof" select="ancestor::proof" />
-    <xsl:if test="$enclosing-proof and not(self::mrow and parent::md and @number='yes') and not(self::mrow and parent::mdn and not(@number='no'))">
-        <xsl:variable name="proof-nodes" select="$enclosing-proof/descendant-or-self::node()[self::* or self::text()]" />
-        <xsl:variable name="trailing-nodes" select="./following::node()[self::* or self::text()]" />
-        <xsl:variable name="proof-remnants" select="$proof-nodes[count(.|$trailing-nodes) = count($trailing-nodes)]" />
-        <xsl:choose>
-            <xsl:when test="count($proof-remnants) = 0">
-                <xsl:text>\qedhere</xsl:text>
-            </xsl:when>
-            <xsl:when test="(count($proof-remnants) = 1) and (translate(normalize-space($proof-remnants), $clause-ending-marks, '') = '')">
-                <xsl:text>\qedhere</xsl:text>
-            </xsl:when>
-            <xsl:otherwise />
-        </xsl:choose>
-    </xsl:if>
-</xsl:template>
+
 
 <!-- ################################## -->
 <!-- General Text Handling and Clean-Up -->
@@ -2225,6 +2581,11 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:apply-templates select="." mode="containing-filename" />
     <xsl:if test="$intermediate='false' and $chunk='false'">
         <xsl:text>#</xsl:text>
+        <!-- the ids on equations are manufactured -->
+        <!-- by MathJax to look this way           -->
+        <xsl:if test="self::men|self::mrow">
+            <xsl:text>mjx-eqn-</xsl:text>
+        </xsl:if>
         <xsl:apply-templates select="." mode="internal-id" />
     </xsl:if>
 </xsl:template>
@@ -2405,7 +2766,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Widths from sidebyside layouts have been error-checked as input    -->
 
 <!-- occurs in a figure, not contained in a sidebyside -->
-<xsl:template match="video[ancestor::sidebyside]|jsxgraph[ancestor::sidebyside]" mode="get-width-percentage">
+<xsl:template match="image[ancestor::sidebyside]|video[ancestor::sidebyside]|jsxgraph[ancestor::sidebyside]" mode="get-width-percentage">
     <!-- in a side-by-side, get layout, locate in layout -->
     <!-- and get width.  The layout-parameters template  -->
     <!-- will analyze an enclosing sbsgroup              -->
@@ -2507,8 +2868,8 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:variable name="translation">
         <xsl:choose>
             <!-- First look in docinfo for document-specific rename -->
-            <xsl:when test="/mathbook/docinfo/rename[@element=$string-id and @lang=$document-language]">
-                <xsl:apply-templates select="/mathbook/docinfo/rename[@element=$string-id and @lang=$document-language]" />
+            <xsl:when test="$docinfo/rename[@element=$string-id and @lang=$document-language]">
+                <xsl:apply-templates select="$docinfo/rename[@element=$string-id and @lang=$document-language]" />
             </xsl:when>
             <!-- default to a lookup from the localization file's nodes -->
             <xsl:otherwise>
@@ -2523,7 +2884,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
         <xsl:otherwise>
             <xsl:text>[</xsl:text>
             <xsl:value-of select="$string-id" />
-            <xsl:text>]&#xa;</xsl:text>
+            <xsl:text>]</xsl:text>
             <xsl:message>MBX:WARNING: could not translate string with id "<xsl:value-of select="$string-id" />" into language for code "<xsl:value-of select="$document-language" />"</xsl:message>
         </xsl:otherwise>
     </xsl:choose>
@@ -2574,7 +2935,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Override for document root node,          -->
 <!-- slide in "index" as preferential default, -->
 <!-- presuming it is not in use anywhere else  -->
-<xsl:template match="/mathbook/*[not(self::docinfo)]" mode="internal-id">
+<xsl:template match="/mathbook/*[not(self::docinfo)]|/pretext/*[not(self::docinfo)]" mode="internal-id">
     <xsl:choose>
         <xsl:when test="@xml:id">
             <xsl:value-of select="@xml:id" />
@@ -2998,6 +3359,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- We determine the appropriate subtree to count within  -->
 <!-- given the document root and the configured depth      -->
 <!-- Note: numbered/unnumbered accounted for here          -->
+<!-- Note: presence of a local tag is like unnumbered      -->
 <xsl:template match="mrow|men" mode="serial-number">
     <xsl:variable name="subtree-level">
         <xsl:apply-templates select="." mode="absolute-subtree-level">
@@ -3005,12 +3367,12 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
         </xsl:apply-templates>
     </xsl:variable>
     <xsl:choose>
-        <xsl:when test="$subtree-level=-1"><xsl:number from="book|article|letter|memo" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no')]"/></xsl:when>
-        <xsl:when test="$subtree-level=0"><xsl:number from="part" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no')]"/></xsl:when>
-        <xsl:when test="$subtree-level=1"><xsl:number from="chapter|book/backmatter/appendix" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no')]"/></xsl:when>
-        <xsl:when test="$subtree-level=2"><xsl:number from="section|article/backmatter/appendix" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no')]"/></xsl:when>
-        <xsl:when test="$subtree-level=3"><xsl:number from="subsection" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no')]"/></xsl:when>
-        <xsl:when test="$subtree-level=4"><xsl:number from="subsubsection" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no')]"/></xsl:when>
+        <xsl:when test="$subtree-level=-1"><xsl:number from="book|article|letter|memo" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no' or @tag)]"/></xsl:when>
+        <xsl:when test="$subtree-level=0"><xsl:number from="part" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no' or @tag)]"/></xsl:when>
+        <xsl:when test="$subtree-level=1"><xsl:number from="chapter|book/backmatter/appendix" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no' or @tag)]"/></xsl:when>
+        <xsl:when test="$subtree-level=2"><xsl:number from="section|article/backmatter/appendix" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no' or @tag)]"/></xsl:when>
+        <xsl:when test="$subtree-level=3"><xsl:number from="subsection" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no' or @tag)]"/></xsl:when>
+        <xsl:when test="$subtree-level=4"><xsl:number from="subsubsection" level="any" count="men|md/mrow[@number = 'yes']|mdn/mrow[not(@number = 'no' or @tag)]"/></xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:ERROR: Subtree level for equation number computation is out-of-bounds (<xsl:value-of select="$subtree-level" />)</xsl:message>
         </xsl:otherwise>
@@ -3046,6 +3408,8 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <xsl:template match="exercises/exercise[@number]|exercisegroup/exercise[@number]" mode="serial-number">
     <xsl:apply-templates select="@number" />
 </xsl:template>
+
+<!-- Serial Numbers: Solutions -->
 <!-- Hints, answers, solutions may be numbered (for cross-reference knowls) -->
 <xsl:template match="hint|answer|solution" mode="serial-number">
     <xsl:number />
@@ -3061,6 +3425,34 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:number />
 </xsl:template>
 
+<!-- Hints, answers, solutions, notes are often singletons.     -->
+<!-- This utility returns the serial number, or if a singleton, -->
+<!-- returns an empty string.  Employing templates will need    -->
+<!-- to check if they want to react accordingly, or they should -->
+<!-- just ask for the serial number itself if they don't care.  -->
+<xsl:template match="hint|answer|solution|biblio/note" mode="non-singleton-number">
+    <xsl:variable name="the-number">
+        <xsl:apply-templates select="." mode="serial-number" />
+    </xsl:variable>
+    <xsl:choose>
+        <!-- non-singletons always of interest/use -->
+        <xsl:when test="not($the-number = 1)">
+            <xsl:value-of select="$the-number" />
+        </xsl:when>
+        <!-- now being careful with "1" -->
+        <xsl:otherwise>
+            <xsl:variable name="elt-name" select="local-name(.)" />
+            <!-- We go to the parent, get all like children, then     -->
+            <!-- filter by name, since hints and answers, etc all mix -->
+            <xsl:variable name="siblings-and-self" select="parent::*/*[local-name(.) = $elt-name]" />
+            <!-- maybe "1" is interesting too -->
+            <!-- if not, no result whatsoever -->
+            <xsl:if test="count($siblings-and-self) > 1">
+                <xsl:value-of select="$the-number" />
+            </xsl:if>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
 
 <!-- Serial Numbers: Footnotes -->
 <!-- We determine the appropriate subtree to count within -->
@@ -3189,7 +3581,10 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Lists live in paragraphs, exercises, objectives, so       -->
 <!-- should be referenced as part of some enclosing element.   -->
 <!-- "mathbook" helps some tree-climbing routines halt -->
-<xsl:template match="mathbook|introduction|conclusion|frontmatter|backmatter|sidebyside|ol|ul|dl|statement" mode="serial-number" />
+<xsl:template match="mathbook|pretext|introduction|conclusion|frontmatter|backmatter|sidebyside|ol|ul|dl|statement" mode="serial-number" />
+
+<!-- Poems go by their titles, not numbers -->
+<xsl:template match="poem" mode="serial-number" />
 
 <!-- If a list item has any ancestor that is not  -->
 <!-- an ordered list, then it gets no number      -->
@@ -3199,6 +3594,14 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- The subdivision gets no number and the references     -->
 <!-- should similarly lack a structural number prefix      -->
 <xsl:template match="backmatter/references" mode="serial-number" />
+
+<!-- Various displayed equations are not numbered.     -->
+<!-- We do not consider the local @tag to be a number, -->
+<!-- as it is more a string, formed from symbols       -->
+<xsl:template match="me|md/mrow[not(@number='yes')]|mdn/mrow[@number='no']|mrow[@tag]" mode="serial-number" />
+
+
+
 
 <!-- WeBWorK problems are never numbered, because they live    -->
 <!-- in (numbered) exercises.  But they have identically named -->
@@ -4391,10 +4794,10 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
         <xsl:choose>
             <xsl:when test="not(@scope)">
                 <xsl:choose>
-                    <xsl:when test="//mathbook/book"><xsl:text>book</xsl:text></xsl:when>
-                    <xsl:when test="//mathbook/article"><xsl:text>article</xsl:text></xsl:when>
-                    <xsl:when test="//mathbook/letter"><xsl:text>letter</xsl:text></xsl:when>
-                    <xsl:when test="//mathbook/memo"><xsl:text>memo</xsl:text></xsl:when>
+                    <xsl:when test="$root/book"><xsl:text>book</xsl:text></xsl:when>
+                    <xsl:when test="$root/article"><xsl:text>article</xsl:text></xsl:when>
+                    <xsl:when test="$root/letter"><xsl:text>letter</xsl:text></xsl:when>
+                    <xsl:when test="$root/memo"><xsl:text>memo</xsl:text></xsl:when>
                 </xsl:choose>
             </xsl:when>
             <xsl:otherwise>
@@ -5661,7 +6064,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:choose>
         <!-- quit at the top, and examine highest-match,    -->
         <!-- and for phrase-hybrid, we do a membership test -->
-        <xsl:when test="$parent/self::mathbook">
+        <xsl:when test="$parent/self::mathbook|$parent/self::pretext">
             <xsl:variable name="requires-global">
                 <xsl:choose>
                     <!-- no match, already high up tree, so no  -->
@@ -5768,8 +6171,9 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Common Constructions -->
 <!-- #################### -->
 
-<!-- With no special formatting  -->
-<!-- "PreTeXt" can be in -common -->
+<!-- With no special formatting, "PreTeXt" can be in -common -->
+<!-- Use of "pretext" as a root container should get higher  -->
+<!-- priority when used with /, or as a variable             -->
 <xsl:template match="pretext">
     <xsl:text>PreTeXt</xsl:text>
 </xsl:template>
@@ -5998,8 +6402,11 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:text>[SOLIDUS]</xsl:text>
 </xsl:template>
 
-
-
+<!-- Backtick -->
+<!-- Accent grave, as a text character -->
+<xsl:template match="backtick">
+    <xsl:text>[BACKTICK]</xsl:text>
+</xsl:template>
 
 <!-- Dots
 http://tex.stackexchange.com/questions/19180/which-dot-character-to-use-in-which-context
@@ -6148,7 +6555,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
                 </xsl:if>
             </xsl:message>
         </xsl:when>
-        <xsl:when test="mathbook">
+        <xsl:when test="mathbook|pretext">
             <!-- at root, fail with no action -->
         </xsl:when>
         <xsl:otherwise>
@@ -6192,7 +6599,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- Checks for errors that would be time-consuming -->
 <!-- if done repeatedly, so a pre-processing step   -->
 <!-- Calling context should be "mathbook" element   -->
-<xsl:template match="mathbook" mode="generic-warnings">
+<xsl:template match="mathbook|pretext" mode="generic-warnings">
     <xsl:apply-templates select="." mode="literate-programming-warning" />
     <xsl:apply-templates select="." mode="xinclude-warnings" />
     <xsl:apply-templates select="." mode="xmlid-warning" />
@@ -6202,7 +6609,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 </xsl:template>
 
 <!-- Literate Programming support is half-baked, 2017-07-21 -->
-<xsl:template match="mathbook" mode="literate-programming-warning">
+<xsl:template match="mathbook|pretext" mode="literate-programming-warning">
     <xsl:if test="$document-root//fragment">
         <xsl:call-template name="banner-warning">
             <xsl:with-param name="warning">
@@ -6219,7 +6626,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- Using the modular  xinclude  scheme at the top level,      -->
 <!-- and forgetting the command-line switch is a common mistake -->
 <!-- The following is not perfect, but reasonably effective     -->
-<xsl:template match="mathbook" mode="xinclude-warnings">
+<xsl:template match="mathbook|pretext" mode="xinclude-warnings">
     <xsl:if test="book and not(book/chapter or book/part/chapter)">
         <xsl:message>
             <xsl:text>MBX:WARNING:    </xsl:text>
@@ -6239,7 +6646,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- 10 digits, hyphen/dash, underscore     -->
 <!-- TODO: Added 2016-10-29, make into a fatal error later -->
 <!-- Unique UI id's added 2017-09-25 as fatal error -->
-<xsl:template match="mathbook" mode="xmlid-warning">
+<xsl:template match="mathbook|pretext" mode="xmlid-warning">
     <xsl:variable name="xmlid-characters" select="concat('-_', &SIMPLECHAR;)" />
     <xsl:for-each select="//@xml:id">
         <xsl:if test="not(translate(., $xmlid-characters, '') = '')">
@@ -6271,7 +6678,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- We warn about WeBWorK table details that ultimately may not be respected -->
 <!-- if a problem is archived to .pg, and then that file is used on a WeBWorK -->
 <!-- server, and then WeBWorK's print copy mechanism is used to make a pdf    -->
-<xsl:template match="mathbook" mode="webwork-warnings">
+<xsl:template match="mathbook|pretext" mode="webwork-warnings">
     <xsl:variable name="coltop" select="//webwork//tabular/col/@top" />
     <xsl:variable name="cellbottom" select="//webwork//tabular/cell/@bottom" />
     <xsl:variable name="medium-major" select="//webwork//tabular//*[@top='medium' or @top='major' or @bottom='medium' or @bottom='major' or @left='medium' or @left='major' or @right='medium' or @right='major']" />
@@ -6320,7 +6727,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- templates in the places where elements are banned -->
 <!-- c, cline; unstructured cd, pre                    -->
 <!-- prompt, input, output for sage, console, program  -->
-<xsl:template match="mathbook" mode="text-element-warning">
+<xsl:template match="mathbook|pretext" mode="text-element-warning">
     <xsl:variable name="bad-elements" select="$document-root//c/*|$document-root//cline/*|$document-root//cd[not(cline)]/*|$document-root//pre[not(cline)]/*|$document-root//prompt/*|$document-root//input/*|$document-root//output/*" />
     <xsl:if test="$bad-elements">
         <xsl:message>
@@ -6347,7 +6754,7 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 <!-- then begin a run of further subdivisions.  This preliminary   -->
 <!-- material belongs in an introduction (or is for a conclusion). -->
 <!-- This test is not exhaustive, but will catch most cases.       -->
-<xsl:template match="mathbook" mode="subdivision-structure-warning">
+<xsl:template match="mathbook|pretext" mode="subdivision-structure-warning">
     <xsl:for-each select=".//chapter">
         <xsl:if test="p and section">
             <xsl:message>
@@ -6433,8 +6840,8 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
 </xsl:template>
 
 <xsl:template match="*" mode="deprecation-warnings">
-    <!-- older deprecations at the bottom of this list,  -->
-    <!-- so author will see new at the tail end          -->
+    <!-- older deprecations at the top of this list, -->
+    <!-- so author will see new at the tail end      -->
     <!--  -->
     <!-- 2014-05-04  @filebase has been replaced in function by @xml:id -->
     <xsl:call-template name="deprecation-message">
@@ -6621,16 +7028,6 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
         <xsl:with-param name="message" select="'the &quot;xref/autoname&quot; attribute is deprecated, replace  autoname=&quot;title&quot;  by functional equivalent  text=&quot;title&quot;'" />
     </xsl:call-template>
     <!--  -->
-    <!-- 2017-07-25  deprecate null autoname, and warn about switch of default -->
-    <!-- We include the existence of "docinfo" as a marker of a mature, non-beginner project -->
-    <xsl:if test="($autoname = '') and $docinfo and not(//docinfo/cross-references)">
-    <xsl:call-template name="parameter-deprecation-message">
-        <xsl:with-param name="date-string" select="'2017-07-25'" />
-        <xsl:with-param name="message" select="'the default version of text for cross-references has changed.  Rather than simply numbers, they will be prefixed by type-names as well.  So you could see duplicates like &quot;Theorem Theorem 5.2&quot;.  Set  &quot;docinfo/cross-references/@text&quot;  to  &quot;global&quot;  to restore old behavior'" />
-            <xsl:with-param name="incorrect-use" select="($autoname = '') and $docinfo and not(//docinfo/cross-references)" />
-        </xsl:call-template>
-    </xsl:if>
-    <!--  -->
     <!-- 2017-07-25  deprecate intentional autoname without new setting -->
     <xsl:if test="not($autoname = '') and not(//docinfo/cross-references)">
         <xsl:call-template name="parameter-deprecation-message">
@@ -6681,6 +7078,28 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
         <xsl:with-param name="date-string" select="'2017-09-10'" />
         <xsl:with-param name="message" select="'the &quot;paragraphs&quot; element (outside of a &quot;sidebyside&quot;) now requires a &quot;title&quot; (but you can xref individual &quot;p&quot; now, if that is your purpose)'" />
     </xsl:call-template>
+    <!--  -->
+    <!-- 2017-11-09  WeBWorK images now with widths as percentages, only on an enclosing sidebyside -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//webwork//image[@width or @height or @tex-size]" />
+        <xsl:with-param name="date-string" select="'2017-11-09'" />
+        <xsl:with-param name="message" select="'an &quot;image&quot; within a &quot;webwork&quot; now has its size given by just a &quot;width&quot; attribute expressed as a percentage, including the percent sign (so in particular do not use &quot;height&quot; or &quot;tex-size&quot;).  Within &quot;webwork&quot;, the &quot;width&quot; needs to be given on an enclosing &quot;sidebyside&quot;'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2017-11-09  Assemblages have been rationalized, warn about captioned items -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//assemblage//*[caption]" />
+        <xsl:with-param name="date-string" select="'2017-11-09'" />
+        <xsl:with-param name="message" select="'an &quot;assemblage&quot; should not contain any items with a &quot;caption&quot;.  You can instead place the content in a bare &quot;sidebyside&quot;'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2017-12-07  "c" content totally escaped for LaTeX -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//c/@latexsep" />
+        <xsl:with-param name="date-string" select="'2017-12-07'" />
+        <xsl:with-param name="message" select="'the &quot;@latexsep&quot; attribute on the &quot;c&quot; element is no longer necessary.  It is being ignored, and can be removed'" />
+    </xsl:call-template>
+    <!--  -->
 </xsl:template>
 
 <!-- Miscellaneous -->

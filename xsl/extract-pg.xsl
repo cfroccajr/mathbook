@@ -1,109 +1,216 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <!-- ********************************************************************* -->
-<!-- Copyright 2015                                                        -->
+<!-- Copyright 2015-7                                                      -->
 <!-- Robert A. Beezer, Michael Gage, Geoff Goehle, Alex Jordan             -->
 <!--                                                                       -->
-<!-- This file is part of MathBook XML.                                    -->
+<!-- This file is part of PreTeXt.                                         -->
 <!--                                                                       -->
-<!-- MathBook XML is free software: you can redistribute it and/or modify  -->
+<!-- PreTeXt is free software: you can redistribute it and/or modify       -->
 <!-- it under the terms of the GNU General Public License as published by  -->
 <!-- the Free Software Foundation, either version 2 or version 3 of the    -->
 <!-- License (at your option).                                             -->
 <!--                                                                       -->
-<!-- MathBook XML is distributed in the hope that it will be useful,       -->
+<!-- PreTeXt is distributed in the hope that it will be useful,            -->
 <!-- but WITHOUT ANY WARRANTY; without even the implied warranty of        -->
 <!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         -->
 <!-- GNU General Public License for more details.                          -->
 <!--                                                                       -->
 <!-- You should have received a copy of the GNU General Public License     -->
-<!-- along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>. -->
+<!-- along with PreTeXt.  If not, see <http://www.gnu.org/licenses/>.      -->
 <!-- ********************************************************************* -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
     xmlns:xml="http://www.w3.org/XML/1998/namespace"
-    xmlns:exsl="http://exslt.org/common"
 >
 
-<!-- This file is a library of routines to convert parts of      -->
-<!-- a webwork problem into PG and PGML code/markup.  It         -->
-<!-- depends on utility routines in xsl/mathbook-common.xsl,     -->
-<!-- such as routines to santize blocks of code.  However        -->
-<!-- the present file does not import mathbook-common.xsl,       -->
-<!-- nor should it, since imports will be applied                -->
-<!-- out-of-order that way.                                      -->
-<!--                                                             -->
-<!-- Instead, a conversion to some format, say HTML, should      -->
-<!-- import xsl/mathbook-html.xsl, for general HTML conversion,  -->
-<!-- but this will additionally import the common file.          -->
-<!-- Then the conversion file may import the present file,       -->
-<!-- mathbook-webwork-pg.xsl, for its services in creating       -->
-<!-- a well-formed WeBWorK problem.                              -->
-<!--                                                             -->
-<!-- This should change as development stabilizes and the        -->
-<!-- production of the content of a PG problem should move       -->
-<!-- to the common file (perhaps).                               -->
+<!-- This style sheet is intended to be used by the ptx script. It makes   -->
+<!-- several Python dictionaries that the ptx script will use to create a  -->
+<!-- single XML file called webwork-extraction.xml with various            -->
+<!-- representations of each webwork.                                      -->
 
-<!-- Intend output to be a PGML problem -->
-<xsl:output method="text" />
+<!-- Each dictionary uses the webworks' internal-ids as keys. There are    -->
+<!-- dictionaries for obtaining:                                           -->
+<!-- 1. a 'ptx'|'server' flag (is it authored in PTX or on the server?)    -->
+<!-- 2. a seed for randomization (with a default explicitly declared)      -->
+<!-- 3. source (either the source XML or a problem's file path)            -->
+<!-- 4. human readable PG (or the problem's file path)                     -->
 
+<!-- The style sheet extract-pg-ptx.xsl separately builds:                 -->
+<!-- 5. PG designed for use in PTX output modes (or problem's file path)   -->
 
-<!-- Parameters to pass via xsltproc "stringparam" on command-line            -->
-<!-- Or make a thin customization layer and use 'select' to provide overrides -->
-<!--  -->
-<!-- Enable answer format syntax help links                       -->
-<!-- Each variable has a "category", like "integer" or "formula". -->
-<!-- When an answer blank is expecting a variable, use category   -->
-<!-- to provide AnswerFormatHelp link.                            -->
+<!-- The ptx script (-c webwork) uses all this to build a single XML file  -->
+<!-- (called webwork-extraction.xml) containing multiple representations   -->
+<!-- of each webwork problem. The ptx script must be re-run whenever       -->
+<!-- something changes with author source within a webwork element. Or if  -->
+<!-- something changes with a .pg file that lives on a server. Or if the   -->
+<!-- configuration of the hosting server or server/course changes.         -->
+
+<!-- Then pretext-merge.xsl merges author's source XML and the webwork     -->
+<!-- representations into a single XML file (that you name at the point of -->
+<!-- running xsltproc). The standard style sheets (HMTL, LaTeX) can then   -->
+<!-- be applied to this merged file. Also, most mbx applications (such as  -->
+<!-- for latex-images) apply to the mered file. So you must re-apply       -->
+<!-- pretext-merge.xsl  each time something changes with source XML.       -->
+
+<xsl:import href="./mathbook-common.xsl" />
+
+<!-- We are really outputting Python code, but setting the output method   -->
+<!-- to be "xml" makes it easy to dump in the author's source.             -->
+<xsl:output method="xml" omit-xml-declaration="yes" indent="yes" encoding="UTF-8" />
+
+<!-- ######### -->
+<!-- Variables -->
+<!-- ######### -->
+
+<!-- Enable answer format syntax help links. Each answer blank can have a  -->
+<!-- "category" attribute, like "integer" or "formula". If these are       -->
+<!-- present and this param is 'yes', answer blank fields in HTML are      -->
+<!-- followed with a link to syntax help.                                  -->
+<!-- TODO: in order to omit all answer help links globally, the ptx script -->
+<!-- needs a switch so that it can pass 'no' to this param.                -->
 <xsl:param name="pg.answer.form.help" select="'yes'" />
 
+<!-- This is cribbed from the CSS "max-width".  Design width, in pixels.   -->
+<!-- NB: the exact same value, for similar, but not identical, reasons is  -->
+<!-- used in the formation of WeBWorK problems                             -->
+<xsl:variable name="design-width-pg" select="'600'" />
 
-<!-- If the extraction style sheet is calling this style sheet, $static -->
-<!-- will be 'yes', and that influences certain templates here          -->
-<xsl:param name="static" select="'no'" />
-<xsl:variable name="b-static" select="$static = 'yes'" />
+<!--#######################################################################-->
+<!-- Dictionary Architecture                                               -->
+<!--#######################################################################-->
 
-<xsl:variable name="document-root" select="/mathbook/*[not(self::docinfo)]|/pretext/*[not(self::docinfo)]" />
+<!-- Initialize empty dictionaries, then define key-value pairs -->
+<xsl:template match="/">
+    <xsl:text>origin = {}&#xa;</xsl:text>
+    <xsl:text>seed = {}&#xa;</xsl:text>
+    <xsl:text>source = {}&#xa;</xsl:text>
+    <xsl:text>pg = {}&#xa;</xsl:text>
+    <xsl:apply-templates select="//webwork[statement|stage|@source]" mode="dictionaries"/>
+</xsl:template>
+
+<xsl:template match="webwork[statement|stage]" mode="dictionaries">
+    <!-- Define values for the internal-id as key -->
+    <xsl:variable name="problem">
+        <xsl:apply-templates select="." mode="internal-id" />
+    </xsl:variable>
+
+    <xsl:text>origin["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = "ptx"&#xa;</xsl:text>
+
+    <xsl:text>seed["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = "</xsl:text>
+    <xsl:apply-templates select="." mode="get-seed" />
+    <xsl:text>"&#xa;</xsl:text>
+
+    <xsl:text>source["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = """</xsl:text>
+    <xsl:copy-of select="." />
+    <xsl:text>"""&#xa;</xsl:text>
+
+    <xsl:text>pg["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = """</xsl:text>
+    <xsl:apply-templates select="." />
+    <xsl:text>"""&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="webwork[@source]" mode="dictionaries">
+    <!-- Define values for the internal-id as key -->
+    <xsl:variable name="problem">
+        <xsl:apply-templates select="." mode="internal-id" />
+    </xsl:variable>
+
+    <xsl:text>origin["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = "server"&#xa;</xsl:text>
+
+    <xsl:text>seed["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = "</xsl:text>
+    <xsl:apply-templates select="." mode="get-seed" />
+    <xsl:text>"&#xa;</xsl:text>
+
+    <xsl:text>source["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = "</xsl:text>
+    <xsl:value-of select="@source" />
+    <xsl:text>"&#xa;</xsl:text>
+
+    <xsl:text>pg["</xsl:text>
+    <xsl:value-of select="$problem" />
+    <xsl:text>"] = "</xsl:text>
+    <xsl:value-of select="@source" />
+    <xsl:text>"&#xa;</xsl:text>
+</xsl:template>
 
 
+<!-- Default randomization seed based on the webwork's number()  -->
+<!-- This is better than a constant default seed, which can lead -->
+<!-- to adjacent problems using the same random values           -->
+<xsl:template match="webwork" mode="get-seed">
+    <xsl:choose>
+        <xsl:when test="@seed">
+            <xsl:value-of select="@seed" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:number level="any" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
 
-<!-- ################# -->
-<!-- File Organization -->
-<!-- ################# -->
+<!-- Marginal notes that common routines may call upon not implemented     -->
+<xsl:template name="margin-warning" />
 
-<!-- The mechanics of a WeBWorK problem come first, with        -->
-<!-- specific MathBook XML markup to support problem expression -->
-<!--                                                            -->
-<!-- The latter half of the file is the conversion of more      -->
-<!-- universal MathBook XML markup to its PGML variants         -->
+
+<!--#######################################################################-->
+<!-- PG Construction. These templates are designed to create human-        -->
+<!-- readable PG. This is in contrast with the templates in extract-pg-ptx -->
+<!-- which are designed to create PG that behaves better for building PTX  -->
+<!-- output.                                                               -->
+<!--#######################################################################-->
+
+<!-- The mechanics of a WeBWorK problem come first, with specific PreTeXt  -->
+<!-- markup to support problem expression.                                 -->
+<!--                                                                       -->
+<!-- The latter half of the file is the conversion of more universal       -->
+<!-- PreTeXt markup to its PGML variants.                                  -->
 
 
 <!-- ################## -->
 <!-- Top-Down Structure -->
 <!-- ################## -->
 
-<!-- Basic outline of a simple problem -->
-<xsl:template match="webwork[child::statement]" mode="pg">
+<!-- A webwork element can either:                                         -->
+<!-- 1. be empty; just for printing "WeBWorK"                              -->
+<!-- 2. use an existing .pg problem from the server                        -->
+<!-- 3. have a single statement child                                      -->
+<!-- 4. have two or more stage children (known in WW as "scaffolded")      -->
+<!-- This file is not concerned with the first two. The latter two top     -->
+<!-- level templates follow.                                               -->
+
+<xsl:template match="webwork[statement]">
     <xsl:call-template   name="begin-problem" />
     <xsl:call-template   name="pg-macros" />
     <xsl:call-template   name="pg-header" />
-    <xsl:apply-templates select="setup" />
+    <xsl:apply-templates select="." mode="pg-setup" />
     <xsl:apply-templates select="statement" />
     <xsl:apply-templates select="hint" />
     <xsl:apply-templates select="solution" />
     <xsl:call-template   name="end-problem" />
 </xsl:template>
 
-<!-- Basic outline of a multi-stage problem  -->
-<!-- Known in WeBWorK as a"scaffold" problem -->
-<!-- Indicated by <stages> as children       -->
-<xsl:template match="webwork[child::stage]" mode="pg">
+<xsl:template match="webwork[stage]">
     <xsl:call-template   name="begin-problem" />
     <xsl:call-template   name="pg-macros" />
     <xsl:call-template   name="pg-header" />
-    <xsl:apply-templates select="setup" />
-    <xsl:call-template name="begin-block">
-        <xsl:with-param name="block-title">Scaffold</xsl:with-param>
+    <xsl:text>COMMENT('This problem is scaffolded with multiple parts');&#xa;</xsl:text>
+    <xsl:apply-templates select="." mode="pg-setup"/>
+    <xsl:call-template   name="begin-block">
+        <xsl:with-param  name="block-title">Scaffold</xsl:with-param>
     </xsl:call-template>
     <xsl:text>Scaffold::Begin();&#xa;</xsl:text>
     <xsl:apply-templates select="stage" />
@@ -112,23 +219,26 @@
     <xsl:call-template   name="end-problem" />
 </xsl:template>
 
-<xsl:template match="webwork/setup">
+
+<!-- The setup element formerly had more internal structure. Now it only   -->
+<!-- contains the pg-code element, and therefore could be eliminated.      -->
+<xsl:template match="webwork" mode="pg-setup">
     <xsl:call-template name="begin-block">
         <xsl:with-param name="block-title">PG Setup</xsl:with-param>
     </xsl:call-template>
-    <!-- DTD does not allow multiple "setup," is this right? -->
-    <xsl:if test="not(preceding-sibling::setup) and not(contains(./pg-code,'Context('))">
+    <!-- All our problems load MathObjects, and so should have at least    -->
+    <!-- one explicit Context() load.                                      -->
+    <xsl:if test="not(contains(setup/pg-code,'Context('))">
         <xsl:text>Context('Numeric');&#xa;</xsl:text>
     </xsl:if>
     <!-- pg-code verbatim, but trim indentation -->
     <xsl:call-template name="sanitize-text">
-        <xsl:with-param name="text" select="pg-code" />
+        <xsl:with-param name="text" select="setup/pg-code" />
     </xsl:call-template>
 </xsl:template>
 
-<!-- A stage is part of a multi-stage problem -->
-<!-- WeBWorK calls these "scaffold" problems, -->
-<!-- which have "section"s                    -->
+<!-- A stage is part of a multi-stage problem. WeBWorK calls these         -->
+<!-- "scaffold" problems, which have "section"s                            -->
 <xsl:template match="webwork/stage">
     <xsl:call-template name="begin-block">
         <xsl:with-param name="block-title">Section</xsl:with-param>
@@ -148,11 +258,9 @@
     <xsl:call-template name="begin-block">
         <xsl:with-param name="block-title">Body</xsl:with-param>
     </xsl:call-template>
-    <xsl:text>BEGIN_PGML&#xa;</xsl:text>
+    <xsl:text>&#xa;BEGIN_PGML&#xa;</xsl:text>
     <xsl:apply-templates />
-    <!-- unless we guarantee line feed, a break is needed -->
-    <xsl:text>&#xa;</xsl:text>
-    <xsl:text>END_PGML&#xa;</xsl:text>
+    <xsl:text>&#xa;END_PGML&#xa;</xsl:text>
 </xsl:template>
 
 <!-- default template, for solution -->
@@ -160,11 +268,9 @@
     <xsl:call-template name="begin-block">
         <xsl:with-param name="block-title">Solution</xsl:with-param>
     </xsl:call-template>
-    <xsl:text>BEGIN_PGML_SOLUTION&#xa;</xsl:text>
+    <xsl:text>&#xa;BEGIN_PGML_SOLUTION&#xa;</xsl:text>
     <xsl:apply-templates />
-    <!-- unless we guarantee line feed, a break is needed -->
-    <xsl:text>&#xa;</xsl:text>
-    <xsl:text>END_PGML_SOLUTION&#xa;</xsl:text>
+    <xsl:text>&#xa;END_PGML_SOLUTION&#xa;</xsl:text>
 </xsl:template>
 
 <!-- default template, for hint -->
@@ -173,18 +279,16 @@
         <xsl:with-param name="block-title">Hint</xsl:with-param>
     </xsl:call-template>
     <xsl:text>#Set value of $showHint in PGcourse.pl for course-wide attempt threshhold for revealing hints&#xa;</xsl:text>
-    <xsl:text>BEGIN_PGML_HINT&#xa;</xsl:text>
+    <xsl:text>&#xa;BEGIN_PGML_HINT&#xa;</xsl:text>
     <xsl:apply-templates />
-    <!-- unless we guarantee line feed, a break is needed -->
-    <xsl:text>&#xa;</xsl:text>
-    <xsl:text>END_PGML_HINT&#xa;</xsl:text>
+    <xsl:text>&#xa;END_PGML_HINT&#xa;</xsl:text>
 </xsl:template>
 
 <!-- ############################## -->
 <!-- Problem Header/Initializations -->
 <!-- ############################## -->
 
-<!-- Includes file header blurb promoting MBX -->
+<!-- Includes file header blurb promoting PTX -->
 <xsl:template name="begin-problem">
     <xsl:call-template name="converter-blurb-webwork" />
     <xsl:call-template name="webwork-metadata" />
@@ -204,26 +308,31 @@
     <xsl:text>## KEYWORDS(</xsl:text>
     <xsl:text>)&#xa;</xsl:text>
     <xsl:text>## TitleText1(</xsl:text>
-    <xsl:if test="$document-root/title">
-        <xsl:apply-templates select="$document-root" mode="title-full" />
+    <xsl:if test="/mathbook/book|/mathbook/article">
+        <xsl:apply-templates select="/mathbook/book|/mathbook/article" mode="title-full" />
     </xsl:if>
     <xsl:text>)&#xa;</xsl:text>
     <xsl:text>## EditionText1(</xsl:text>
+    <xsl:if test="/mathbook/book/frontmatter/colophon/edition">
+        <xsl:apply-templates select="/mathbook/book/frontmatter/colophon/edition" />
+    </xsl:if>
     <xsl:text>)&#xa;</xsl:text>
     <xsl:text>## AuthorText1(</xsl:text>
-    <xsl:for-each select="$document-root/frontmatter/titlepage/author">
-        <xsl:value-of select="personname"/>
-        <xsl:if test="following::personname">
-            <xsl:text>, </xsl:text>
-        </xsl:if>
-    </xsl:for-each>
+    <xsl:if test="/mathbook/book|/mathbook/article">
+        <xsl:for-each select="/mathbook/book/frontmatter/titlepage/author|/mathbook/article/frontmatter/titlepage/author">
+            <xsl:value-of select="personname"/>
+            <xsl:if test="not(position()=last())">
+                <xsl:text>, </xsl:text>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:if>
     <xsl:text>)&#xa;</xsl:text>
     <!-- needs structural enclosure inline v. sectional          -->
     <!-- do not use structure number, makes overrides impossible -->
     <xsl:text>## Section1(not reported</xsl:text>
         <!-- <xsl:apply-templates select="ancestor::exercise" mode="structure-number" /> -->
     <xsl:text>)&#xa;</xsl:text>
-    <!-- WW problem is always enclosed directly by an MBX exercise -->
+    <!-- WW problem is always enclosed directly by an PTX exercise -->
     <xsl:text>## Problem1(</xsl:text>
         <xsl:apply-templates select="parent::exercise" mode="number" />
     <xsl:text>)&#xa;</xsl:text>
@@ -236,7 +345,7 @@
     <xsl:text>)&#xa;&#xa;</xsl:text>
 </xsl:template>
 
-<!-- Includes (localized) PG "COMMENT" promoting MBX -->
+<!-- Includes (localized) PG "COMMENT" promoting PTX -->
 <xsl:template name="pg-header">
     <xsl:call-template name="begin-block">
         <xsl:with-param name="block-title">Header</xsl:with-param>
@@ -246,7 +355,8 @@
         <xsl:with-param name="string-id" select="'authored'" />
     </xsl:call-template>
     <xsl:text> PreTeXt');&#xa;</xsl:text>
-    <xsl:text>TEXT(beginproblem());&#xa;</xsl:text>
+    <xsl:text>TEXT(beginproblem());</xsl:text>
+    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <!-- ############## -->
@@ -257,7 +367,7 @@
     <xsl:call-template name="begin-block">
         <xsl:with-param name="block-title">End Problem</xsl:with-param>
     </xsl:call-template>
-    <xsl:text>ENDDOCUMENT();&#xa;</xsl:text>
+    <xsl:text>&#xa;ENDDOCUMENT();&#xa;</xsl:text>
 </xsl:template>
 
 <!-- ############## -->
@@ -396,11 +506,11 @@
             </xsl:variable>
             <xsl:choose>
                 <xsl:when test="contains($standard-macros, $fenced-macro)">
-                    <xsl:message>MBX:WARNING: the WeBWorK PG macro <xsl:value-of select="."/> is always included for every problem</xsl:message>
+                    <xsl:message>PTX:WARNING: the WeBWorK PG macro <xsl:value-of select="."/> is always included for every problem</xsl:message>
                     <xsl:apply-templates select="." mode="location-report" />
                 </xsl:when>
                 <xsl:when test="contains($implied-macros, $fenced-macro)">
-                    <xsl:message>MBX:WARNING: the WeBWorK PG macro <xsl:value-of select="."/> is implied by the problem construction and already included</xsl:message>
+                    <xsl:message>PTX:WARNING: the WeBWorK PG macro <xsl:value-of select="."/> is implied by the problem construction and already included</xsl:message>
                     <xsl:apply-templates select="." mode="location-report" />
                 </xsl:when>
                 <xsl:otherwise>
@@ -418,7 +528,7 @@
         </xsl:variable>
         <xsl:choose>
             <xsl:when test="contains($standard-macros, $fenced-macro)">
-                <xsl:message>MBX:WARNING: the WeBWorK PG macro PGcourse.pl is always included for every problem</xsl:message>
+                <xsl:message>PTX:WARNING: the WeBWorK PG macro PGcourse.pl is always included for every problem</xsl:message>
                 <xsl:apply-templates select="." mode="location-report" />
             </xsl:when>
             <xsl:otherwise>
@@ -429,20 +539,18 @@
         </xsl:choose>
     </xsl:variable>
     <!-- put them together with a wrapper -->
-    <xsl:text>loadMacros(&#xa;</xsl:text>
-    <xsl:value-of select="$standard-macros" />
-    <xsl:value-of select="$implied-macros" />
-    <xsl:value-of select="$user-macros" />
-    <xsl:value-of select="$course-macro" />
-    <xsl:text>);&#xa;</xsl:text>
+    <xsl:variable name="load-macros">
+        <xsl:text>loadMacros(&#xa;</xsl:text>
+        <xsl:value-of select="$standard-macros" />
+        <xsl:value-of select="$implied-macros" />
+        <xsl:value-of select="$user-macros" />
+        <xsl:value-of select="$course-macro" />
+        <xsl:text>);&#xa;</xsl:text>
+    </xsl:variable>
+    <xsl:value-of select="$load-macros" />
     <!-- if images are used, explicitly refresh or stale images will be used in HTML -->
     <xsl:if test=".//image[@pg-name]">
         <xsl:text>$refreshCachedImages= 1;</xsl:text>
-    </xsl:if>
-    <!-- shorten name of PGML::Format to save characters for base64 url -->
-    <!-- only used within table cells                                  -->
-    <xsl:if test=".//tabular">
-        <xsl:text>sub PF {PGML::Format(@_)};&#xa;</xsl:text>
     </xsl:if>
 </xsl:template>
 
@@ -453,34 +561,19 @@
 
 <!-- PGML markup for Perl variable in LaTeX expression -->
 <xsl:template match="webwork//statement//var|webwork//hint//var|webwork//solution//var">
-    <xsl:apply-templates select="." mode="static-warning" />
-    <xsl:variable name="varname" select="@name" />
-    <xsl:variable name="problem" select="ancestor::webwork" />
     <xsl:text>[</xsl:text>
     <xsl:value-of select="@name" />
-    <xsl:if test="$problem/statement//var[@name=$varname and @form='checkboxes']">
+    <xsl:if test="@form='checkboxes'">
         <xsl:text>->correct_ans()</xsl:text>
     </xsl:if>
     <xsl:text>]</xsl:text>
 </xsl:template>
 
+<!-- An image description may depend on the value of a simple scalar var   -->
+<!-- Perhaps this should warn if @name is not in Perl scalar syntax        -->
 <xsl:template match="webwork//description//var">
-    <xsl:apply-templates select="." mode="static-warning" />
     <xsl:value-of select="@name"/>
 </xsl:template>
-
-<xsl:template match="webwork//var" mode="static-warning">
-    <xsl:variable name="varname" select="@name" />
-    <xsl:variable name="problem" select="ancestor::webwork" />
-    <xsl:if test="substring($varname,1,1)='$' and not($problem/setup/var[@name=$varname]/static) and not($problem/setup/var[@name=$varname]/set/member) and not(@form='essay')">
-        <xsl:message>
-            <xsl:text>MBX:WARNING: A WeBWorK exercise uses a var (name="</xsl:text>
-            <xsl:value-of select="$varname"/>
-            <xsl:text>") for which there is no static value or set declared</xsl:text>
-        </xsl:message>
-    </xsl:if>
-</xsl:template>
-
 
 <!-- ############ -->
 <!-- PGML answers -->
@@ -489,11 +582,8 @@
 <!-- PGML answer input               -->
 <!-- Example: [_____]{$ans}          -->
 <xsl:template match="webwork//statement//var[@width|@form]">
-    <xsl:apply-templates select="." mode="static-warning" />
     <xsl:apply-templates select="." mode="field"/>
     <xsl:apply-templates select="." mode="form-help"/>
-    <xsl:variable name="problem" select="ancestor::webwork" />
-    <xsl:variable name="varname" select="@name" />
 </xsl:template>
 
 <!-- MathObject answers -->
@@ -511,6 +601,7 @@
         </xsl:choose>
     </xsl:variable>
     <!-- when an answer blank is the first thing on a line, indent -->
+    <!-- this is a styling preference that can't be customized     -->
     <xsl:if test="(count(preceding-sibling::*)+count(preceding-sibling::text()))=0 and parent::p/parent::statement">
         <xsl:text>    </xsl:text>
     </xsl:if>
@@ -550,16 +641,19 @@
 </xsl:template>
 
 <!-- Checkbox answers -->
-<!-- TODO: not really supported yet. The checkbox handling in WeBWorK is technically broken. -->
-<!-- The issue is only surfacing when trying to do a checkbox problem from an iframe. Any    -->
-<!-- attempt to check multiple boxes and submit leads to only one box being seen as checked  -->
-<!-- by WeBWorK 2                                                                            --> 
+<!-- TODO: not really supported yet. The checkbox handling in WeBWorK is  -->
+<!-- technically broken. The issue is only surfacing when trying to do a  -->
+<!-- checkbox problem from an iframe. Any attempt to check multiple boxes -->
+<!-- and submit leads to only one box being seen as checked by WeBWorK.   -->
 <xsl:template match="webwork//var[@form='checkboxes']" mode="field">
     <xsl:text>    [@</xsl:text>
     <xsl:value-of select="@name"/>
-    <xsl:text>->print_a() @]*&#xa;END_PGML&#xa;ANS(checkbox_cmp(</xsl:text>
+    <xsl:text>->print_a() @]*&#xa;</xsl:text>
+    <xsl:text>&#xa;END_PGML&#xa;</xsl:text>
+    <xsl:text>ANS(checkbox_cmp(</xsl:text>
     <xsl:value-of select="@name"/>
-    <xsl:text>->correct_ans()));&#xa;BEGIN_PGML&#xa;</xsl:text>
+    <xsl:text>->correct_ans()));&#xa;</xsl:text>
+    <xsl:text>&#xa;BEGIN_PGML&#xa;</xsl:text>
 </xsl:template>
 
 <!-- Essay answers -->
@@ -567,7 +661,7 @@
 <!-- Requires:  PGessaymacros.pl, automatically loaded -->
 <!-- http://webwork.maa.org/moodle/mod/forum/discuss.php?d=3370 -->
 <xsl:template match="webwork//var[@form='essay']" mode="field">
-    <xsl:text>[@ ANS(essay_cmp); essay_box(</xsl:text>
+    <xsl:text>[@ANS(essay_cmp); essay_box(</xsl:text>
     <xsl:choose>
         <xsl:when test="@height">
             <xsl:value-of select="@height"/>
@@ -585,13 +679,10 @@
             <xsl:text>76</xsl:text>
         </xsl:otherwise>
     </xsl:choose>
-    <xsl:text>) @]*</xsl:text>
+    <xsl:text>)@]*</xsl:text>
 </xsl:template>
 
 <xsl:template match="webwork//var[@width]|var[@form]" mode="form-help">
-    <xsl:variable name="varname" select="@name" />
-    <xsl:variable name="problem" select="ancestor::webwork" />
-    <xsl:variable name="category" select="$problem/setup/var[@name=$varname]/@category" />
     <xsl:variable name="form">
         <xsl:choose>
             <xsl:when test="@form">
@@ -599,7 +690,7 @@
             </xsl:when>
             <xsl:otherwise>
                 <xsl:call-template name="category-to-form">
-                    <xsl:with-param name="category" select="$category"/>
+                    <xsl:with-param name="category" select="@category"/>
                 </xsl:call-template>
             </xsl:otherwise>
         </xsl:choose>
@@ -611,6 +702,7 @@
             <xsl:when test="$form='essay'">
                 <xsl:text> [@essay_help()@]*</xsl:text>
             </xsl:when>
+            <!-- inside a table, do not encase in [@...@]* and do concatenate-->
             <xsl:when test="ancestor::tabular">
                 <xsl:text>".AnswerFormatHelp('</xsl:text>
                 <xsl:value-of select="$form"/>
@@ -677,26 +769,6 @@
     </xsl:choose>
 </xsl:template>
 
-<!-- Sidebyside in a WeBWorK expects only one child: image or tabular.    -->
-<!-- Just applies templates to its child                                  -->
-<!-- NB: this may need improvements, such as positioning                  -->
-<!-- NB: a Schematron rule should enforce the single child                -->
-
-<xsl:template match="webwork//sidebyside">
-    <xsl:if test="preceding-sibling::p|preceding-sibling::sidebyside">
-        <xsl:call-template name="potential-list-indent" />
-    </xsl:if>
-    <xsl:if test="not(ancestor::li)">
-        <xsl:text>&gt;&gt; </xsl:text>
-    </xsl:if>
-    <xsl:apply-templates select="image|tabular" />
-    <xsl:if test="not(ancestor::li)">
-        <xsl:text> &lt;&lt;</xsl:text>
-    </xsl:if>
-    <xsl:text>&#xa;</xsl:text>
-    <xsl:text>&#xa;</xsl:text>
-</xsl:template>
-
 <!-- ####################### -->
 <!-- PGML Image Construction -->
 <!-- ####################### -->
@@ -708,7 +780,7 @@
     <xsl:text>[@image(insertGraph(</xsl:text>
     <xsl:value-of select="@pg-name"/>
     <xsl:text>), width=&gt;</xsl:text>
-    <xsl:value-of select="substring-before($width, '%') div 100 * 600"/>
+    <xsl:value-of select="substring-before($width, '%') div 100 * $design-width-pg"/>
     <xsl:if test="description">
         <xsl:text>, extra_html_tags=&gt;qq!alt="</xsl:text>
         <xsl:apply-templates select="description" mode="pg" />
@@ -717,71 +789,17 @@
     <xsl:text>)@]* </xsl:text>
 </xsl:template>
 
-<!-- Copied from common, since it's needed but this style sheet does not itself import common. -->
-<!-- Forthcoming extract-pg.xsl and extract-pg-ptx.xsl will replace this style sheet, and they -->
-<!-- do import common, so there is no need for this duplication there.                         -->
-<xsl:template match="image[ancestor::sidebyside and ancestor::webwork]|video[ancestor::sidebyside and ancestor::webwork]|jsxgraph[ancestor::sidebyside and ancestor::webwork]" mode="get-width-percentage">
-    <!-- in a side-by-side, get layout, locate in layout -->
-    <!-- and get width.  The layout-parameters template  -->
-    <!-- will analyze an enclosing sbsgroup              -->
-    <xsl:variable name="enclosing-sbs" select="ancestor::sidebyside" />
-    <xsl:variable name="rtf-layout">
-        <xsl:apply-templates select="$enclosing-sbs" mode="layout-parameters" />
-    </xsl:variable>
-    <xsl:variable name="layout" select="exsl:node-set($rtf-layout)" />
-    <xsl:choose>
-        <xsl:when test="parent::figure">
-            <xsl:variable name="panel-number" select="count(parent::figure/preceding-sibling::*) + 1" />
-            <xsl:value-of select="$layout/width[$panel-number]" />
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:variable name="panel-number" select="count(preceding-sibling::*) + 1" />
-            <xsl:value-of select="$layout/width[$panel-number]" />
-        </xsl:otherwise>
-    </xsl:choose>
+<!-- A description here should only have text nodes and var children.      -->
+<!-- Puts the description into an "alt" tag.                               -->
+<xsl:template match="webwork//image[@pg-name]/description">
+    <xsl:apply-templates select="text()|var"/>
 </xsl:template>
 
-<!-- We need to override the HTML template that  -->
-<!-- puts the description into an "alt" tag -->
-<xsl:template match="webwork//description" mode="pg">
-    <xsl:apply-templates />
-</xsl:template>
-
-
-
-<!-- ############################# -->
-<!-- ############################# -->
-<!-- MathBook XML Markup into PGML -->
-<!-- ############################# -->
-<!-- ############################# -->
-
-
-<!-- ########## -->
-<!-- Paragraphs -->
-<!-- ########## -->
-
-<!-- In PGML, paragraph breaks are just blank lines -->
-<!-- End as normal with a line feed, then           -->
-<!-- issue a blank line to signify the break        -->
-<!-- If p is inside a list, special handling        -->
-<xsl:template match="webwork//p">
-    <xsl:if test="preceding-sibling::p|preceding-sibling::image|preceding-sibling::tabular and not(child::*[1][self::ol] or child::*[1][self::ul])">
-        <xsl:call-template name="potential-list-indent" />
-    </xsl:if>
-    <xsl:apply-templates />
-    <!-- If p is last thing in entire (maybe nested) list, explicitly terminate list with three spaces at end of line. -->
-    <xsl:if test="parent::li and not(following-sibling::*) and not(parent::*/following::*[1][self::li])">
-        <xsl:text>   </xsl:text>
-    </xsl:if>
-    <!-- Blank line required or PGML will treat two adjacent p as one -->
-    <xsl:if test="not(parent::li) or following-sibling::* or parent::li/following-sibling::*">
-        <xsl:text>&#xa;</xsl:text>
-        <xsl:text>&#xa;</xsl:text>
-    </xsl:if>
-</xsl:template>
-
+<!-- An "instruction" is a peer of p, only within a webwork. The purpose   -->
+<!-- is to give the reader something like keyboard syntax instructions     -->
+<!-- but withhold these in print output.                                   -->
 <xsl:template match="webwork//instruction">
-    <xsl:if test="preceding-sibling::p|preceding-sibling::image|preceding-sibling::tabular and not(child::*[1][self::ol] or child::*[1][self::ul])">
+    <xsl:if test="preceding-sibling::p|preceding-sibling::sidebyside and not(child::*[1][self::ol] or child::*[1][self::ul])">
         <xsl:call-template name="potential-list-indent" />
     </xsl:if>
     <xsl:text>[@KeyboardInstructions(q?</xsl:text>
@@ -791,127 +809,17 @@
     <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<!-- ######### -->
-<!-- Numbering -->
-<!-- ######### -->
-
-<!-- The cross-reference numbering scheme uses \ref, \hyperref -->
-<!-- for LaTeX and numbers elsewhere, so it is unimplmented in -->
-<!-- mathbook-common.xsl, hence we implement it here           -->
-<!-- This is identical to mathbook-html.xsl                    -->
-
-<xsl:template match="*" mode="xref-number">
-    <xsl:apply-templates select="." mode="number" />
-</xsl:template>
-
-<!-- In common template, but have to point -->
-<!-- to it since it is a modal template    -->
-<xsl:template match="webwork//exercisegroup" mode="xref-number">
-    <xsl:apply-imports />
-</xsl:template>
-
-<!-- ######### -->
-<!-- PGML Math -->
-<!-- ######### -->
-
-<!-- PGML inline math uses its own delimiters  -->
-<!-- NB: we allow the "var" element as a child -->
-
-<!-- Note: the default template for "text()" in             -->
-<!-- xsl/mathbook-common.xsl will drop "clause-ending"      -->
-<!-- punctuation that immediately follows a bit of math,    -->
-<!-- and possibly remove some resulting leading whitespace. -->
-<!-- For inline math "m" this behavior is under the control -->
-<!-- of the global $latex-processing variable, which is     -->
-<!-- only overridden for LaTeX processing itself.           -->
-<!-- Then the math templates need to look forward and       -->
-<!-- recover this punctuation with a \text{} wrapper.       -->
-
-<xsl:template match= "webwork//m">
-    <xsl:text>[`</xsl:text>
-    <xsl:if test="not($b-static)">
-        <xsl:call-template name="select-latex-macros"/>
-    </xsl:if>
-    <xsl:apply-templates select="text()|var" />
-    <!-- look ahead to absorb immediate clause-ending punctuation -->
-    <xsl:apply-templates select="." mode="get-clause-punctuation" />
-    <xsl:text>`]</xsl:text>
-</xsl:template>
-
-<xsl:template match="webwork//me">
-    <xsl:text>&#xa;&#xa;</xsl:text>
-    <xsl:if test="ancestor::ul|ancestor::ol">
-        <xsl:call-template name="potential-list-indent" />
-    </xsl:if>
-    <xsl:text>&gt;&gt; [``</xsl:text>
-    <xsl:if test="not($b-static)">
-        <xsl:call-template name="select-latex-macros"/>
-    </xsl:if>
-    <xsl:apply-templates select="text()|var" />
-    <!-- look ahead to absorb immediate clause-ending punctuation -->
-    <xsl:apply-templates select="." mode="get-clause-punctuation" />
-    <xsl:text>``] &lt;&lt;&#xa;&#xa;</xsl:text>
-    <xsl:if test="following-sibling::text()[normalize-space()] or following-sibling::*">
-        <xsl:call-template name="potential-list-indent" />
-    </xsl:if>
-</xsl:template>
-
-<xsl:template match="webwork//md">
-    <xsl:text>&#xa;&#xa;</xsl:text>
-        <xsl:if test="ancestor::ul|ancestor::ol">
-            <xsl:call-template name="potential-list-indent" />
-        </xsl:if>
-    <xsl:text>&gt;&gt; </xsl:text>
-    <xsl:choose>
-        <xsl:when test="contains(., '&amp;') or contains(., '\amp')">
-            <xsl:text>[``</xsl:text>
-            <xsl:if test="not($b-static)">
-                <xsl:call-template name="select-latex-macros"/>
-            </xsl:if>
-            <xsl:text>\begin{aligned}&#xa;</xsl:text>
-            <xsl:apply-templates select="mrow" />
-            <xsl:text>\end{aligned}``]</xsl:text>
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:text>[``</xsl:text>
-            <xsl:if test="not($b-static)">
-                <xsl:call-template name="select-latex-macros"/>
-            </xsl:if>
-            <xsl:text>\begin{gathered}&#xa;</xsl:text>
-            <xsl:apply-templates select="mrow" />
-            <xsl:text>\end{gathered}``]</xsl:text>
-        </xsl:otherwise>
-    </xsl:choose>
-    <xsl:text> &lt;&lt;&#xa;&#xa;</xsl:text>
-    <xsl:if test="following-sibling::text()[normalize-space()] or following-sibling::*">
-        <xsl:call-template name="potential-list-indent" />
-    </xsl:if>
-</xsl:template>
-
-<xsl:template match="webwork//md/mrow">
-    <xsl:if test="ancestor::ul|ancestor::ol">
-        <xsl:call-template name="potential-list-indent" />
-    </xsl:if>
-    <xsl:apply-templates select="text()|var" />
-    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
-        <!-- look ahead to absorb immediate clause-ending punctuation -->
-        <!-- pass the enclosing environment (md) as the context       -->
-        <xsl:apply-templates select="parent::md" mode="get-clause-punctuation" />
-    </xsl:if>
-    <xsl:if test="following-sibling::mrow">
-       <xsl:text>\\</xsl:text>
-    </xsl:if>
-    <xsl:text>&#xa;</xsl:text>
-</xsl:template>
-
-<!-- This template assumes each LaTeX macro is entirely on its own line  -->
-<!-- And assumes they are defined with a \newcommand (not \renewcommand) -->
-<!-- It only outputs LaTeX macro definitions that are explicitly used,   -->
-<!-- so if they are chained, then precursors will be missed              -->
-<!-- Macros are jammed together, but maybe needs protection, like {}     -->
-<!-- The $latex-macros sanitized list assumes  mathbook-common.xsl  used -->
-<!-- TODO: This named template examines the current context              -->
-<!-- (see . in contains() below), so should be a match template          -->
+<!-- Inside math we need to print definitions for PTX author-defined      -->
+<!-- LaTeX macros. This template assumes each LaTeX macro is entirely on  -->
+<!-- its own line and assumes they are defined with a \newcommand         -->
+<!-- (not \renewcommand). It only outputs LaTeX macro definitions that    -->
+<!-- are explicitly used, so if they are nested, then "inner" macros will -->
+<!-- be missed. So authors should not use nested macro definitions.       -->
+<!-- Macros are jammed together, but maybe need protection, like {}. The  -->
+<!-- $latex-macros sanitized list assumes  mathbook-common.xsl is used.   -->
+<!-- TODO: This named template examines the current context (see '.' in   -->
+<!-- contains() below), so should be a match template. But its recursive  -->
+<!-- implementation makes it a named template for now.                    -->
 <xsl:template name="select-latex-macros">
     <xsl:param name="macros" select="$latex-macros" />
     <xsl:variable name="trimmed-start">
@@ -940,23 +848,286 @@
     </xsl:if>
 </xsl:template>
 
+
+<!-- ##################################################################### -->
+<!-- ##################################################################### -->
+<!-- Above: templates for elements that only ever apply within a webwork   -->
+<!-- Below: templates for elements that also exist outside webwork         -->
+<!-- ##################################################################### -->
+<!-- ##################################################################### -->
+
+
+<!-- ########## -->
+<!-- Paragraphs -->
+<!-- ########## -->
+
+<!-- In PGML, paragraph breaks are just blank lines. End as normal with a -->
+<!-- line feed, then issue a blank line to signify the break. If p is     -->
+<!-- inside a list, special handling                                      -->
+<xsl:template match="webwork//p">
+    <xsl:if test="preceding-sibling::p|preceding-sibling::sidebyside and not(child::*[1][self::ol] or child::*[1][self::ul])">
+        <xsl:call-template name="potential-list-indent" />
+    </xsl:if>
+    <xsl:apply-templates />
+    <!-- If p is last thing in entire (maybe nested) list, explicitly terminate list with three spaces at end of line. -->
+    <xsl:if test="parent::li and not(following-sibling::*) and not(following::li)">
+        <xsl:text>   </xsl:text>
+    </xsl:if>
+    <!-- Blank line required or PGML will treat two adjacent p as one -->
+    <xsl:if test="not(parent::li) or following-sibling::* or parent::li/following-sibling::*">
+        <xsl:text>&#xa;</xsl:text>
+        <xsl:text>&#xa;</xsl:text>
+    </xsl:if>
+</xsl:template>
+
+<!-- Sidebyside in a WeBWorK expects only one child: image or tabular.    -->
+<!-- Just applies templates to its child                                  -->
+<!-- NB: this may need improvements, such as positioning                  -->
+<!-- NB: a Schematron rule should enforce the single child                -->
+<xsl:template match="webwork//sidebyside">
+    <xsl:if test="preceding-sibling::p|preceding-sibling::sidebyside">
+        <xsl:call-template name="potential-list-indent" />
+    </xsl:if>
+    <xsl:if test="not(ancestor::li)">
+        <xsl:text>&gt;&gt; </xsl:text>
+    </xsl:if>
+    <xsl:apply-templates select="image|tabular" />
+    <xsl:if test="not(ancestor::li)">
+        <xsl:text> &lt;&lt;</xsl:text>
+    </xsl:if>
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
+<!-- ######### -->
+<!-- Numbering -->
+<!-- ######### -->
+
+<!-- The cross-reference numbering scheme uses \ref, \hyperref -->
+<!-- for LaTeX and numbers elsewhere, so it is unimplmented in -->
+<!-- mathbook-common.xsl, hence we implement it here           -->
+<!-- This is identical to mathbook-html.xsl                    -->
+
+<xsl:template match="*" mode="xref-number">
+    <xsl:apply-templates select="." mode="number" />
+</xsl:template>
+
+<!-- In common template, but have to point -->
+<!-- to it since it is a modal template    -->
+<xsl:template match="webwork//exercisegroup" mode="xref-number">
+    <xsl:apply-imports />
+</xsl:template>
+
+<!-- ######### -->
+<!-- PGML Math -->
+<!-- ######### -->
+
+<!-- PGML inline math uses its own delimiters: [`...`] and [``...``]       -->
+<!-- NB: we allow the "var" element as a child                             -->
+<!-- To support a PTX author's custom LaTeX macros when the problem is     -->
+<!-- used within WeBWorK, we must define each macro as it is used within   -->
+<!-- each math environment. This is the only way to simultaneiously        -->
+<!-- support HTML_mathjax, HTML_dpng, and TeX display modes.               -->
+
+<!-- Note: the default template for "text()" in xsl/mathbook-common.xsl    -->
+<!-- will drop "clause-ending" punctuation that immediately follows a bit  -->
+<!-- of math, and possibly remove some resulting leading whitespace. For   -->
+<!-- inline math "m" this behavior is under the control of the global      -->
+<!-- $latex-processing variable, which is only overridden for LaTeX        -->
+<!-- processing itself. Then the math templates need to look forward and   -->
+<!-- recover this punctuation with a \text{} wrapper.                      -->
+
+<xsl:template match="webwork//m">
+    <xsl:text>[`</xsl:text>
+    <xsl:call-template name="select-latex-macros"/>
+    <xsl:apply-templates select="text()|var" />
+    <!-- look ahead to absorb immediate clause-ending punctuation -->
+    <xsl:apply-templates select="." mode="get-clause-punctuation" />
+    <xsl:text>`]</xsl:text>
+</xsl:template>
+
+<!-- PGML [``...``] creates displaystyle math, but does not by itself      -->
+<!-- center it on a new line, so we manually apply that here.              -->
+<xsl:template match="webwork//me">
+    <xsl:text>&#xa;&#xa;</xsl:text>
+    <xsl:if test="ancestor::ul|ancestor::ol">
+        <xsl:call-template name="potential-list-indent" />
+    </xsl:if>
+    <xsl:text>&gt;&gt; [``</xsl:text>
+    <xsl:call-template name="select-latex-macros"/>
+    <xsl:apply-templates select="text()|var" />
+    <!-- look ahead to absorb immediate clause-ending punctuation -->
+    <xsl:apply-templates select="." mode="get-clause-punctuation" />
+    <xsl:text>``] &lt;&lt;&#xa;&#xa;</xsl:text>
+    <xsl:if test="following-sibling::text()[normalize-space()] or following-sibling::*">
+        <xsl:call-template name="potential-list-indent" />
+    </xsl:if>
+</xsl:template>
+
+<xsl:template match="webwork//md">
+    <xsl:text>&#xa;&#xa;</xsl:text>
+        <xsl:if test="ancestor::ul|ancestor::ol">
+            <xsl:call-template name="potential-list-indent" />
+        </xsl:if>
+    <xsl:text>&gt;&gt; </xsl:text>
+    <xsl:choose>
+        <xsl:when test="contains(., '&amp;') or contains(., '\amp')">
+            <xsl:text>[``</xsl:text>
+            <xsl:call-template name="select-latex-macros"/>
+            <xsl:text>\begin{aligned}&#xa;</xsl:text>
+            <xsl:apply-templates select="mrow" />
+            <xsl:text>\end{aligned}``]</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:text>[``</xsl:text>
+            <xsl:call-template name="select-latex-macros"/>
+            <xsl:text>\begin{gathered}&#xa;</xsl:text>
+            <xsl:apply-templates select="mrow" />
+            <xsl:text>\end{gathered}``]</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
+    <xsl:text> &lt;&lt;&#xa;&#xa;</xsl:text>
+    <xsl:if test="following-sibling::text()[normalize-space()] or following-sibling::*">
+        <xsl:call-template name="potential-list-indent" />
+    </xsl:if>
+</xsl:template>
+
+<xsl:template match="webwork//md/mrow">
+    <xsl:if test="ancestor::ul|ancestor::ol">
+        <xsl:call-template name="potential-list-indent" />
+    </xsl:if>
+    <xsl:apply-templates select="text()|var" />
+    <xsl:if test="not(following-sibling::*[self::mrow or self::intertext])">
+        <!-- look ahead to absorb immediate clause-ending punctuation -->
+        <!-- pass the enclosing environment (md) as the context       -->
+        <xsl:apply-templates select="parent::md" mode="get-clause-punctuation" />
+    </xsl:if>
+    <xsl:if test="following-sibling::mrow">
+       <xsl:text>\\</xsl:text>
+    </xsl:if>
+    <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
+<!-- ########################## -->
+<!-- Numbers, units, quantities -->
+<!-- ########################## -->
+
+<!-- Implemented similarly as in pretext-html.xsl, but we avoid the       -->
+<!-- unicode thinspace. And avoid the unicode fraction slash with sub and -->
+<!-- sup elements for a fractional unit. And implement exponent with a    -->
+<!-- literal ^ instead of superscript. Perhaps once unicode is supported  -->
+<!-- in WeBWorK, revisit some of these differences.                       -->
+<xsl:template match="webwork//quantity">
+    <!-- warning if there is no content -->
+    <xsl:if test="not(descendant::unit) and not(descendant::per) and not(descendant::mag)">
+        <xsl:message terminate="no">
+        <xsl:text>PTX:WARNING: magnitude or units needed</xsl:text>
+        </xsl:message>
+    </xsl:if>
+    <!-- print magnitude if there is one -->
+    <xsl:if test="descendant::mag">
+        <xsl:apply-templates select="mag"/>
+        <!-- if the units that follow are fractional, space -->
+        <xsl:if test="descendant::per">
+            <xsl:text> </xsl:text>
+        </xsl:if>
+    </xsl:if>
+    <!-- if there are non-fracitonal units, print them -->
+    <xsl:if test="descendant::unit and not(descendant::per)">
+        <xsl:apply-templates select="unit" />
+    </xsl:if>
+    <!-- if there are fracitonal units with a numerator part, print them -->
+    <xsl:if test="descendant::unit and descendant::per">
+        <xsl:apply-templates select="unit" />
+        <xsl:text>/</xsl:text>
+        <xsl:apply-templates select="per" />
+    </xsl:if>
+    <!-- if there are fracitonal units without a numerator part, print them -->
+    <xsl:if test="not(descendant::unit) and descendant::per">
+        <xsl:text>1</xsl:text>
+        <xsl:text>/</xsl:text>
+        <xsl:apply-templates select="per" />
+    </xsl:if>
+</xsl:template>
+
+<!-- Magnitude                                      -->
+<xsl:template match="webwork//mag">
+    <xsl:variable name="mag">
+        <xsl:apply-templates />
+    </xsl:variable>
+    <xsl:value-of select="str:replace($mag,'\pi','[`\pi`]')"/>
+</xsl:template>
+
+<!-- unit and per children of a quantity element    -->
+<!-- have a mandatory base attribute                -->
+<!-- may have prefix and exp attributes             -->
+<!-- base and prefix are not abbreviations          -->
+
+<xsl:key name="prefix-key" match="prefix" use="concat(../@name, @full)"/>
+<xsl:key name="prefix-key" match="prefix" use="concat(../@name, @full)"/>
+<xsl:key name="base-key" match="base" use="concat(../@name, @full)"/>
+
+<xsl:template match="webwork//unit|webwork//per">
+    <xsl:if test="not(parent::quantity)">
+        <xsl:message>PTX:WARNING: unit or per element should have parent quantity element</xsl:message>
+    </xsl:if>
+    <!-- if the unit is 1st and no mag, no need for thinspace. Otherwise, give space -->
+    <xsl:if test="position() != 1 or (local-name(.)='unit' and (preceding-sibling::mag or following-sibling::mag) and not(preceding-sibling::per or following-sibling::per))">
+        <xsl:text> </xsl:text>
+    </xsl:if>
+    <!-- prefix is optional -->
+    <xsl:if test="@prefix">
+        <xsl:variable name="prefix">
+            <xsl:value-of select="@prefix" />
+        </xsl:variable>
+        <xsl:variable name="short">
+            <xsl:for-each select="document('mathbook-units.xsl')">
+                <xsl:value-of select="key('prefix-key',concat('prefixes',$prefix))/@short"/>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:value-of select="$short" />
+    </xsl:if>
+    <!-- base unit is *mandatory* so check to see if it has been provided -->
+    <xsl:choose>
+        <xsl:when test="@base">
+            <xsl:variable name="base">
+                <xsl:value-of select="@base" />
+            </xsl:variable>
+            <xsl:variable name="short">
+                <xsl:for-each select="document('mathbook-units.xsl')">
+                    <xsl:value-of select="key('base-key',concat('bases',$base))/@short"/>
+                </xsl:for-each>
+            </xsl:variable>
+            <xsl:value-of select="$short" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message terminate="no">
+                <xsl:text>PTX:WARNING: base unit needed</xsl:text>
+            </xsl:message>
+        </xsl:otherwise>
+    </xsl:choose>
+    <!-- exponent is optional -->
+    <xsl:if test="@exp">
+        <xsl:text>^</xsl:text>
+        <xsl:value-of select="@exp"/>
+    </xsl:if>
+</xsl:template>
+
 <!-- ################ -->
 <!-- Cross-References -->
 <!-- ################ -->
 
-<!-- The visual text of a cross-reference is         -->
-<!-- formed in the xsl/mathbook-common.xsl routines. -->
-<!-- But we in the WW source we can't really form    -->
-<!-- a link to a target outside the problem.         -->
-<!-- So we just duplicate the text.                  -->
-<!-- HACK: low-priority, so                             -->
-<!--   (a) for problem extraction it is only version    -->
-<!--   (b) for HTML it is low, so see "xref-link" there -->
-<!-- Solution: reconsider import/override mechanism     -->
-<xsl:template match="*" mode="xref-link" priority="-1">
+<!-- The visual text of a cross-reference is formed in the common routines -->
+<!-- but we in the WW source we can't really form a link to a target       -->
+<!-- outside the problem.                                                  -->
+<xsl:template match="*" mode="xref-link">
     <xsl:param name="content" />
     <xsl:param name="xref" />
     <xsl:copy-of select="$content" />
+    <xsl:if test="/mathbook/book|/mathbook/article">
+        <xsl:text> in </xsl:text>
+        <xsl:apply-templates select="/mathbook/book|/mathbook/article" mode="title-full" />
+    </xsl:if>
 </xsl:template>
 
 
@@ -983,10 +1154,9 @@
 
 <!-- two spaces at line-end makes a newline in PGML-->
 <xsl:template match="webwork//cell/line">
-    <!-- This leads to lines of PG code that would ideally be indented -->
-    <!-- for human readability, but it cannot be avoided because the   -->
-    <!-- cell is fed to PF(), alias for PGML::Format(), and would act  -->
-    <!-- on the indentation. -->
+    <!-- This leads to lines of PG code that would ideally be indented     -->
+    <!-- for human readability, but it cannot be avoided because the       -->
+    <!-- cell is fed to PGML::Format(), and would act on the indentation.  -->
     <xsl:apply-templates />
     <xsl:text>  &#xa;</xsl:text>
 </xsl:template>
@@ -1087,7 +1257,7 @@
 <!-- 2015/01/28: there was a mismatch between HTML and LaTeX names -->
 <xsl:template match="webwork//circum">
     <xsl:text>\^</xsl:text>
-    <xsl:message>MBX:WARNING: the "circum" element is deprecated (2015/01/28), use "circumflex"</xsl:message>
+    <xsl:message>PTX:WARNING: the "circum" element is deprecated (2015/01/28), use "circumflex"</xsl:message>
     <xsl:apply-templates select="." mode="location-report" />
 </xsl:template>
 
@@ -1116,6 +1286,13 @@
     <xsl:text>\*</xsl:text>
 </xsl:template>
 
+<!-- Ellipsis -->
+<!-- Just three periods -->
+<xsl:template match="webwork//ellipsis">
+    <xsl:text>...</xsl:text>
+</xsl:template>
+
+
 <!-- Braces -->
 <!-- Individually, or matched            -->
 <!-- All escaped to avoid conflicts with -->
@@ -1141,7 +1318,7 @@
 <xsl:template match="webwork//c">
     <xsl:choose>
         <xsl:when test="contains(.,'[|') or contains(.,'|]')">
-            <xsl:message>MBX:ERROR:   the strings '[|' and '|]' are not supported within verbatim text in WeBWorK problems</xsl:message>
+            <xsl:message>PTX:ERROR:   the strings '[|' and '|]' are not supported within verbatim text in WeBWorK problems</xsl:message>
             <xsl:apply-templates select="." mode="location-report" />
         </xsl:when>
         <xsl:otherwise>
@@ -1280,9 +1457,9 @@
         <xsl:text>[$NBSP]*&#xa;</xsl:text>
     </xsl:if>
     <xsl:apply-templates />
-    <!-- Explicitly end lists with three trailing spaces when at the absolute end of all nested list  -->
-    <!-- in document order. For structured list items  with p, image, tabular children, this trailing -->
-    <!-- whitespace must be added in respective templates prior to their trailing line breaks.        -->
+    <!-- Explicitly end lists with three trailing spaces when at the absolute end of all nested list -->
+    <!-- in document order. For structured list items with p, image, tabular children, this trailing -->
+    <!-- whitespace must be added in respective templates prior to their trailing line breaks.       -->
     <xsl:if test="(child::*|child::text())[normalize-space()][position()=last()][self::text()] and not(following::*[1][self::li])">
         <xsl:text>   </xsl:text>
     </xsl:if>
@@ -1298,7 +1475,7 @@
 </xsl:template>
 
 <xsl:template match="webwork//tabular">
-    <!-- MBX tabular attributes top, bottom, left, right, halign are essentially passed -->
+    <!-- PTX tabular attributes top, bottom, left, right, halign are essentially passed -->
     <!-- down to cells, rather than used at the tabular level.                          -->
     <xsl:text>[@DataTable(&#xa;</xsl:text>
     <xsl:call-template name="potential-list-indent" />
@@ -1306,16 +1483,6 @@
     <xsl:apply-templates select="row"/>
     <xsl:call-template name="potential-list-indent" />
     <xsl:text>  ],&#xa;</xsl:text>
-    <xsl:if test="ancestor::table/caption">
-        <xsl:call-template name="potential-list-indent" />
-        <xsl:text>  caption => '</xsl:text>
-            <xsl:apply-templates select="parent::*" mode="type-name"/>
-            <xsl:text> </xsl:text>
-            <xsl:apply-templates select="parent::*" mode="number"/>
-            <xsl:text>: </xsl:text>
-            <xsl:value-of select="ancestor::table/caption"/>
-        <xsl:text>',&#xa;</xsl:text>
-    </xsl:if>
     <xsl:variable name="table-left">
         <xsl:choose>
             <xsl:when test="@left">
@@ -1452,7 +1619,7 @@
         <xsl:text>,&#xa;</xsl:text>
     </xsl:if>
     <!-- column specification done -->
-    <xsl:if test="ancestor::li">
+    <xsl:if test="not(parent::table)">
         <xsl:call-template name="potential-list-indent" />
         <xsl:text>  center => 0,&#xa;</xsl:text>
     </xsl:if>
@@ -1737,12 +1904,12 @@
 
     <xsl:choose>
         <xsl:when test="($halign='') and ($midrule='') and ($rowcss='') and ($cellcss='') and not(descendant::m) and not(descendant::var[@width|@form]) and not(@colspan)">
-            <xsl:text>PF('</xsl:text>
+            <xsl:text>PGML('</xsl:text>
             <xsl:apply-templates/>
             <xsl:text>'),&#xa;</xsl:text>
         </xsl:when>
         <xsl:otherwise>
-            <xsl:text>[PF('</xsl:text>
+            <xsl:text>[PGML('</xsl:text>
             <xsl:apply-templates/>
             <xsl:text>'),</xsl:text>
             <xsl:if test="@colspan">
@@ -1803,7 +1970,7 @@
         </xsl:when>
         <xsl:when test="$width=''"/>
         <xsl:otherwise>
-            <xsl:message>MBX:WARNING: tabular left or right attribute not recognized: use none, minor, medium, major</xsl:message>
+            <xsl:message>PTX:WARNING: tabular left or right attribute not recognized: use none, minor, medium, major</xsl:message>
         </xsl:otherwise>
     </xsl:choose>
 </xsl:template>
@@ -1815,12 +1982,11 @@
 <xsl:template name="begin-block">
     <xsl:param name="block-title"/>
     <xsl:text>&#xa;</xsl:text>
-    <!-- short string of octothorpes to save on base64 url characters -->
-    <xsl:text>####################&#xa;</xsl:text>
+    <xsl:text>############################################################&#xa;</xsl:text>
     <xsl:text># </xsl:text>
     <xsl:value-of select="$block-title"/>
     <xsl:text>&#xa;</xsl:text>
-    <xsl:text>####################&#xa;</xsl:text>
+    <xsl:text>############################################################&#xa;</xsl:text>
 </xsl:template>
 
 <!-- Recursively prepend to multiple lines -->
@@ -1850,5 +2016,6 @@
         <xsl:with-param name="text"  select="' '" />
     </xsl:call-template>
 </xsl:template>
+
 
 </xsl:stylesheet>

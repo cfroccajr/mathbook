@@ -66,13 +66,25 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- We process structural nodes via chunking routine in  xsl/mathbook-common.html -->
 <!-- This in turn calls specific modal templates defined elsewhere in this file    -->
-<xsl:template match="mathbook">
+<xsl:template match="/mathbook|/pretext">
     <xsl:call-template name="banner-warning">
         <xsl:with-param name="warning">Jupyter notebook conversion is experimental and incomplete&#xa;Requests to fix/implement specific constructions welcome</xsl:with-param>
     </xsl:call-template>
     <xsl:apply-templates select="mathbook" mode="deprecation-warnings" />
     <xsl:apply-templates mode="chunking" />
 </xsl:template>
+
+<!-- ########### -->
+<!-- Compromises -->
+<!-- ########### -->
+
+<!-- Knowls are not yet functional in Jupyter notebooks    -->
+<!-- See:  https://github.com/jupyter/notebook/pull/2947   -->
+<!-- So we kill them while we wait and get hyperlinks only -->
+<xsl:template match="*" mode="xref-as-knowl">
+    <xsl:value-of select="false()" />
+</xsl:template>
+
 
 <!-- ################ -->
 <!-- Structural Nodes -->
@@ -93,6 +105,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Some structural nodes do not need their title,                -->
 <!-- (or subtitle) so we don't put a section heading there         -->
 <!-- Title(s) for an article are forced by a frontmatter/titlepage -->
+<!-- TODO: incorporate in above by implementing null heading template? -->
 <xsl:template match="article|frontmatter">
     <xsl:apply-templates />
 </xsl:template>
@@ -139,8 +152,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- or link to subsidiary content, all from HTML -->
 <!-- template with same mode, as one big cell     -->
 <xsl:template match="&STRUCTURAL;" mode="summary">
+    <xsl:apply-templates select="objectives|introduction" />
     <xsl:variable name="html-rtf">
-        <xsl:apply-imports />
+        <nav class="summary-links">
+            <xsl:apply-templates select="*" mode="summary-nav" />
+        </nav>
     </xsl:variable>
     <xsl:variable name="html-node-set" select="exsl:node-set($html-rtf)" />
     <xsl:call-template name="pretext-cell">
@@ -150,6 +166,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:call-template name="end-string" />
         </xsl:with-param>
     </xsl:call-template>
+    <xsl:apply-templates select="conclusion" />
 </xsl:template>
 
 <!-- File Structure -->
@@ -165,8 +182,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <!-- a code cell for reader to load CSS -->
         <!-- First, so already with focus       -->
         <xsl:call-template name="load-css" />
-        <!-- load LaTeX macros for MathJax   -->
-        <!-- Empty, also provides separation -->
+        <!-- load LaTeX macros for MathJax               -->
+        <!-- Empty visually, so also provides separation -->
         <xsl:call-template name="latex-macros" />
         <!-- the real content of the page -->
         <xsl:copy-of select="$content" />
@@ -177,59 +194,67 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:text>{&#xa;</xsl:text>
         <!-- cell list first, majority of notebook, metadata to finish -->
         <xsl:text>"cells": [&#xa;</xsl:text>
-        <!-- <xsl:message>CL:<xsl:value-of select="$cell-list" /></xsl:message> -->
-        <!-- Escape backslashes -->
+        <!-- Escape backslashes first, because more are coming -->
         <xsl:variable name="escape-backslash" select="str:replace($cell-list, '\','\\')" />
         <!-- Escape quote marks -->
         <xsl:variable name="escape-quote" select="str:replace($escape-backslash, '&quot;','\&quot;')" />
-        <!-- Replace newline markers -->
-        <xsl:variable name="replace-newline" select="str:replace($escape-quote, $NL,'\n')" />
-        <!-- Massage string delimiters, separators -->
-        <xsl:variable name="split-strings" select="str:replace($replace-newline, $ESBS, '&quot;,&#xa;&quot;')" />
+        <!-- Replace all newlines -->
+        <xsl:variable name="replace-newline" select="str:replace($escape-quote, '&#xa;','\n')" />
+        <!-- Multiple strings in a cell are merged into one by    -->
+        <!-- combining adjoining end/begin pairs, leaving only    -->
+        <!-- leading and trailing delimiters (next substitution). -->
+        <!-- This is one solution of the problem of $n-1$         -->
+        <!-- separators for $n$ items.                            -->
+        <xsl:variable name="split-strings" select="str:replace($replace-newline, $ESBS, '')" />
         <xsl:variable name="finalize-strings" select="str:replace(str:replace($split-strings, $ES, '&quot;'), $BS, '&quot;')" />
-        <!-- Massage cell delimiters, separators -->
-        <!-- Split cell separators -->
+        <!-- The only pseudo-markup left is that of the two types -->
+        <!-- of cells possible in a Jupyter notebook.  We split   -->
+        <!-- just the adjacent brackets with comma-newline, so    -->
+        <!-- source has each cell entirely on its own line.  This -->
+        <!-- is the other solution of the problem of $n-1$        -->
+        <!-- separators for $n$ items.                            -->
         <xsl:variable name="split-cells" select="str:replace($finalize-strings, $RBLB, $RBLB-comma)" />
-        <!-- now replace cell markers with actual wrappers -->
+        <!-- Now we consider the actual markers and replace   -->
+        <!-- with the JSON that Jupyter expects as source.    -->
+        <!-- We are done, so "value-of" is good enough,       -->
+        <!-- rather than having a final $code-cells.  The     -->
+        <!-- four *-wrap variables here are just conveniences -->
         <xsl:variable name="markdown-cells" select="str:replace(str:replace($split-cells, $BM, $begin-markdown-wrap), $EM, $end-markdown-wrap)" />
-        <xsl:variable name="code-cells" select="str:replace(str:replace($markdown-cells, $BC, $begin-code-wrap), $EC, $end-code-wrap)" />
-        <!-- remove next line by making previous a value-of, once stable -->
-        <xsl:value-of select="$code-cells" />
+        <xsl:value-of select="str:replace(str:replace($markdown-cells, $BC, $begin-code-wrap), $EC, $end-code-wrap)" />
         <!-- end cell list -->
-        <xsl:text>],&#xa;</xsl:text>
+        <xsl:text>&#xa;],&#xa;</xsl:text>
         <!-- version identifiers -->
-        <xsl:text>"nbformat": 4,&#xa;</xsl:text>
-        <xsl:text>"nbformat_minor": 0,&#xa;</xsl:text>
+        <xsl:text>"nbformat": 4, "nbformat_minor": 0, </xsl:text>
         <!-- metadata copied from blank SMC notebook -->
-        <xsl:text>"metadata": {&#xa;</xsl:text>
-        <xsl:text>  "kernelspec": {&#xa;</xsl:text>
+        <xsl:text>"metadata": {</xsl:text>
+        <xsl:text>"kernelspec": {</xsl:text>
         <!-- TODO: configure kernel in "docinfo" -->
         <!-- "display_name" seems ineffective, but is required -->
-        <xsl:text>    "display_name": "",&#xa;</xsl:text>
+        <xsl:text>"display_name": "", </xsl:text>
         <!-- TODO: language not needed? -->
-        <!-- <xsl:text>    "language": "python",&#xa;</xsl:text> -->
+        <!-- <xsl:text>"language": "python", </xsl:text> -->
         <!-- "sagemath" as  "name" will be latest kernel on CoCalc -->
-        <xsl:text>    "name": "python2"&#xa;</xsl:text>
+        <xsl:text>"name": "python2"</xsl:text>
         <!-- TODO: how much of the following is necessary before loading? -->
-        <xsl:text>  },&#xa;</xsl:text>
-        <xsl:text>  "language_info": {&#xa;</xsl:text>
-        <xsl:text>    "codemirror_mode": {&#xa;</xsl:text>
-        <xsl:text>      "name": "ipython",&#xa;</xsl:text>
-        <xsl:text>      "version": 2&#xa;</xsl:text>
-        <xsl:text>    },&#xa;</xsl:text>
-        <xsl:text>    "file_extension": ".py",&#xa;</xsl:text>
-        <xsl:text>    "mimetype": "text/x-python",&#xa;</xsl:text>
-        <xsl:text>    "name": "python",&#xa;</xsl:text>
-        <xsl:text>    "nbconvert_exporter": "python",&#xa;</xsl:text>
-        <xsl:text>    "pygments_lexer": "ipython2",&#xa;</xsl:text>
-        <xsl:text>    "version": "2.7.8"&#xa;</xsl:text>
-        <xsl:text>  },&#xa;</xsl:text>
-        <xsl:text>  "name": "</xsl:text>
+        <xsl:text>}, </xsl:text>
+        <xsl:text>"language_info": {</xsl:text>
+        <xsl:text>"codemirror_mode": {</xsl:text>
+        <xsl:text>"name": "ipython", </xsl:text>
+        <xsl:text>"version": 2</xsl:text>
+        <xsl:text>}, </xsl:text>
+        <xsl:text>"file_extension": ".py", </xsl:text>
+        <xsl:text>"mimetype": "text/x-python", </xsl:text>
+        <xsl:text>"name": "python", </xsl:text>
+        <xsl:text>"nbconvert_exporter": "python", </xsl:text>
+        <xsl:text>"pygments_lexer": "ipython2", </xsl:text>
+        <xsl:text>"version": "2.7.8"</xsl:text>
+        <xsl:text>}, </xsl:text>
+        <xsl:text>"name": "</xsl:text>
         <xsl:value-of select="$filename" />
-        <xsl:text>"&#xa;</xsl:text>
-        <xsl:text>  }&#xa;</xsl:text>
-        <!-- end outermost group -->
+        <xsl:text>"</xsl:text>
         <xsl:text>}&#xa;</xsl:text>
+        <!-- end outermost group -->
+        <xsl:text>}</xsl:text>
     </exsl:document>
 </xsl:template>
 
@@ -242,18 +267,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:call-template name="code-cell">
         <xsl:with-param name="content">
             <xsl:call-template name="begin-string" />
-            <xsl:text>%%html</xsl:text>
-            <xsl:call-template name="newline" />
-            <xsl:call-template name="end-string" />
-            <xsl:call-template name="begin-string" />
-            <!-- TEMPORARY TEMPORARY for AIR TRAVEL testing -->
-            <!-- <xsl:text>&lt;link href="./mathbook-content.css" rel="stylesheet" type="text/css" /&gt;</xsl:text> -->
-            <xsl:text>&lt;link href="http://mathbook.pugetsound.edu/beta/mathbook-content.css" rel="stylesheet" type="text/css" /&gt;</xsl:text>
-            <xsl:call-template name="newline" />
-            <xsl:text>&lt;link href="https://aimath.org/mathbook/mathbook-add-on.css" rel="stylesheet" type="text/css" /&gt;</xsl:text>
-            <xsl:call-template name="newline" />
-            <xsl:text>&lt;link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic" rel="stylesheet" type="text/css" /&gt;</xsl:text>
-            <xsl:call-template name="newline" />
+            <xsl:text>%%html&#xa;</xsl:text>
+            <!-- for offline testing -->
+            <!-- <xsl:text>&lt;link href="./mathbook-content.css" rel="stylesheet" type="text/css" /&gt;&#xa;</xsl:text> -->
+            <xsl:text>&lt;link href="http://mathbook.pugetsound.edu/beta/mathbook-content.css" rel="stylesheet" type="text/css" /&gt;&#xa;</xsl:text>
+            <xsl:text>&lt;link href="https://aimath.org/mathbook/mathbook-add-on.css" rel="stylesheet" type="text/css" /&gt;&#xa;</xsl:text>
+            <xsl:text>&lt;link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,600,600italic" rel="stylesheet" type="text/css" /&gt;&#xa;</xsl:text>
             <xsl:text>&lt;link href="https://fonts.googleapis.com/css?family=Inconsolata:400,700&amp;subset=latin,latin-ext" rel="stylesheet" type="text/css" /&gt;</xsl:text>
             <xsl:call-template name="end-string" />
         </xsl:with-param>
@@ -269,17 +288,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:call-template>
 </xsl:template>
 
-<!-- This will override the HTML version, but is patterned       -->
-<!-- after same.  Adjustments are: different overall delimiters, -->
-<!-- translation of newlines, and no enclosing div to hide       -->
-<!-- content (thereby avoiding the need for serialization).      -->
+<!-- This will override the HTML version, but is patterned -->
+<!-- after same.  Adjustments are: different overall       -->
+<!-- delimiters, and no enclosing div to hide content      -->
+<!-- (thereby avoiding the need for serialization).        -->
 <xsl:template name="latex-macros">
     <xsl:call-template name="markdown-cell">
         <xsl:with-param name="content">
             <xsl:call-template name="begin-string" />
             <xsl:call-template name="begin-inline-math" />
-            <xsl:value-of select="str:replace($latex-packages-mathjax, '&#xa;', $NL)" />
-            <xsl:value-of select="str:replace($latex-macros,           '&#xa;', $NL)" />
+            <xsl:value-of select="$latex-packages-mathjax" />
+            <xsl:value-of select="$latex-macros" />
             <xsl:call-template name="end-inline-math" />
             <xsl:call-template name="end-string" />
         </xsl:with-param>
@@ -295,7 +314,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- and pseudo-divisions.  Normally they would get a high -->
 <!-- priority, but we want them to have the same low       -->
 <!-- priority as a generic (default) wilcard match         -->
-<xsl:template match="*[parent::*[&STRUCTURAL-FILTER; or self::paragraphs or self::introduction[parent::*[&STRUCTURAL-FILTER;]] or self::conclusion[parent::*[&STRUCTURAL-FILTER;]]]]" priority="-0.5">
+<!-- TODO: remove filter on paragraphs once we add stack for sidebyside -->
+<xsl:template match="*[parent::*[&STRUCTURAL-FILTER; or self::paragraphs[not(ancestor::sidebyside)] or self::introduction[parent::*[&STRUCTURAL-FILTER;]] or self::conclusion[parent::*[&STRUCTURAL-FILTER;]]]]" priority="-0.5">
     <!-- <xsl:message>G:<xsl:value-of select="local-name(.)" />:G</xsl:message> -->
     <xsl:variable name="html-rtf">
         <xsl:apply-imports />
@@ -330,16 +350,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:call-template>
     </xsl:variable>
     <!-- we trim a final trailing newline -->
-    <xsl:variable name="loc-trim" select="substring($loc, 1, string-length($loc)-1)" />
-    <!-- the code, content with string markers -->
-    <xsl:variable name="the-code">
-        <xsl:call-template name="begin-string" /> <!-- start first string -->
-        <xsl:value-of select="str:replace($loc-trim, '&#xa;', concat($NL, $ESBS))" />
-        <xsl:call-template name="end-string" /> <!-- end last string -->
-    </xsl:variable>
+    <!-- as we wrap into a single string  -->
     <xsl:call-template name="code-cell">
         <xsl:with-param name="content">
-            <xsl:value-of select="$the-code" />
+            <xsl:call-template name="begin-string" />
+                <xsl:value-of select="substring($loc, 1, string-length($loc)-1)" />
+            <xsl:call-template name="end-string" />
         </xsl:with-param>
     </xsl:call-template>
 </xsl:template>
@@ -348,42 +364,29 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Math -->
 <!-- #### -->
 
-<!-- These two templates provide the delimiters for inline math. -->
-<!-- The Jupyter notebook appears to support AMS-style inline.   -->
+<!-- Our sanitization procedures will preserve author's line   -->
+<!-- breaks within mathematics.  Even inline math might be a   -->
+<!-- complicated construction, like a column vector, with line -->
+<!-- breaks.  Replacements late in the conversion will make    -->
+<!-- these the "\n" acceptable in JSON.                        -->
+
+<!-- These two templates provide the delimiters for inline math.     -->
+<!-- The Jupyter notebook appears to support the AMS-style for       -->
+<!-- inline math ( \(, \) ).  But in doing so, it fails to prevent   -->
+<!-- Markdown syntax from mucking up the math.  For example, two     -->
+<!-- underscores in a Markdown cell will look like underlining       -->
+<!-- and override the LaTeX meaning for subscripts.  They can        -->
+<!-- be escaped, but easier to just deal with "plain text" dollar    -->
+<!-- signs as a possibility.  There is no issue for display          -->
+<!-- mathematics, presumably since we use environments, exclusively. -->
 <xsl:template name="begin-inline-math">
-    <xsl:text>\\(</xsl:text>
+    <xsl:text>$</xsl:text>
 </xsl:template>
 
 <xsl:template name="end-inline-math">
-    <xsl:text>\\)</xsl:text>
+    <xsl:text>$</xsl:text>
 </xsl:template>
 
-<!-- Dollar sign -->
-<!-- The Jupyter notebook allows markdown cells to      -->
-<!-- use dollar signs to delimit LaTeX, if you have     -->
-<!-- two used for financial reasons, they will be       -->
-<!-- interpreted incorrectly.  But they can be escaped. -->
-<!-- So authors should use the "dollar" element.        -->
-<xsl:template match="dollar">
-    <xsl:text>\$</xsl:text>
-</xsl:template>
-
-<!-- Displayed Equations -->
-<!-- Break out of enclosing paragraph, new -->
-<!-- JSON string, combine lines as one big -->
-<!-- string with newline separators        -->
-<xsl:template match="me|men|md|mdn">
-    <xsl:variable name="line-broken-math">
-        <xsl:apply-imports />
-    </xsl:variable>
-    <!-- check to see if first element in paragraph? -->
-    <xsl:call-template name="end-string" />
-    <xsl:call-template name="begin-string" />
-    <xsl:value-of select="str:replace($line-broken-math, '&#xa;', $NL)" />
-    <xsl:call-template name="end-string" />
-    <!-- check to see if last element in paragraph? -->
-    <xsl:call-template name="begin-string" />
-</xsl:template>
 
 <!-- Images -->
 
@@ -416,16 +419,126 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:element>
 </xsl:template>
 
+<!-- ################### -->
+<!-- Markdown Protection -->
+<!-- ################### -->
+
+<!-- XML with LaTeX, to HTML, to JSON.  Its hard to keep track. -->
+<!-- And the HTML is really spiced up with Markdown.  Or is it  -->
+<!-- the other way around?  No matter, a first defense is to    -->
+<!-- convert common simple characters employed by Markdown and  -->
+<!-- make them escaped versions.  Here is the list of escapable -->
+<!-- characters from the Markdown documentation on 2017-11-06.  -->
+<!-- daringfireball.net/projects/markdown/syntax#backslash      -->
+<!--                                                            -->
+<!--         \   backslash                                      -->
+<!--         `   backtick                                       -->
+<!--         *   asterisk                                       -->
+<!--         _   underscore                                     -->
+<!--         {}  curly braces                                   -->
+<!--         []  square brackets                                -->
+<!--         ()  parentheses                                    -->
+<!--         #   hash mark                                      -->
+<!--         +   plus sign                                      -->
+<!--         -   minus sign (hyphen)                            -->
+<!--         .   dot                                            -->
+<!--         !   exclamation mark                               -->
+
+
+<!-- Dollar sign -->
+<!-- The Jupyter notebook allows markdown cells to        -->
+<!-- use dollar signs to delimit LaTeX, if you have       -->
+<!-- two used for financial reasons, they will be         -->
+<!-- interpreted incorrectly.  But they can be escaped.   -->
+<!-- Not a Markdown element, but critical so here anyway. -->
+<!-- So authors should use the "dollar" element.          -->
+<xsl:template match="dollar">
+    <xsl:text>\$</xsl:text>
+</xsl:template>
+
+<!-- Other than the dollar sign, these are from the -html code.    -->
+<!-- We escape ASCII versions, and leave just comments for         -->
+<!-- those whose HTML definitions suffice, either as HTML entities -->
+<!-- (&, <, >) or as fancier, non-ASCII, Unicode versions.         -->
+
+<!-- Number Sign, Hash, Octothorpe -->
+<xsl:template match="hash">
+    <xsl:text>\#</xsl:text>
+</xsl:template>
+
+<!-- Underscore -->
+<xsl:template match="underscore">
+    <xsl:text>\_</xsl:text>
+</xsl:template>
+
+<!-- Left Brace -->
+<xsl:template match="lbrace">
+    <xsl:text>\{</xsl:text>
+</xsl:template>
+
+<!-- Right  Brace -->
+<xsl:template match="rbrace">
+    <xsl:text>\}</xsl:text>
+</xsl:template>
+
+<!-- Backslash -->
+<xsl:template match="backslash">
+    <xsl:text>\\</xsl:text>
+</xsl:template>
+
+<!-- Asterisk, implemented as Unicode  -->
+
+<!-- Left Bracket -->
+<xsl:template match="lbracket">
+    <xsl:text>\[</xsl:text>
+</xsl:template>
+
+<!-- Right Bracket -->
+<xsl:template match="rbracket">
+    <xsl:text>\]</xsl:text>
+</xsl:template>
+
+<!-- Backtick -->
+<!-- This is the rationale for this element. -->
+<!-- We can use it in a text context,        -->
+<!-- and protect it here from Markdown.      -->
+<xsl:template match="backtick">
+    <xsl:text>\`</xsl:text>
+</xsl:template>
+
+<!-- Markdown protection remaining unimplemented?            -->
+<!-- These are symbols we would not want to need to          -->
+<!-- replace by PreTeXt empty elements, since they           -->
+<!-- are in heavy use.  Some require placement in            -->
+<!-- column 1, which may never happen as a text              -->
+<!-- (Markdown) cell will always have lots of HTML           -->
+<!-- around without many newlines at all.  If square         -->
+<!-- brackets are escaped, the link and image                -->
+<!-- constructions will break, so exclamation marks          -->
+<!-- and parentheses will render correctly, even if          -->
+<!-- accidentally forming the Markdown constructions         -->
+<!-- for links or images.                                    -->
+<!--                                                         -->
+<!-- 1.  parentheses - only an issue following []            -->
+<!-- 2.  plus, minus/hyphen - list items if in column 1      -->
+<!-- 3.  hyphens - three in a row is an hrule.  Breakup?     -->
+<!-- 4.  dot - numbered list construction, in column 1       -->
+<!-- 4.  exclamation - part of image construction, before [] -->
+
 <!--
-TODO:
+TODO: (overall)
 
 1.  Interfere with left-angle bracket to make elements not evaporate in serialization.
+    For verbatim items, apply-imports into a variable, then search/replace to escaped versions
 2.  DONE: Escape $ so that pairs do not go MathJax on us.
-3.  Do we need to protect a hash?  So not interpreted as a title?  Underscores, too.
+3.  DONE: Do we need to protect a hash?  So not interpreted as a title?  Underscores, too.
 4.  Update CSS, use add-on, make an output version to parse as text.
-5.  Markup enclosed Sage cells (non-top-level) to allow dropout, dropin.
+5.  ABANDON: Markup enclosed Sage cells (non-top-level) to allow dropout, dropin.
+    Bad idea, breaks CSS begin/end across multiple cells
 6.  Remove empty strings, empty anything, with search/replace step on null constructions.
 7.  Maybe replace tabs (good for Sage code and/or JSON fidelity)?
+8.  Hyperlinks within a file work better if not prefixed with file name.
+    (General improvement, but not so important with knowls available.)
 -->
 
 <!-- ########################## -->
@@ -457,8 +570,6 @@ TODO:
 <!-- BS, ES: begin and end string                                       -->
 <!--                                                                    -->
 <!-- BM, EM, BC, EC: begin and end, markdown and code, cells            -->
-<!--                                                                    -->
-<!-- NL: newline                                                        -->
 
 
 <!-- ####### -->
@@ -472,14 +583,17 @@ TODO:
 <!-- salt in, and grep final output for this "bad" string  -->
 <!-- that should not survive.                              -->
 
-<!-- Random-ish output from  mkpasswd  utility, -->
-<!-- 2017-10-24 at AMS airport, Starbucks by gate D1 -->
+<!-- Random-ish output from  mkpasswd  utility,           -->
+<!-- 2017-10-24 at AMS airport, Starbucks by faux gate D1 -->
 <xsl:variable name="salt" select="'x9rNtyUydoz3o'" />
 
-<xsl:variable name="LB" select="'[[['" />
+<xsl:variable name="LB">
+    <xsl:text>[[[</xsl:text>
+    <xsl:value-of select="$salt" />
+</xsl:variable>
 
 <xsl:variable name="RB">
-    <!-- <xsl:value-of select="$salt" /> -->
+    <xsl:value-of select="$salt" />
     <xsl:text>]]]</xsl:text>
 </xsl:variable>
 
@@ -504,7 +618,6 @@ TODO:
     <xsl:text>BM</xsl:text>
     <xsl:value-of select="$RB" />
 </xsl:variable>
-
 <xsl:variable name="EM">
     <xsl:value-of select="$LB" />
     <xsl:text>EM</xsl:text>
@@ -517,27 +630,14 @@ TODO:
     <xsl:text>BC</xsl:text>
     <xsl:value-of select="$RB" />
 </xsl:variable>
-
 <xsl:variable name="EC">
     <xsl:value-of select="$LB" />
     <xsl:text>EC</xsl:text>
     <xsl:value-of select="$RB" />
 </xsl:variable>
 
-<!-- Destined to be a newline in JSON output        -->
-<!-- We often need to be very careful with newlines -->
-<!-- This is like an empty, or self-closing tag     -->
-<xsl:variable name="NL">
-    <xsl:value-of select="$LB" />
-    <xsl:text>NL</xsl:text>
-    <xsl:value-of select="$RB" />
-</xsl:variable>
-
-<!-- Combinations -->
-
-<!-- These variables describe adjacent pseudo-markup   -->
-<!-- that will be converted to JSON equivalents,       -->
-<!-- or in the last case, an intermediate combination. -->
+<!-- These variables describe adjacent pseudo-markup -->
+<!-- that will be converted to JSON equivalents.     -->
 
 <xsl:variable name="ESBS">
     <xsl:value-of select="$ES" />
@@ -549,6 +649,8 @@ TODO:
     <xsl:value-of select="$LB" />
 </xsl:variable>
 
+<!-- This is a convenience for the replacement that -->
+<!-- splits cells into lines within JSON file       -->
 <xsl:variable name="RBLB-comma">
     <xsl:value-of select="$RB" />
     <xsl:text>,&#xa;</xsl:text>
@@ -556,11 +658,9 @@ TODO:
 </xsl:variable>
 
 <!-- Convenience templates -->
-<!-- These are primary interface to our creation           -->
-<!-- of pseudo-markup above, but are not the whole         -->
-<!-- story since we convert markup based oon the variables -->
-
-<!-- TODO: global search/replace to make more unique names -->
+<!-- These are primary interface to our creation          -->
+<!-- of pseudo-markup above, but are not the whole        -->
+<!-- story since we convert markup based on the variables -->
 
 <xsl:template name="begin-string">
     <xsl:value-of select="$BS" />
@@ -568,15 +668,6 @@ TODO:
 
 <xsl:template name="end-string">
     <xsl:value-of select="$ES" />
-</xsl:template>
-
-<!-- Will be a start of a markdown cell eventually -->
-<xsl:template name="begin-inline">
-    <xsl:value-of select="$BM" />
-</xsl:template>
-
-<xsl:template name="end-inline">
-    <xsl:value-of select="$EI" />
 </xsl:template>
 
 <xsl:template name="begin-markdown-cell">
@@ -595,17 +686,13 @@ TODO:
     <xsl:value-of select="$EC" />
 </xsl:template>
 
-<xsl:template name="newline">
-    <xsl:value-of select="$NL" />
-</xsl:template>
-
 
 <!-- ################# -->
 <!-- Cell Construction -->
 <!-- ################# -->
 
 <xsl:variable name="begin-markdown-wrap">
-    <xsl:text>{"cell_type": "markdown", "metadata": {}, "source": [&#xa;</xsl:text>
+    <xsl:text>{"cell_type":"markdown", "metadata":{}, "source":[</xsl:text>
 </xsl:variable>
 
 <xsl:variable name="end-markdown-wrap">
@@ -613,11 +700,11 @@ TODO:
 </xsl:variable>
 
 <xsl:variable name="begin-code-wrap">
-    <xsl:text>{"cell_type" : "code", "execution_count" : null, "metadata" : {}, "source": [&#xa;</xsl:text>
+    <xsl:text>{"cell_type":    "code", "execution_count":null, "metadata":{}, "source":[</xsl:text>
 </xsl:variable>
 
 <xsl:variable name="end-code-wrap">
-    <xsl:text>],"outputs" : []}</xsl:text>
+    <xsl:text>], "outputs":[]}</xsl:text>
 </xsl:variable>
 
 <!-- A Jupyter markdown cell intended  -->

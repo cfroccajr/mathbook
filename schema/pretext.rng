@@ -602,7 +602,7 @@
   </define>
   <define name="Hint">
     <element name="hint">
-      <ref name="MetaDataTarget"/>
+      <ref name="MetaDataTitleOptional"/>
       <oneOrMore>
         <ref name="BlockStatement"/>
       </oneOrMore>
@@ -610,7 +610,7 @@
   </define>
   <define name="Answer">
     <element name="answer">
-      <ref name="MetaDataTarget"/>
+      <ref name="MetaDataTitleOptional"/>
       <oneOrMore>
         <ref name="BlockStatement"/>
       </oneOrMore>
@@ -618,7 +618,7 @@
   </define>
   <define name="Solution">
     <element name="solution">
-      <ref name="MetaDataTarget"/>
+      <ref name="MetaDataTitleOptional"/>
       <oneOrMore>
         <ref name="BlockStatement"/>
       </oneOrMore>
@@ -1238,8 +1238,9 @@
       <ref name="MetaDataTitleOptional"/>
       <oneOrMore>
         <choice>
-          <ref name="BlockStatement"/>
-          <ref name="List"/>
+          <ref name="BlockText"/>
+          <ref name="SideBySideNoCaption"/>
+          <ref name="SideBySideGroupNoCaption"/>
         </choice>
       </oneOrMore>
     </element>
@@ -1437,21 +1438,6 @@
     <element name="image">
       <optional>
         <attribute name="pg-name"/>
-      </optional>
-      <optional>
-        <attribute name="width">
-          <data type="integer"/>
-        </attribute>
-      </optional>
-      <optional>
-        <attribute name="height">
-          <data type="integer"/>
-        </attribute>
-      </optional>
-      <optional>
-        <attribute name="tex-size">
-          <data type="integer"/>
-        </attribute>
       </optional>
       <optional>
         <element name="description">
@@ -2075,8 +2061,6 @@
           <ref name="WWInstruction"/>
           <ref name="Preformatted"/>
           <ref name="SideBySideWW"/>
-          <ref name="ImageWW"/>
-          <ref name="TabularWW"/>
         </choice>
       </oneOrMore>
     </element>
@@ -2182,8 +2166,6 @@
           <ref name="ParagraphWW"/>
           <ref name="Preformatted"/>
           <ref name="SideBySideWW"/>
-          <ref name="ImageWW"/>
-          <ref name="TabularWW"/>
         </choice>
       </oneOrMore>
     </element>
@@ -2195,8 +2177,6 @@
           <ref name="ParagraphWW"/>
           <ref name="Preformatted"/>
           <ref name="SideBySideWW"/>
-          <ref name="ImageWW"/>
-          <ref name="TabularWW"/>
         </choice>
       </oneOrMore>
     </element>
@@ -2555,12 +2535,30 @@
     <element name="mrow">
       <ref name="MetaDataTarget"/>
       <optional>
-        <attribute name="number">
-          <choice>
-            <value>yes</value>
-            <value>no</value>
-          </choice>
-        </attribute>
+        <choice>
+          <attribute name="number">
+            <choice>
+              <value>yes</value>
+              <value>no</value>
+            </choice>
+          </attribute>
+          <attribute name="tag">
+            <choice>
+              <value>star</value>
+              <value>dstar</value>
+              <value>tstar</value>
+              <value>dagger</value>
+              <value>ddagger</value>
+              <value>tdagger</value>
+              <value>hash</value>
+              <value>dhash</value>
+              <value>thash</value>
+              <value>maltese</value>
+              <value>dmaltese</value>
+              <value>tmaltese</value>
+            </choice>
+          </attribute>
+        </choice>
       </optional>
       <optional>
         <attribute name="break">
@@ -2798,9 +2796,6 @@
   <define name="Verbatim">
     <choice>
       <element name="c">
-        <optional>
-          <attribute name="latexsep"/>
-        </optional>
         <text/>
       </element>
       <element name="email">

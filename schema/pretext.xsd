@@ -588,10 +588,10 @@
       <xs:element name="hint">
         <xs:complexType>
           <xs:sequence>
-            <xs:group ref="MetaDataTarget"/>
+            <xs:group ref="MetaDataTitleOptional"/>
             <xs:group maxOccurs="unbounded" ref="BlockStatement"/>
           </xs:sequence>
-          <xs:attributeGroup ref="MetaDataTarget"/>
+          <xs:attributeGroup ref="MetaDataTitleOptional"/>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
@@ -599,10 +599,10 @@
   <xs:element name="answer">
     <xs:complexType>
       <xs:sequence>
-        <xs:group ref="MetaDataTarget"/>
+        <xs:group ref="MetaDataTitleOptional"/>
         <xs:group maxOccurs="unbounded" ref="BlockStatement"/>
       </xs:sequence>
-      <xs:attributeGroup ref="MetaDataTarget"/>
+      <xs:attributeGroup ref="MetaDataTitleOptional"/>
     </xs:complexType>
   </xs:element>
   <xs:group name="Solution">
@@ -610,10 +610,10 @@
       <xs:element name="solution">
         <xs:complexType>
           <xs:sequence>
-            <xs:group ref="MetaDataTarget"/>
+            <xs:group ref="MetaDataTitleOptional"/>
             <xs:group maxOccurs="unbounded" ref="BlockStatement"/>
           </xs:sequence>
-          <xs:attributeGroup ref="MetaDataTarget"/>
+          <xs:attributeGroup ref="MetaDataTitleOptional"/>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
@@ -1185,8 +1185,9 @@
       <xs:sequence>
         <xs:group ref="MetaDataTitleOptional"/>
         <xs:choice maxOccurs="unbounded">
-          <xs:group ref="BlockStatement"/>
-          <xs:group ref="List"/>
+          <xs:group ref="BlockText"/>
+          <xs:group ref="SideBySideNoCaption"/>
+          <xs:group ref="SideBySideGroupNoCaption"/>
         </xs:choice>
       </xs:sequence>
       <xs:attributeGroup ref="MetaDataTitleOptional"/>
@@ -1425,9 +1426,6 @@
             </xs:element>
           </xs:sequence>
           <xs:attribute name="pg-name"/>
-          <xs:attribute name="width" type="xs:integer"/>
-          <xs:attribute name="height" type="xs:integer"/>
-          <xs:attribute name="tex-size" type="xs:integer"/>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
@@ -2008,8 +2006,6 @@
             <xs:element ref="instruction"/>
             <xs:element ref="pre"/>
             <xs:group ref="SideBySideWW"/>
-            <xs:group ref="ImageWW"/>
-            <xs:group ref="TabularWW"/>
           </xs:choice>
         </xs:complexType>
       </xs:element>
@@ -2108,8 +2104,6 @@
             <xs:group ref="ParagraphWW"/>
             <xs:element ref="pre"/>
             <xs:group ref="SideBySideWW"/>
-            <xs:group ref="ImageWW"/>
-            <xs:group ref="TabularWW"/>
           </xs:choice>
         </xs:complexType>
       </xs:element>
@@ -2123,8 +2117,6 @@
             <xs:group ref="ParagraphWW"/>
             <xs:element ref="pre"/>
             <xs:group ref="SideBySideWW"/>
-            <xs:group ref="ImageWW"/>
-            <xs:group ref="TabularWW"/>
           </xs:choice>
         </xs:complexType>
       </xs:element>
@@ -2450,6 +2442,24 @@
               </xs:restriction>
             </xs:simpleType>
           </xs:attribute>
+          <xs:attribute name="tag">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value="star"/>
+                <xs:enumeration value="dstar"/>
+                <xs:enumeration value="tstar"/>
+                <xs:enumeration value="dagger"/>
+                <xs:enumeration value="ddagger"/>
+                <xs:enumeration value="tdagger"/>
+                <xs:enumeration value="hash"/>
+                <xs:enumeration value="dhash"/>
+                <xs:enumeration value="thash"/>
+                <xs:enumeration value="maltese"/>
+                <xs:enumeration value="dmaltese"/>
+                <xs:enumeration value="tmaltese"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
           <xs:attribute name="break">
             <xs:simpleType>
               <xs:restriction base="xs:token">
@@ -2678,11 +2688,7 @@
       <xs:element ref="email"/>
     </xs:choice>
   </xs:group>
-  <xs:element name="c">
-    <xs:complexType mixed="true">
-      <xs:attribute name="latexsep"/>
-    </xs:complexType>
-  </xs:element>
+  <xs:element name="c" type="xs:string"/>
   <xs:group name="Group">
     <xs:choice>
       <xs:choice>

@@ -55,8 +55,10 @@
             element book {
                 MetaDataSubtitle,
                 BookFrontMatter?,
-                Chapter,
-                (Chapter | Exercises | References)*,
+                (
+                    (Chapter, (Chapter | Exercises | References)*) |
+                    Part+
+                ),
                 BackMatter?
             }
         Letter =
@@ -76,6 +78,10 @@
         <p>There are several things to note (expand this): always a title, dead-end with blocks, or subdivide with optional intro and conclusion.</p>
 
         <fragment xml:id="divisions">
+        Part =
+            element part {
+                MetaDataTitle, Chapter+
+            }
         Chapter =
             element chapter {
                 MetaDataTitle,
@@ -1322,7 +1328,7 @@
         <p>Raster, and described by languages, plus 100<percent /> duplicates.  The <webwork /> variant is quite different.</p>
 
         <fragment xml:id="image">
-        Image = ImageRaster | ImageCode | ImageCopy
+        Image = ImageRaster | ImageCode
         ImageRaster = 
             element image {
                 UniqueID?,
@@ -1338,15 +1344,10 @@
                 attribute archive {text}?,
                 element description {TextShort}?,
                 (
-                    element latex-image-code {text} |
+                    element latex-image {text} |
                     element asymptote {text} |
                     element sageplot {text}
                 )
-            }
-        ImageCopy = 
-            element image {
-                UniqueID?,
-                attribute copy {text}
             }
         ImageWW = 
             element image {
@@ -1364,7 +1365,6 @@
         <fragment xml:id="sage">
         Sage = element sage {
             UniqueID?,
-            attribute copy {text}?,
             attribute doctest {text}?,
             attribute tolerance {text}?,
             attribute language {text}?,
@@ -1515,7 +1515,7 @@
         BibJournal = element journal {text}
         BibNumber = element number {text}
         BibVolume = element volume {text}
-        BibTitle = element title {TextShort}
+        BibTitle = element title {TextLong}
         BibNote = element note {UniqueID?, Paragraph+}
         </fragment>
     </section>
@@ -1669,15 +1669,16 @@
             <li><c>MetaDataTarget</c> is for items that are targets of cross-references, but without even optional titles.  Since they will be knowled, they can appear in an index.  But without the potential to be titled, we do not set them up as possible root elements of a file to <c>xinclude</c>.</li>
             <li><c>MetaDataSubtitle</c> implicitly has an required title.  We might relax this as it is employed in more places.</li>
             <li><c>MetaDataCaption</c> implicitly has an optional title.</li>
+            <li>Titles may contain external references (<c>url</c>) or internal cross-references (<c>xref</c>), but implementers need not make them active (<ie />, they maybe text only), since titles are prone to migrating to other locations.</li>
         </ul></p>
 
         <fragment xml:id="metadata">
         UniqueID =
             attribute xml:id {text}
         Title =
-            element title {TextShort}
+            element title {TextLong}
         Subtitle =
-            element subtitle {TextShort}
+            element subtitle {TextLong}
         XMLBase = attribute xml:base {text}
         XMLLang = attribute xml:lang {text}
         MetaDataTarget =
@@ -1781,7 +1782,7 @@
             }
         Credit =
             element credit {
-                element title {TextShort},
+                element title {TextLong},
                 Author+
             }
         Date = 
@@ -1886,7 +1887,7 @@
     <section>
         <title>Document Information</title>
 
-        <p>The <c>docinfo</c> sction is like a small database for the document.</p>
+        <p>The <c>docinfo</c> section is like a small database for the document.</p>
 
         <fragment xml:id="docinfo">
         DocInfo =
@@ -1906,6 +1907,7 @@
         <fragment ref="imagearchive" />
         <fragment ref="authorbiographylength" />
         <fragment ref="addins" />
+        <fragment ref="numbering" />
         </fragment>
 
         <p>A nice icon near the top of an electronic version is a nice touch, and can link back to a project landing page.</p>
@@ -2020,6 +2022,17 @@
                         element security {text}
                     }
                 )+
+            }
+        </fragment>
+
+        <p>Many aspects of numbering are configurable.  These choices affect the numbers printed, and so are an author's decision, and hence run with the source.</p>
+
+        <fragment xml:id="numbering">
+        Configuration |=
+            element numbering {
+                element division {
+                    attribute part {"decorative" | "structural"}
+                }?
             }
         </fragment>
     </section>

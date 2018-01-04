@@ -86,7 +86,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <caption>Subgroups of <m>S_3</m></caption>
             <!-- Replaced figure with tikz figure - TWJ 5/6/2010 -->
             <image xml:id="cyclic-s3-subgroups">
-                <latex-image-code><![CDATA[
+                <latex-image><![CDATA[
                     \begin{tikzpicture}[scale=1]
 
                     \draw  (0,0.3) -- (2.6,1.2);
@@ -106,7 +106,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     \node at (3, 1.5) {$S_3$};
                     \node at (3,-1.5) {$\{ \identity \}$};
                     \end{tikzpicture}]]>
-                </latex-image-code>
+                </latex-image>
             </image>
         </figure>
 
@@ -201,7 +201,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <caption>Rectangular coordinates of a complex number</caption>
             <!-- Replaced figure with tikz figure - TWJ 5/6/2010 -->
             <image xml:id="cyclic-complex-rectangular">
-                <latex-image-code><![CDATA[
+                <latex-image><![CDATA[
                     \begin{tikzpicture}[scale=0.5]
 
                     \draw [->]  (0,-5) -- (0,5);
@@ -220,7 +220,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     \node [right] at (1, -2) {$z_2 = 1 -  2i$};
 
                     \end{tikzpicture}]]>
-                </latex-image-code>
+                </latex-image>
             </image>
         </figure>
 
@@ -230,7 +230,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <caption>Polar coordinates of a complex number</caption>
             <!-- Replaced figure with tikz figure - TWJ 5/6/2010 -->
             <image xml:id="cyclic-complex-polar">
-                <latex-image-code><![CDATA[
+                <latex-image><![CDATA[
                     \begin{tikzpicture}[scale=0.5]
 
                     \draw [->]  (0,-5) -- (0,5);
@@ -248,7 +248,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     \node [right] at (17:2) {$\theta$};
 
                     \end{tikzpicture}]]>
-                </latex-image-code>
+                </latex-image>
             </image>
         </figure>
 
@@ -278,14 +278,14 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <p>If <m>z =  3 \cis( \pi / 3 )</m> and <m>w = 2 \cis(\pi / 6 )</m>, then <m>zw = 6 \cis( \pi / 2 ) = 6i</m>.</p>
         </example>
 
-        <theorem>
+        <theorem xml:id="theorem-demoivre">
             <title>DeMoivre</title>
             <idx><h>DeMoivre's Theorem</h></idx>
             <statement>
                 <p>Let <m>z = r \cis  \theta</m> be a nonzero complex number. Then <me>[r \cis \theta  ]^n = r^n \cis( n \theta)</me> for <m>n = 1, 2, \ldots</m>.</p>
             </statement>
             <proof>
-                <p>We will use induction on <m>n</m>. For <m>n = 1</m> the theorem is trivial. Assume that the theorem is true for all <m>k</m> such that <m>1  \leq k \leq n</m>. Then<md>
+                <p>We will use induction on <m>n</m> (see <xref ref="section-math-induction" />). For <m>n = 1</m> the theorem is trivial. Assume that the theorem is true for all <m>k</m> such that <m>1  \leq k \leq n</m>. Then<md>
                     <mrow>z^{n+1} &amp; = z^n z</mrow>
                     <mrow>&amp; = r^n( \cos  n \theta + i \sin n \theta ) r( \cos \theta + i\sin \theta )</mrow>
                     <mrow>&amp; = r^{n+1} [( \cos n \theta \cos \theta - \sin n \theta \sin \theta ) + i ( \sin n \theta \cos \theta + \cos n \theta \sin \theta)]</mrow>
@@ -295,7 +295,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </proof>
         </theorem>
 
-        <example xml:id="theorem-demoivre">
+        <example>
             <p>Suppose that <m>z= 1+i</m> and we wish to compute <m>z^{10}</m>. Rather than computing <m>(1 + i)^{10}</m> directly, it is much easier to switch to polar coordinates and calculate <m>z^{10}</m> using DeMoivre's Theorem:<md>
                 <mrow>z^{10} &amp; = (1+i)^{10}</mrow>
                 <mrow>&amp; = \left( \sqrt{2} \cis \left( \frac{\pi }{4} \right) \right)^{10}</mrow>
@@ -342,38 +342,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <caption>8th roots of unity</caption>
             <!-- Replaced figure with tikz figure - TWJ 5/6/2010 -->
             <image xml:id="cyclic-roots-unity">
-                <latex-image-code><![CDATA[
-                    \begin{tikzpicture}[scale=1.65]
+                <latex-image><xi:include href="tikz/cyclic-roots-unity.tex" parse="text" /></latex-image>
+            </image>
+        </figure>
 
-                    \draw [->]  (0,-1.5) -- (0,1.5);
-                    \draw  [->] (-1.75,0) -- (1.75,0);
-                    \node [right] at (0,1.5) {$y$};
-                    \node [below] at (1.75,0) {$x$};
-                    \node [below] at (0.1,0) {$0$};
+        <p>We interrupt this exposition to repeat the previous diagram, wrapped as different figure with a different caption.  The TikZ code to produce these diagrams lives in an external file, <c>tikz/cyclic-roots-unity.tex</c>, which is pure text, freed from any need to format for XML processing.  So, in particular, there is no need to escape ampersands and angle brackets, nor is there employment of the <c>CDATA</c> mechanism.  But the real value is that there is just one version to edit, and any changes will be reflected in both copies.</p>
 
-                    \draw (0,0) circle (1);
-
-                    \filldraw[fill=black, draw=black] (0:1) circle (0.03);
-                    \filldraw[fill=black, draw=black] (45:1) circle (0.03);
-                    \filldraw[fill=black, draw=black] (90:1) circle (0.03);
-                    \filldraw[fill=black, draw=black] (135:1) circle (0.03);
-                    \filldraw[fill=black, draw=black] (180:1) circle (0.03);
-                    \filldraw[fill=black, draw=black] (225:1) circle (0.03);
-                    \filldraw[fill=black, draw=black] (270:1) circle (0.03);
-                    \filldraw[fill=black, draw=black] (315:1) circle (0.03);
-
-
-                    \node [right] at (1,-0.15) {1};
-                    \node [right] at (45:1) {$\omega$};
-                    \node [left] at (0,1.15) {$i$};
-                    \node [left] at (135:1) {$\omega^3$};
-                    \node [left] at (-1,-0.15) {$-1$};
-                    \node [left] at (225:1) {$\omega^5$};
-                    \node [left] at (0,-1.15) {$-i$};
-                    \node [right] at (315:1) {$\omega^7$};
-
-                    \end{tikzpicture}]]>
-                </latex-image-code>
+        <figure xml:id="figure-rtsunity-copy">
+            <caption>Repeat: 8th roots of unity</caption>
+            <image xml:id="cyclic-roots-unity-copy">
+                <latex-image><xi:include href="tikz/cyclic-roots-unity.tex" parse="text" /></latex-image>
             </image>
         </figure>
     </section>

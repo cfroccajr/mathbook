@@ -578,7 +578,7 @@ the xsltproc executable.
                 <p>The Fundamental Theorem comes in two flavors, where usually one is a corollary of the other.</p>
             </introduction>
 
-            <subsection>
+            <subsection xml:id="subsection-second-FTC">
                 <title>Second Version of <acro>FTC</acro></title>
 
                 <todo>Should equation references come with parentheses?</todo>
@@ -664,7 +664,7 @@ the xsltproc executable.
             -->
 
             <subsection>
-                <title>A Pedagogical Note</title>
+                <title>A Pedagogical Note about <xref ref="subsection-second-FTC" text="type-global"/></title>
 
                 <subsubsection xml:id="subsubsection-different-integrals">
                     <title>Symbolic and Numerical Integrals</title>
@@ -734,6 +734,16 @@ the xsltproc executable.
                             <p>What was the question?</p>
                         </solution>
                     </exercise>
+
+                    <example xml:id="example-math-title">
+                        <title>An Example of with <m>\frac12</m> math formula <m>\displaystyle{\int e^x \, dx}</m> in the title</title>
+                        <statement>
+                            <p>
+                               Just for testing math in knowls,
+                               and also extra whitespace in a <c>&lt;p&gt;</c>.
+                            </p>
+                        </statement>
+                    </example>
 
                     <p>There are many different blocks you can employ, and they mostly behave the same way.  A <c>&lt;project&gt;</c><idx><h>project</h></idx> is very similar to a <c>&lt;question&gt;</c><idx><h>question</h></idx> or <c>&lt;problem&gt;</c><idx><h>problem</h></idx></p>
 
@@ -961,9 +971,7 @@ the xsltproc executable.
                 <title>Linking Sage Cells</title>
                 <idx><h>Sage cells</h><h>linking</h></idx>
 
-                <p>Sage cells share their results on a per-webpage basis, so if you move to a new chapter, section, or subsection that happens to be on another webpage, your Sage computations are gone and you start fresh.  But maybe you need some results from elsewhere.  As an author, you can make an exact copy of a cell in another location.  As a reader you are suggested to <q>replay</q> the cell.  You have seen the next cell before.  More typically such a cell might define a function or set some values of a variable.</p>
-
-                <sage copy="sage-numerical-integral" />
+                <p>Sage cells share their results on a per-webpage basis, so if you move to a new chapter, section, or subsection that happens to be on another webpage, your Sage computations are gone and you start fresh.  But maybe you need some results from elsewhere.  As an author, you can make an exact copy of a cell in another location by placing the code in an external file, which is pure text, freed from any need to format for XML processing.  So, in particular, there is no need to escape ampersands and angle brackets, nor is there employment of the <c>CDATA</c> mechanism.  But the real value is that there is just one version to edit, and any changes will be reflected in both copies.  We demonstrate this in the sample book, since it has the <c>xinclude</c> mechanism in place.  In the chapter on groups, find the section on Sage and then find the discussion of subgroups, and you will find an example of two identical Sage cells produced from one source file.</p>
             </subsection>
 
             <subsection>
@@ -1306,6 +1314,14 @@ the xsltproc executable.
                     <mrow>x  \amp {}+{} \amp 3y \amp {}+{} \amp 2z \amp {}={} \amp 13.</mrow>
                 </md>Beautiful.</p>
 
+                <p>A long equation, to check layout on various screen sizes.  This is Weil's <q>explicit formula</q> for the
+                   Riemann <m>\zeta</m>-function:
+                  <men>
+        \sum_\gamma S_-(\gamma) = \frac{\log Q}{\pi} \hat S_-(0) 
+        + \frac{1}{2\pi} \sum_{j=1}^d \Re\left\{ \int_{-\infty}^\infty \frac{\Gamma'}{\Gamma}\left(\frac{1}{4} + \frac{it}{2} + \mu_j\right)S_-(t) dt\right\}
+        - \frac{d}{2\pi}\hat S_-(0)\log \pi
+                  </men>.
+                </p>
                 <example>
                     <title>Excessive Display Mathematics</title>
 
@@ -1602,7 +1618,7 @@ the xsltproc executable.
             </subsection>
 
             <subsection xml:id="section-urls">
-                <title>URLs</title>
+                <title>URLs, such as <url href="http://example.com" /></title>
 
                 <p>An internet <init>URL</init><idx><h>URLs</h></idx> can very well contain some of the characters that <latex /> needs to escape.  But the packages we use for embedded links should be smart about this.  So we include a long <init>URL</init> for testing <latex /> output, with one reserved character, though maybe someday it will become stale and we need to change it out:  <url href="http://www.pcc.edu/enroll/registration/dropping.html#withdraw">www.pcc.edu/enroll/registration/dropping.html<hash />withdraw</url>.  Notice in the source that you <em>cannot</em> put a tag inside the <c>href</c> attribute, and do need to use an element within the content (unless you like to wrap the content in a <c>c</c> element).  Here is a totally bogus <init>URL</init>, which contains every possible legal character, so if this fails to convert there is some problematic character.  Four combinations: with the content as normal text versus with the characters as verbatim text, and as a <init>URL</init> versus not.</p>
 
@@ -1720,7 +1736,7 @@ the xsltproc executable.
                     <caption>TikZ Electronics Diagram</caption>
                     <image xml:id="tikz-electronics">
                         <description>A pile of electronic components wired together</description>
-                        <latex-image-code>
+                        <latex-image>
                         <!-- CDATA prevents certain LaTeX code from being interpreted as xml -->
                         <![CDATA[\tikzset{%
                           block/.style    = {draw, thick, rectangle, minimum height = 3em,
@@ -1799,7 +1815,7 @@ the xsltproc executable.
                             \draw [color=gray,thick](-0.5,-9) rectangle (12.5,-5);
                             \node at (-0.5,-9) [below=5mm, right=0mm] {\textsc{second-order noise shaper}};
                         \end{tikzpicture}]]>
-                        </latex-image-code>
+                        </latex-image>
                     </image>
                 </figure>
 
@@ -1809,7 +1825,7 @@ the xsltproc executable.
                 <figure xml:id="figure-tikz-cone3D">
                     <caption>TikZ Cone Drawing</caption>
                     <image xml:id="tikz-cone" width="70%">
-                        <latex-image-code>
+                        <latex-image>
                         <!-- CDATA prevents certain LaTeX code from being interpreted as xml -->
                         <![CDATA[\begin{tikzpicture}[join=round]
                         \tikzstyle{conefill} = [fill=blue!20,fill opacity=0.8]
@@ -1885,7 +1901,7 @@ the xsltproc executable.
                                         (.274,-.5) node [below] {$P_{11}$};
                         \end{scope}
                         \end{tikzpicture}]]>
-                        </latex-image-code>
+                        </latex-image>
                     </image>
                 </figure>
 
@@ -1895,7 +1911,7 @@ the xsltproc executable.
                     <caption>Sample pgfplots plot</caption>
                     <image xml:id="pgfplots-demo">
                         <description>A pgfplots example, with a function, a parametric curve, and some points plotted.</description>
-                        <latex-image-code>
+                        <latex-image>
                         <!-- CDATA prevents certain LaTeX code from being interpreted as xml -->
                         <![CDATA[\begin{tikzpicture}
                         \matrix{
@@ -1933,8 +1949,7 @@ the xsltproc executable.
                             \end{axis}\\
                         };
                         \end{tikzpicture}]]>
-
-                        </latex-image-code>
+                        </latex-image>
                     </image>
                 </figure>
 
@@ -1946,7 +1961,7 @@ the xsltproc executable.
                     <caption>External data in a pgfplots plot</caption>
                     <image xml:id="pgfplots-data-demo">
                         <description>A pgfplots example, with external data plotted.</description>
-                        <latex-image-code>
+                        <latex-image>
                         <!-- CDATA prevents certain LaTeX code from being interpreted as xml -->
                         <![CDATA[\tikzset{%
                         }
@@ -1960,7 +1975,7 @@ the xsltproc executable.
                         \addplot[blue] table {data/hodgkin-huxley-data.dat};
                         \end{axis}
                         \end{tikzpicture}]]>
-                        </latex-image-code>
+                        </latex-image>
                     </image>
                 </figure>
 
@@ -2228,19 +2243,14 @@ the xsltproc executable.
             <subsection>
                 <title>Copies of Images</title>
 
-                <p>So you do not have to duplicate the source of an image (and risk them later diverging), or for other reasons of efficiency, you can place an image as a copy of another one.  The copy is an <em>exact</em> copy, such as having the identical width.  Though, if placed within a <c>figure</c> element, the caption and so on, can be changed.</p>
-                <p>To use this feature, simply be certain to give the original an <c>xml:id</c> and then place an <c>image</c> tag where you want the copy.  Then use a <c>@copy</c> attribute to point to the original.  Two test examples, one from TikZ source, the other from a raster image.</p>
+                <p>Sometimes you want to use the same image more than once.  For a raster image, you can just point to it again.  You are free to wrap it in a <c>figure</c> or <c>sidebyside</c> and can change the caption.  It will get a new number as a new figure, and you will need to assign a unique <c>@xml:id</c> attribute.  Maybe appending <c>-copy-2</c>, or similar, will be helpful.</p>
 
-                <figure xml:id="figure-tikz-cone3D-copied">
-                    <caption>TikZ Cone Drawing (Copy)</caption>
-                    <image copy="tikz-cone" xml:id="tikz-cone-copy" />
+                <figure xml:id="figure-raster-image-copy">
+                    <caption>Copy of raster image, in a figure, so now numbered and captioned</caption>
+                    <image source="images/cross-square.png" width="30%" />
                 </figure>
 
-                <figure xml:id="figure-captionless-titleless-image-copied">
-                    <caption>Copy of raster image, now numbered, captioned</caption>
-                    <image copy="cross-square" />
-                </figure>
-
+                <p>If you have a figure generated from source code (such as in TikZ) you can place the code into a file and <c>xinclude</c> it twice.  The <c>mbx</c> script will make two copies if you include the source twice, but with different names (generated from the different <c>@xml:id</c>).  Furthermore, with the <c>@parse</c> attribute on the <c>xinclude</c> element set to <c>text</c> you are absolved from escaping the dangerous XML characters (ampersand, angle brackets) and definitely have no need for the <c>CDATA</c> mechanism.  We demonstrate this with the sample book, since it is all set up with the <c>xinclude</c> mechanism.  See the two plots of the 8-th roots of unity in the complex numbers section of the chapter on cyclic groups.</p>
             </subsection>
 
             <subsection>
@@ -3586,7 +3596,7 @@ the xsltproc executable.
                    <figure>
                         <caption>GeoGebra demonstration of the Euler Line</caption>
                         <image xml:id="tikz-geogebra-euler">
-                            <latex-image-code>
+                            <latex-image>
                             \begin{tikzpicture}
                             \definecolor{ffqqqq}{rgb}{1,0,0}
                             \definecolor{uuuuuu}{rgb}{0.27,0.27,0.27}
@@ -3614,7 +3624,7 @@ the xsltproc executable.
                             \draw[color=uuuuuu] (-1.29,1.79) node {$orthocentre$};
                             \draw[color=ffqqqq] (-3.75,6.23) node {$Euler$};
                             \end{tikzpicture}
-                            </latex-image-code>
+                            </latex-image>
                         </image>
                     </figure>
                 </geogebra-applet>
@@ -4180,6 +4190,150 @@ the xsltproc executable.
         A "preview" XSL transform to HTML could be especially useful.
         -->
 
+        <section>
+            <title>Exercises, Redone</title>
+
+            <p>This <c>section</c> of the sample article is provisional, and will eventually replace, or merge with, the previous section, which is actually an <c>exercises</c>.  To view this test section properly, include on the <c>xsltproc</c> command line:<cd>
+                <cline>-stringparam new.exercises yes</cline>
+            </cd>and set the value to <c>no</c> to view the previous section properly.</p>
+
+            <p>Our purpose here is to illustrate an un-structured division, containing inline exercises, plus three subdivisions that are <c>exercises</c> and one subdivision that is a <c>references</c>.  The change is that these divisions are not numbered.  So contained exercises get their structure number from the overall division, and we need to be careful about uniqueness and ambiguity.</p>
+
+            <p>Notice that we have engineered this division (under default settings) to have an <xref ref="exercise-duplicate-inline" text="type-global" />  and an <xref ref="exercise-duplicate-sectional" text="type-global" />.  In print, you will be completely confused by this (that is a problem), while in electronic versions, following these cross-references will take you different places, which may also be confusing.</p>
+
+            <p>How did we end up with the same exercise number?  Inline exercises are mixed in with examples and theorems, so the inline exercises are numbered in concert with those items.  Two inline exercises and one theorem precede <xref ref="exercise-duplicate-inline" text="title" />, so the serial number of this exercises is 4.  Then for the division titled <xref ref="exercises-drill" text="title" /> we purposely set the <c>@first-number</c> attribute to <c>4</c>, causing the numbering to begin with 4 for the sectional exercise <xref ref="exercise-duplicate-sectional" text="title" />.  If we had not set this attribute, the problem would have been worse, as there would be an inline and sectional exercise numbered 1 and an inline and sectional exercise numbered 2 (but not for numbers 3 and 4).  There are various work-arounds to this problem:<ul>
+                <li>Set the <c>@first-number</c> attribute on the first <c>exercises</c> division after an inline exercise to a large enough number to remove any duplication.</li>
+                <li>Use fewer levels for the numbering on inline exercises (and theorems, etc), and place all <c>exercises</c> sections deep enough in the hierarchy to avoid duplication.</li>
+                <li>Never cross-reference an exercise.  Or when you do, cross-reference by title (as in the first part of this paragraph).  The duplicate numbers might still cause confusion for your readers (such as students receiving an assignment).</li>
+            </ul></p>
+
+            <p>Notice that if you only ever use inline exercises, or only ever use sectional exercises, then there is no potential for duplicate numbers (so long as you use the <c>@first-number</c> attribute responsibly).</p>
+
+            <p>Following text is mostly nonsense, just for testing purposes.</p>
+
+            <exercise>
+                <title>Inline One</title>
+                <statement>
+                    <p>Aliquam vitae risus placerat, pellentesque leo vitae, iaculis ante. Praesent ac odio eget mi bibendum eleifend ac eget metus. Morbi in dolor et diam accumsan mattis. Aenean elementum pulvinar efficitur. Etiam viverra ut tellus quis consequat. Phasellus sit amet nisl a ligula pharetra tempus id in elit. Maecenas congue quam eu purus fermentum pretium. Fusce pellentesque ultricies arcu, egestas sollicitudin erat condimentum non. Integer non velit at dolor dictum aliquam et rhoncus mauris. Sed nec nibh id nunc convallis tincidunt ut at ligula. Etiam elementum nisl eu erat dapibus rhoncus.</p>
+                </statement>
+            </exercise>
+
+            <p>Pellentesque nec condimentum ligula, quis interdum mauris. Ut sed urna lacinia, aliquam arcu id, faucibus nisi. Suspendisse potenti. Curabitur in erat ultricies, condimentum mi nec, vehicula mauris. Duis faucibus risus fermentum velit hendrerit, non laoreet massa maximus. Donec bibendum elit ac lectus lobortis luctus. Ut finibus, dolor ut euismod tristique, ligula tortor tempus arcu, finibus semper purus erat ut ligula. Aenean accumsan ut ante vel euismod.</p>
+
+            <exercise>
+                <title>Inline Two</title>
+                <statement>
+                    <p>Ut porttitor neque a pharetra euismod. Vivamus ut metus pretium, placerat massa tempor, condimentum metus. Phasellus vestibulum iaculis turpis non posuere. Vestibulum quis aliquet neque. Donec nec metus iaculis, laoreet massa vitae, suscipit tellus. Etiam et ultrices quam, quis pretium ligula. In ut cursus metus. Aenean volutpat quam odio, quis tempus dolor egestas eget. Nunc fringilla lobortis nunc, ut interdum lorem posuere sed. Sed sodales risus a laoreet venenatis. Nunc sodales tempor mollis. Nam sollicitudin velit sed ex viverra feugiat. Nunc consectetur mi vitae urna sollicitudin malesuada. Fusce eget risus lectus. Mauris augue velit, vestibulum vitae tempus sit amet, porttitor eget turpis.</p>
+                </statement>
+            </exercise>
+
+            <theorem>
+                <title>Major Result</title>
+                <p>Vivamus tortor tortor, lobortis et sem vel, accumsan placerat libero. Sed eget metus non magna accumsan efficitur a non turpis. Curabitur maximus arcu ipsum, eget vestibulum nulla mollis ac. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Duis vel eleifend risus. Morbi hendrerit tellus eget nibh imperdiet, ac mollis nisl sagittis. Ut commodo pharetra leo. Suspendisse consequat velit eget velit condimentum feugiat.</p>
+            </theorem>
+
+            <exercise xml:id="exercise-duplicate-inline">
+                <title>Inline Three</title>
+                <statement>
+                    <p>Suspendisse lacinia mattis risus, eget viverra urna dictum eu. Maecenas ut sem in turpis egestas varius nec at ipsum. Praesent bibendum nisi et turpis congue, a pellentesque felis tempor. Vivamus non dolor in risus interdum mattis. In tempus iaculis velit, sit amet rhoncus tellus aliquam convallis. Sed ut tellus id ipsum blandit convallis sed eget tortor. Nunc leo felis, scelerisque vel ante porta, volutpat rhoncus neque. Mauris convallis, felis at aliquam aliquet, felis ipsum semper mi, vitae auctor purus ante non erat. Ut nec felis mi.</p>
+                </statement>
+            </exercise>
+
+            <exercises first-number="4" xml:id="exercises-drill">
+                <title>Drill Exercises</title>
+
+                <exercise xml:id="exercise-duplicate-sectional">
+                    <title>Drill One</title>
+                    <statement>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras congue urna nulla. Aliquam eget euismod tellus. Maecenas nibh libero, venenatis a laoreet in, tempor sit amet sem. Morbi sit amet justo tempor velit auctor placerat. Maecenas nec lobortis orci. Aenean dictum enim lacus, ac blandit lacus elementum nec. Mauris porttitor neque volutpat tincidunt sollicitudin. Cras porta lectus ac facilisis tempor. Suspendisse in velit nisl. Sed convallis leo at nunc aliquet fermentum. Pellentesque feugiat at ex sed elementum. In porta vulputate ipsum sit amet consectetur.</p>
+                    </statement>
+                </exercise>
+
+                <exercise>
+                    <title>Drill Two</title>
+                    <statement>
+                        <p>Aliquam sagittis ex at magna porttitor, quis scelerisque ligula malesuada. Vestibulum vitae mauris id nisi pretium ornare a id lectus. Nam suscipit magna id sem ultricies vestibulum. Nulla facilisi. Duis venenatis lectus massa, ac mollis nisi suscipit non. Sed et sapien vulputate, imperdiet nibh vel, lobortis nisl. Curabitur sagittis justo nibh. Nulla vulputate sodales justo at efficitur. Cras justo augue, mollis vitae nulla sed, vestibulum tincidunt ante. Vestibulum et lorem lectus. Maecenas accumsan lacus a nisi euismod rutrum eu dapibus justo. Etiam scelerisque a odio a euismod. Pellentesque vestibulum pellentesque nisi, a tempus erat cursus ac. Morbi ut auctor lectus.</p>
+                    </statement>
+                </exercise>
+
+                <exercise>
+                    <title>Drill Three</title>
+                    <statement>
+                        <p>Nam congue ex nec justo iaculis maximus. Vestibulum lobortis magna sed urna auctor, vel dignissim massa posuere. In sed venenatis elit. Vivamus congue gravida tempus. Nunc quis fermentum nisi. Nullam hendrerit lorem et tellus semper, sit amet scelerisque purus lobortis. Quisque sollicitudin quis neque eu suscipit. Praesent volutpat justo quis magna vehicula molestie.</p>
+                    </statement>
+                </exercise>
+            </exercises>
+
+
+            <exercises first-number="101">
+                <title>Challenging Exercises</title>
+
+                <exercise>
+                    <title>Challenging One</title>
+                    <statement>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras congue urna nulla. Aliquam eget euismod tellus. Maecenas nibh libero, venenatis a laoreet in, tempor sit amet sem. Morbi sit amet justo tempor velit auctor placerat. Maecenas nec lobortis orci. Aenean dictum enim lacus, ac blandit lacus elementum nec. Mauris porttitor neque volutpat tincidunt sollicitudin. Cras porta lectus ac facilisis tempor. Suspendisse in velit nisl. Sed convallis leo at nunc aliquet fermentum. Pellentesque feugiat at ex sed elementum. In porta vulputate ipsum sit amet consectetur.</p>
+                    </statement>
+                </exercise>
+
+                <exercisegroup>
+                    <introduction>
+                        <p>An introduction to an <c>exercisegroup</c>.  This is here to attempt to interrupt the flow of the counting from this division to the next.</p>
+                    </introduction>
+
+                    <exercise>
+                        <title>Challenging Two</title>
+                        <statement>
+                            <p>Aliquam sagittis ex at magna porttitor, quis scelerisque ligula malesuada. Vestibulum vitae mauris id nisi pretium ornare a id lectus. Nam suscipit magna id sem ultricies vestibulum. Nulla facilisi. Duis venenatis lectus massa, ac mollis nisi suscipit non. Sed et sapien vulputate, imperdiet nibh vel, lobortis nisl. Curabitur sagittis justo nibh. Nulla vulputate sodales justo at efficitur. Cras justo augue, mollis vitae nulla sed, vestibulum tincidunt ante. Vestibulum et lorem lectus. Maecenas accumsan lacus a nisi euismod rutrum eu dapibus justo. Etiam scelerisque a odio a euismod. Pellentesque vestibulum pellentesque nisi, a tempus erat cursus ac. Morbi ut auctor lectus.</p>
+                        </statement>
+                    </exercise>
+
+                    <exercise>
+                        <title>Challenging Three</title>
+                        <statement>
+                            <p>Nam congue ex nec justo iaculis maximus. Vestibulum lobortis magna sed urna auctor, vel dignissim massa posuere. In sed venenatis elit. Vivamus congue gravida tempus. Nunc quis fermentum nisi. Nullam hendrerit lorem et tellus semper, sit amet scelerisque purus lobortis. Quisque sollicitudin quis neque eu suscipit. Praesent volutpat justo quis magna vehicula molestie.</p>
+                        </statement>
+                    </exercise>
+                </exercisegroup>
+            </exercises>
+
+
+            <exercises>
+                <title>Impossible Exercises</title>
+
+                <exercise>
+                    <title>Impossible One</title>
+                    <statement>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras congue urna nulla. Aliquam eget euismod tellus. Maecenas nibh libero, venenatis a laoreet in, tempor sit amet sem. Morbi sit amet justo tempor velit auctor placerat. Maecenas nec lobortis orci. Aenean dictum enim lacus, ac blandit lacus elementum nec. Mauris porttitor neque volutpat tincidunt sollicitudin. Cras porta lectus ac facilisis tempor. Suspendisse in velit nisl. Sed convallis leo at nunc aliquet fermentum. Pellentesque feugiat at ex sed elementum. In porta vulputate ipsum sit amet consectetur.</p>
+                    </statement>
+                </exercise>
+
+                <exercise>
+                    <title>Impossible Two</title>
+                    <statement>
+                        <p>Aliquam sagittis ex at magna porttitor, quis scelerisque ligula malesuada. Vestibulum vitae mauris id nisi pretium ornare a id lectus. Nam suscipit magna id sem ultricies vestibulum. Nulla facilisi. Duis venenatis lectus massa, ac mollis nisi suscipit non. Sed et sapien vulputate, imperdiet nibh vel, lobortis nisl. Curabitur sagittis justo nibh. Nulla vulputate sodales justo at efficitur. Cras justo augue, mollis vitae nulla sed, vestibulum tincidunt ante. Vestibulum et lorem lectus. Maecenas accumsan lacus a nisi euismod rutrum eu dapibus justo. Etiam scelerisque a odio a euismod. Pellentesque vestibulum pellentesque nisi, a tempus erat cursus ac. Morbi ut auctor lectus.</p>
+                    </statement>
+                </exercise>
+
+                <exercise>
+                    <title>Impossible Three</title>
+                    <statement>
+                        <p>Nam congue ex nec justo iaculis maximus. Vestibulum lobortis magna sed urna auctor, vel dignissim massa posuere. In sed venenatis elit. Vivamus congue gravida tempus. Nunc quis fermentum nisi. Nullam hendrerit lorem et tellus semper, sit amet scelerisque purus lobortis. Quisque sollicitudin quis neque eu suscipit. Praesent volutpat justo quis magna vehicula molestie.</p>
+                    </statement>
+                </exercise>
+            </exercises>
+
+
+            <references>
+                <title>More Reading</title>
+
+                <introduction>
+                    <p>Left intentionally blank.</p>
+                </introduction>
+
+            </references>
+        </section>
+
+
         <section xml:id="section-cross-referencing">
             <title>Cross-Referencing</title>
 
@@ -4522,6 +4676,27 @@ the xsltproc executable.
                     </console>
                 </sidebyside>
 
+            <p>We take care to render the <c>U+0080</c><ndash /><c>U+00FF</c> characters in Sage cells.  This would allow some flexibility in comments and strings employed.  The following is just a test of these characters in the <c>input</c> and <c>output</c> of a <c>sage</c> element.  This is not functional code.</p>
+
+            <sage doctest="not tested">
+                <input>
+                  &#x00A1; &#x00A2; &#x00A3; &#x00A4; &#x00A5; &#x00A6; &#x00A7; &#x00A8; &#x00A9; &#x00AA; &#x00AB; &#x00AC;   &#x00AE; &#x00AF;
+                &#x00B0; &#x00B1; &#x00B2; &#x00B3; &#x00B4; &#x00B5; &#x00B6; &#x00B7; &#x00B8; &#x00B9; &#x00BA; &#x00BB; &#x00BC; &#x00BD; &#x00BE; &#x00BF;
+                &#x00C0; &#x00C1; &#x00C2; &#x00C3; &#x00C4; &#x00C5; &#x00C6; &#x00C7; &#x00C8; &#x00C9; &#x00CA; &#x00CB; &#x00CC; &#x00CD; &#x00CE; &#x00CF;
+                &#x00D0; &#x00D1; &#x00D2; &#x00D3; &#x00D4; &#x00D5; &#x00D6; &#x00D7; &#x00D8; &#x00D9; &#x00DA; &#x00DB; &#x00DC; &#x00DD; &#x00DE; &#x00DF;
+                &#x00E0; &#x00E1; &#x00E2; &#x00E3; &#x00E4; &#x00E5; &#x00E6; &#x00E7; &#x00E8; &#x00E9; &#x00EA; &#x00EB; &#x00EC; &#x00ED; &#x00EE; &#x00EF;
+                &#x00F0; &#x00F1; &#x00F2; &#x00F3; &#x00F4; &#x00F5; &#x00F6; &#x00F7; &#x00F8; &#x00F9; &#x00FA; &#x00FB; &#x00FC; &#x00FD; &#x00FE; &#x00FF;
+                </input>
+                <output>
+                  &#x00A1; &#x00A2; &#x00A3; &#x00A4; &#x00A5; &#x00A6; &#x00A7; &#x00A8; &#x00A9; &#x00AA; &#x00AB; &#x00AC;   &#x00AE; &#x00AF;
+                &#x00B0; &#x00B1; &#x00B2; &#x00B3; &#x00B4; &#x00B5; &#x00B6; &#x00B7; &#x00B8; &#x00B9; &#x00BA; &#x00BB; &#x00BC; &#x00BD; &#x00BE; &#x00BF;
+                &#x00C0; &#x00C1; &#x00C2; &#x00C3; &#x00C4; &#x00C5; &#x00C6; &#x00C7; &#x00C8; &#x00C9; &#x00CA; &#x00CB; &#x00CC; &#x00CD; &#x00CE; &#x00CF;
+                &#x00D0; &#x00D1; &#x00D2; &#x00D3; &#x00D4; &#x00D5; &#x00D6; &#x00D7; &#x00D8; &#x00D9; &#x00DA; &#x00DB; &#x00DC; &#x00DD; &#x00DE; &#x00DF;
+                &#x00E0; &#x00E1; &#x00E2; &#x00E3; &#x00E4; &#x00E5; &#x00E6; &#x00E7; &#x00E8; &#x00E9; &#x00EA; &#x00EB; &#x00EC; &#x00ED; &#x00EE; &#x00EF;
+                &#x00F0; &#x00F1; &#x00F2; &#x00F3; &#x00F4; &#x00F5; &#x00F6; &#x00F7; &#x00F8; &#x00F9; &#x00FA; &#x00FB; &#x00FC; &#x00FD; &#x00FE; &#x00FF;
+                </output>
+            </sage>
+
             </paragraphs>
 
             <p>The table below has a single column, and each cell of the table has a string of 10 characters inside a <c>c</c> element.  It is meant to test if the font is monospace in this situation.</p>
@@ -4563,7 +4738,7 @@ the xsltproc executable.
             \end{array}\right)
             </pre>
 
-            <p>The realization of preformatted text should be robust enough that it can be cut from documents and pasted without any substitutions of <q>fancier</q> Unicode characters for generic ASCII characters.  Try the <q>minus</q> sign on the <m>48</m> above to see if it does not become a dash, or the single quotes on the Sage variables.</p>
+            <p>The <c>pre</c> element surrounds text that should be preserved verbatim.  It is like a special kind of paragraph, and can be used almost everywhere that a paragraph can be used.   The realization of preformatted text should be robust enough that it can be cut from documents and pasted without any substitutions of <q>fancier</q> Unicode characters for generic ASCII characters.  Try the <q>minus</q> sign on the <m>48</m> above to see if it does not become a dash, or the single quotes on the Sage variables.</p>
 
             <p>For Sage input code, the first non-whitespace character sets the left margin, since legitimate Python code has no subsequent lines outdented.  For pre-formatted code, the line with the <em>least</em> whitespace leading the line will determine the left margin.  If preserving indentation is important, do not mix spaces and tabs.  For syntax highlighting of text representing computer programs, or parts of them, see Section<nbsp /><xref ref="section-programs" />.  Examine the source of the following example to help understand this paragraph.</p>
 
@@ -4575,10 +4750,10 @@ the xsltproc executable.
 
             <p>Snippets should also be robust for cut/paste operations.  For example, you should not get <q>curly</q> <q>smart</q> quote marks in verbatim text: <c>this should have "dumb" quote marks</c>. Here are a few characters that should migrate through <latex /> to a PDF unmolested:  <c>'"----"'</c></p>
 
-            <p><c>If you write a very long snippet of inline code it can impinge on the right margin, since very long words will not hypenate, unless you have a dash/hypen.  Such as when you use words like pneumonoultramicroscopicsilicovolcanoconiosis, parastratiosphecomyia stratiosphecomyioides, floccinaucinihilipilification, or subdermatoglyphic.  For output in LaTeX we get line-breaking, and perhaps word-spacing, but we do not get hyphenation and the font is fixed-width.  So not always perfect.  Consider other options like &lt;cd&gt; or &lt;pre&gt; below.</c></p>
+            <p><c>If you write a very long snippet of inline code (i.e. within a &lt;c&gt; element) it can impinge on the right margin, since very long words will not hypenate, unless you have a dash/hypen.  Such as when you use words like pneumonoultramicroscopicsilicovolcanoconiosis, parastratiosphecomyia stratiosphecomyioides, floccinaucinihilipilification, or subdermatoglyphic.  For output in LaTeX we get line-breaking, and perhaps word-spacing, but we do not get hyphenation and the font is fixed-width.  So not always perfect.  Consider other options like &lt;cd&gt; or &lt;pre&gt; below.</c></p>
 
-            <p>An intermediate type of verbatim text can be accomplished with the <c>&lt;cd&gt;</c> tag, short for <q>code display.</q>  It allows for larger chunks of verbatim text to show up in the middle of a paragraph, but with some vertical space above and below.  It can be<cd>authored as a single line</cd>or if you wish to have multiple lines<cd>
-                <cline>there is the cline tag</cline>
+            <p>An intermediate type of verbatim text can be accomplished with the <c>&lt;cd&gt;</c> tag, short for <q>code display.</q>  It allows for larger chunks of verbatim text to show up in the middle of a paragraph, but with some vertical space above and below, and centered between the margins.  It can be<cd>authored as a single line</cd>or if you wish to have multiple lines<cd>
+                <cline>there is the &lt;cline&gt; tag</cline>
                 <cline>meant to model the line tag</cline>
                 <cline>and short for "code line"</cline>
             </cd>and you may even<cd>
@@ -4588,17 +4763,16 @@ the xsltproc executable.
             <p>The <c>&lt;pre&gt;</c> tag is meant for use outside of paragraphs, but is otherwise very similar.  The source may also be structured as a sequence of <c>&lt;cline&gt;</c> as in the next example, recycling content from above.</p>
 
             <pre>
-                <cline>If you write a very long snippet of inline code it</cline>
-                <cline>can impinge on the right margin, since very long words</cline>
-                <cline>will not hypenate, unless you have a dash/hypen.  Such</cline>
-                <cline>as when you use words like</cline>
+                <cline>If you write a very long snippet of inline code (i.e. within</cline>
+                <cline>a &lt;c&gt; element)i t can impinge on the right margin, since</cline>
+                <cline>very long words will not hypenate, unless you have a dash/hypen.</cline>
+                <cline>Such as when you use words like</cline>
                 <cline>pneumonoultramicroscopicsilicovolcanoconiosis,</cline>
                 <cline>parastratiosphecomyia stratiosphecomyioides,</cline>
-                <cline>floccinaucinihilipilification, or subdermatoglyphic.</cline>
-                <cline>For output in LaTeX we get line-breaking, and perhaps</cline>
-                <cline>word-spacing, but we do not get hyphenation and the</cline>
-                <cline>font is fixed-width.  So not always perfect.  Consider</cline>
-                <cline>other options like &lt;cd&gt; or &lt;pre&gt; below.</cline>
+                <cline>floccinaucinihilipilification, or subdermatoglyphic. For output</cline>
+                <cline>in LaTeX we get line-breaking, and perhaps word-spacing, but we</cline>
+                <cline>do not get hyphenation and the font is fixed-width. So not always</cline>
+                <cline>perfect. Consider other options like &lt;cd&gt; or &lt;pre&gt; below.</cline>
             </pre>
 
         </section>
@@ -4642,7 +4816,7 @@ the xsltproc executable.
                 </program>
             </sidebyside>
 
-            <p>You can write made-up pseudo-code and get reasonable syntax highlighting, but you might explain to a reader what your symbols all mean.  This routine takes the <m>m\times n</m> marix <m>A</m> to reduced row-echelon form.  Note in the source the use of escaped characters for the four angle brackets.</p>
+            <p>You can write made-up pseudo-code, but you might explain to a reader what your symbols all mean.  This routine takes the <m>m\times n</m> marix <m>A</m> to reduced row-echelon form.  Note that with no language spefified, there is no special formatting ir use of color.  Note in the source the use of escaped characters for the four angle brackets.</p>
 
             <sidebyside margins="5%">
                 <program>
@@ -4757,7 +4931,7 @@ the xsltproc executable.
                 </console>
             </sidebyside>
 
-            <p>If your console input exceeds more than one line, you can author it across several lines and your choice of line breaks will be reflected in the rendering.  You can decide to indent lines after the first one for clarity, if desired.  You can also decide if your audience needs line-continuation characters or not.  (But be careful, a backslash, <q><c>\</c>,</q> will require you to define the <c>latex.console.macro-char</c> xsltproc stringparam to something else, as explained below.)</p>
+            <p>If your console input exceeds more than one line, you can author it across several lines and your choice of line breaks will be reflected in the rendering.  You can decide to indent lines after the first one for clarity, if desired.  You can also decide if your audience needs line-continuation characters or not.</p>
 
             <listing xml:id="console-raspberry-pi-multi">
                 <caption>Console Session: <c>int</c> and <c>float</c> (multi-line input)</caption>
@@ -4779,13 +4953,34 @@ the xsltproc executable.
 
             <p>Notice in the HTML version of the above example that when you highlight all, or a portion, of the listing for a cut<ampersand />paste that the prompts are not included.</p>
 
-            <p>There is one subtlety with a <c>console</c> session rendered as <latex /> output.  The user input is made bold by a <latex /> macro, which means that your code cannot contain the special <latex /> characters <q><backslash /></q>, <q><lbrace /></q>, and <q><rbrace /></q>, which are used to begin a macro, begin a group, and end a group (respectively).  You will get an error message if this condition exists, and there are parameters <c>latex.console.macro-char</c>, <c>latex.console.begin-char</c>, and <c>latex.console.end-char</c> that will allow you to specify alternatives (which need to be characters that do not appear in <em>any</em> of your console sessions, document-wide).  The characters <c>&amp; % $ # _ { } ~ ^ \</c> have special meaning in <latex /> but should be available for duty as these alternative characters (though not all have been tested).  The backslash used in pathnames for Windows is a highly likely case where this needs adjustment.</p>
+            <p>The next listing is just absurdity, to check special characters from <latex />, and some Latin-1 characters.  We test each in a prompt, input, and output.</p>
 
-            <!-- & % $ # _ { } ~ ^ \ Add @ to this list as it is implemented, but need empty element to render it?-->
+            <listing>
+                <caption>Console Session: problematic <latex /> characters</caption>
+                <console>
+                    <prompt>A backslash \ here  </prompt>
+                    <input>A backslash \ here</input>
+                    <output>A backslash \ here</output>
 
-            <p>There is no good way to provide an example of this situation, without making a document with an error in it, out-of-the-box.  So experiment by using <c>--stringparam</c> on the <c>xsltproc</c> command-line with alternative characters that will behave with the example above, and with characters that will cause the example above to raise errors.  In practice, you may want to specify alternative characters in a thin XSL extension file specific to your project.</p>
+                    <prompt>A begin group { here  </prompt>
+                    <input>A begin group { here</input>
+                    <output>A begin group { here</output>
 
-            <p>We conclude with a longer example, an assembly language program from Bob Plantz, included to test a <c>listing</c> breaking across pages in PDF output.</p>
+                    <prompt>An end group { here  </prompt>
+                    <input>An end group } here</input>
+                    <output>An end group } here</output>
+
+                    <prompt>The rest &amp; % $ # _ ~ ^ of LaTeX  </prompt>
+                    <input>The rest &amp; % $ # _ ~ ^ of LaTeX</input>
+                    <output>The rest &amp; % $ # _ ~ ^ of LaTeX</output>
+
+                    <prompt>Latin-1: ÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß  </prompt>
+                    <input>Latin-1: ÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß</input>
+                    <output>Latin-1: ÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß</output>
+                </console>
+            </listing>
+
+            <p>We conclude this section with a longer example of a program listing, an assembly language program from Bob Plantz, included to test a <c>listing</c> breaking across pages in PDF output.</p>
 
             <listing>
                 <caption>A longer program listing</caption>
@@ -5215,7 +5410,7 @@ the xsltproc executable.
                     <!-- :Slug: venn                                 -->
                     <!-- PDF blend mode requires TikZ version 3.0 or above. -->
                     <image xml:id="tikz-venn-diagram" archive="pdf svg">
-                        <latex-image-code>
+                        <latex-image>
                         \begin{tikzpicture}[scale=0.75]
                           \begin{scope}[blend group = soft light]
                             \fill[red!30!white]   ( 90:1.2) circle (2);
@@ -5227,7 +5422,7 @@ the xsltproc executable.
                           \node at ( 330:2)   {Coding};
                           \node [font=\Large] {\LaTeX};
                         \end{tikzpicture}
-                        </latex-image-code>
+                        </latex-image>
                     </image>
                     <!--  -->
                     <figure>
@@ -5240,10 +5435,10 @@ the xsltproc executable.
                             <!-- :Slug: smart-circle                                 -->
                             <!-- A diagram showing a TeX workflow using the          -->
                             <!-- clever  smartdiagram  package. (in premable)        -->
-                            <latex-image-code>
+                            <latex-image>
                             \smartdiagram[circular diagram:clockwise]{Edit,
                             pdf\LaTeX, Bib\TeX/ biber, make\-index, pdf\LaTeX}
-                            </latex-image-code>
+                            </latex-image>
                         </image>
                     </figure>
                     <!--  -->

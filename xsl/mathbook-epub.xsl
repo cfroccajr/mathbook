@@ -481,7 +481,7 @@
 </xsl:template>
 
 <!-- Manifest entry first -->
-<xsl:template match="image/latex-image-code|image/sageplot|image/asymptote" mode="manifest">
+<xsl:template match="image/latex-image|image/latex-image-code|image/sageplot|image/asymptote" mode="manifest">
     <!-- condition on file extension -->
     <xsl:variable name="extension">
         <xsl:call-template name="file-extension">
@@ -539,7 +539,7 @@
 
 <!-- Now the image inclusion   -->
 <!-- With source specification -->
-<xsl:template match="image/latex-image-code|image/sageplot|image/asymptote">
+<xsl:template match="image/latex-image|image/latex-image-code|image/sageplot|image/asymptote">
     <!-- assumes SVG exists from  mbx  script creation -->
     <xsl:element name="img">
         <xsl:attribute name="src">
@@ -617,14 +617,6 @@
 <!-- Has knowls by default, so we kill it -->
 <xsl:template match="index-list">
     <p>Index intentionally blank, knowls inactive in EPUB</p>
-</xsl:template>
-
-<!-- Code, inline -->
-<!-- Validator does not like <tt> element -->
-<xsl:template match="c">
-    <xsl:element name="code">
-        <xsl:apply-templates select="text()" />
-    </xsl:element>
 </xsl:template>
 
 </xsl:stylesheet>

@@ -22,8 +22,10 @@
             element book {
                 MetaDataSubtitle,
                 BookFrontMatter?,
-                Chapter,
-                (Chapter | Exercises | References)*,
+                (
+                    (Chapter, (Chapter | Exercises | References)*) |
+                    Part+
+                ),
                 BackMatter?
             }
         Letter =
@@ -32,6 +34,10 @@
             element memo {empty}
         
         
+        Part =
+            element part {
+                MetaDataTitle, Chapter+
+            }
         Chapter =
             element chapter {
                 MetaDataTitle,
@@ -143,7 +149,7 @@
             }
         Credit =
             element credit {
-                element title {TextShort},
+                element title {TextLong},
                 Author+
             }
         Date = 
@@ -644,7 +650,7 @@
             }
         
         
-        Image = ImageRaster | ImageCode | ImageCopy
+        Image = ImageRaster | ImageCode
         ImageRaster = 
             element image {
                 UniqueID?,
@@ -660,15 +666,10 @@
                 attribute archive {text}?,
                 element description {TextShort}?,
                 (
-                    element latex-image-code {text} |
+                    element latex-image {text} |
                     element asymptote {text} |
                     element sageplot {text}
                 )
-            }
-        ImageCopy = 
-            element image {
-                UniqueID?,
-                attribute copy {text}
             }
         ImageWW = 
             element image {
@@ -765,7 +766,6 @@
         
         Sage = element sage {
             UniqueID?,
-            attribute copy {text}?,
             attribute doctest {text}?,
             attribute tolerance {text}?,
             attribute language {text}?,
@@ -879,7 +879,7 @@
         BibJournal = element journal {text}
         BibNumber = element number {text}
         BibVolume = element volume {text}
-        BibTitle = element title {TextShort}
+        BibTitle = element title {TextLong}
         BibNote = element note {UniqueID?, Paragraph+}
         
         
@@ -995,9 +995,9 @@
         UniqueID =
             attribute xml:id {text}
         Title =
-            element title {TextShort}
+            element title {TextLong}
         Subtitle =
-            element subtitle {TextShort}
+            element subtitle {TextLong}
         XMLBase = attribute xml:base {text}
         XMLLang = attribute xml:lang {text}
         MetaDataTarget =
@@ -1525,6 +1525,14 @@
                         element security {text}
                     }
                 )+
+            }
+        
+        
+        Configuration |=
+            element numbering {
+                element division {
+                    attribute part {"decorative" | "structural"}
+                }?
             }
         
         

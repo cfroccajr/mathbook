@@ -269,6 +269,8 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$toc.level != ''">
             <xsl:value-of select="$toc.level" />
         </xsl:when>
+        <xsl:when test="$root/book/part/chapter/section">3</xsl:when>
+        <xsl:when test="$root/book/part/chapter">2</xsl:when>
         <xsl:when test="$root/book/chapter/section">2</xsl:when>
         <xsl:when test="$root/book/chapter">1</xsl:when>
         <xsl:when test="$root/article/section/subsection">2</xsl:when>
@@ -449,8 +451,39 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- TEMPORARY: exercise numbering cutover -->
 <xsl:param name="new.exercises" select="'no'" />
-<xsl:variable name="newexercises" select="boolean($new.exercises = 'yes')" />
+<xsl:variable name="b-newexercises" select="boolean($new.exercises = 'yes')" />
 
+<!-- Status quo, for no-part books and articles is "absent".     -->
+<!-- The "structural" option will change numbers and numbering   -->
+<!-- substantially.  The "decorative" option is the default for  -->
+<!-- books with parts, and it looks just like the LaTeX default. -->
+<xsl:variable name="parts">
+    <xsl:choose>
+        <xsl:when test="not($document-root/part) and $docinfo/numbering/division/@part">
+            <xsl:message>MBX:WARNING: your document is not a book with parts, so docinfo/numbering/division/@part will be ignored</xsl:message>
+            <xsl:text>absent</xsl:text>
+        </xsl:when>
+        <!-- Schema restricts parts to a division of a book -->
+        <!-- So usual no-part book, or article, or ...      -->
+        <xsl:when test="not($document-root/part)">
+            <xsl:text>absent</xsl:text>
+        </xsl:when>
+        <!-- has parts, check docinfo specification        -->
+        <!-- nothing given is default, which is decorative -->
+        <xsl:when test="not($docinfo/numbering/division/@part)">
+            <xsl:text>decorative</xsl:text>
+        </xsl:when>
+        <xsl:when test="$docinfo/numbering/division/@part = 'structural'">
+            <xsl:text>structural</xsl:text>
+        </xsl:when>
+        <xsl:when test="$docinfo/numbering/division/@part = 'decorative'">
+            <xsl:text>decorative</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message terminate='yes'>MBX:WARNING: docinfo/numbering/division/@part should be "decorative" or "structural", not "<xsl:value-of select="$docinfo/numbering/division/@part" />"  Quitting...</xsl:message>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:variable>
 
 <!-- We read the document language translation -->
 <!-- nodes out of the right file, which relies -->
@@ -604,9 +637,19 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- filter them out.  The overarching XML root (not   -->
 <!-- the special root node) is simply subtracted from  -->
 <!-- the count.                                        -->
+<!-- Appendices of a part'ed book need an additional   -->
+<!-- level added to become a \chapter in LaTeX and     -->
+<!-- thus realized as an appendix                      -->
 <xsl:template match="*" mode="level">
     <xsl:variable name="hierarchy" select="ancestor-or-self::*[not(self::backmatter or self::frontmatter)]" />
-    <xsl:value-of select="count($hierarchy) - 2" />
+    <xsl:choose>
+        <xsl:when test="ancestor-or-self::appendix and $document-root//part">
+            <xsl:value-of select="count($hierarchy) - 2 + 1" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:value-of select="count($hierarchy) - 2" />
+        </xsl:otherwise>
+    </xsl:choose>
 </xsl:template>
 
 <!-- Enclosing Level -->
@@ -1356,6 +1399,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Provide an empty cell to scribble in     -->
 <!-- Or break text cells in the Sage notebook -->
 <!-- This cell does respect @language         -->
+<!-- @copy deprecated  2017-12-21 -->
 <xsl:template match="sage[not(input) and not(output) and not(@type) and not(@copy)]">
     <xsl:call-template name="sage-active-markup">
         <xsl:with-param name="internal-id">
@@ -1389,6 +1433,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:call-template>
 </xsl:template>
 
+<!-- @copy deprecated  2017-12-21 -->
 <!-- Type: "copy"; used for replays     -->
 <!-- Mostly when HTML is chunked        -->
 <!-- Just handle the same way as others -->
@@ -2698,6 +2743,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- Copies of Images -->
 <!-- ################ -->
 
+<!-- @copy deprecated  2017-12-21 -->
 <xsl:template match="image[@copy]">
     <xsl:variable name="target" select="id(@copy)" />
     <xsl:choose>
@@ -3011,29 +3057,77 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- via particular modal templates.  These may include Exercises -->
 <!-- and References sections, which can occur at multiple levels  -->
 <!-- NB: newexercises: hack to kill "exercises" division numbering, later move to "the unnumbered" -->
-<xsl:template match="part" mode="serial-number">
+<xsl:template match="part|chapter|appendix|section|subsection|subsubsection|exercises|references" mode="serial-number">
+    <xsl:variable name="relative-level">
+        <xsl:apply-templates select="." mode="level" />
+    </xsl:variable>
+    <xsl:choose>
+        <xsl:when test="$relative-level > $numbering-maxlevel">
+            <xsl:text></xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:apply-templates select="." mode="division-serial-number" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<!-- Each division has different formats or quirks -->
+
+<xsl:template match="part" mode="division-serial-number">
     <xsl:number format="I" />
 </xsl:template>
-<!-- TODO: condition on part/chapter style to use  level='any'; from="book/part"  to cross part boundaries -->
-<xsl:template match="chapter" mode="serial-number">
-    <xsl:number count="chapter|references|exercises" format="1" />
+<!-- TODO: ban references and exercises as peers of chapters (overall references can go in backmatter) -->
+<xsl:template match="chapter" mode="division-serial-number">
+    <!-- chapters, in parts or not, do not have "references" -->
+    <!-- or "exercises" divisions as peers, so we just count -->
+    <!-- chapters, varying the subtree considered depending  -->
+    <!-- on the style elected for how parts are numbered     -->
+    <xsl:choose>
+        <xsl:when test="($parts = 'absent') or ($parts = 'decorative')">
+            <xsl:number from="book" level="any" count="chapter" format="1" />
+        </xsl:when>
+        <xsl:when test="$parts = 'structural'">
+            <xsl:number from="part" count="chapter" format="1" />
+        </xsl:when>
+    </xsl:choose>
 </xsl:template>
-<xsl:template match="appendix" mode="serial-number">
+<xsl:template match="appendix" mode="division-serial-number">
     <xsl:number format="A" />
 </xsl:template>
-<xsl:template match="section" mode="serial-number">
-    <xsl:number count="section|references|exercises" format="1" />
+<xsl:template match="section" mode="division-serial-number">
+    <xsl:choose>
+        <xsl:when test="$b-newexercises">
+            <xsl:number count="section" format="1" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:number count="section|references|exercises" format="1" />
+        </xsl:otherwise>
+    </xsl:choose>
 </xsl:template>
-<xsl:template match="subsection" mode="serial-number">
-    <xsl:number count="subsection|references|exercises" format="1" />
+<xsl:template match="subsection" mode="division-serial-number">
+    <xsl:choose>
+        <xsl:when test="$b-newexercises">
+            <xsl:number count="subsection" format="1" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:number count="subsection|references|exercises" format="1" />
+        </xsl:otherwise>
+    </xsl:choose>
 </xsl:template>
-<xsl:template match="subsubsection" mode="serial-number">
-    <xsl:number count="subsubsection|references|exercises" format="1" />
+<xsl:template match="subsubsection" mode="division-serial-number">
+    <xsl:choose>
+        <xsl:when test="$b-newexercises">
+            <xsl:number count="subsubsection" format="1" />
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:number count="subsubsection|references|exercises" format="1" />
+        </xsl:otherwise>
+    </xsl:choose>
 </xsl:template>
 <!-- Convert references and exercises to the unnumbered once cutover -->
-<xsl:template match="exercises|references" mode="serial-number">
+<xsl:template match="exercises|references" mode="division-serial-number">
     <xsl:choose>
-        <xsl:when test="$newexercises" />
+        <xsl:when test="$b-newexercises" />
         <xsl:otherwise>
             <xsl:number count="part|chapter|appendix|section|subsection|subsubsection|references|exercises" format="1" />
         </xsl:otherwise>
@@ -3387,15 +3481,31 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- N.B. Same priority as above, so needs to come in this order, -->
 <!-- as we wish hard-coded to have higher priority                -->
 <xsl:template match="exercises/exercise|exercises/exercisegroup/exercise" mode="serial-number">
+    <!-- A sectional exercise is numbered from where the previous "exercises" section leaves off -->
     <xsl:variable name="base">
-        <xsl:variable name="parent-exercises" select="parent::exercises|parent::exercisegroup/parent::exercises" />
         <xsl:choose>
-            <xsl:when test="$parent-exercises/preceding-sibling::exercises and $newexercises">
-                <!-- <xsl:value-of select="count($parent-exercises/preceding-sibling::exercises/exercise)" /> -->
-                <xsl:apply-templates select="$parent-exercises/preceding-sibling::exercises/exercise[last()]" mode="serial-number"/>
+            <!-- status quo from old days -->
+            <xsl:when test="not($b-newexercises)">
+                <xsl:text>0</xsl:text>
+            </xsl:when>
+            <!-- now in  $b-newexercises  true scenario -->
+            <!-- first, respect explicit numbering request -->
+            <!-- do a NaN test?, or restrict in schema? -->
+            <xsl:when test="ancestor::exercises/@first-number">
+                <xsl:value-of select="ancestor::exercises/@first-number - 1" />
+            </xsl:when>
+            <!-- now automatic -->
+            <!-- if first, start at 1 -->
+            <xsl:when test="not(ancestor::exercises/preceding-sibling::exercises)">
+                <xsl:text>0</xsl:text>
+            </xsl:when>
+            <!-- this should be the "otherwise" clause, but presently debugging -->
+            <!-- compute serial number of previous "exercises" last exercise -->
+            <xsl:when test="ancestor::exercises/preceding-sibling::exercises">
+                <xsl:apply-templates select="ancestor::exercises/preceding-sibling::exercises[1]/descendant::exercise[last()]" mode="serial-number"/>
             </xsl:when>
             <xsl:otherwise>
-                <xsl:text>0</xsl:text>
+                <xsl:message>MBX:DEBUG:   base number for sectional exercises not determined</xsl:message>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
@@ -3405,6 +3515,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     </xsl:variable>
     <xsl:value-of select="$base + $offset" />
 </xsl:template>
+
 <xsl:template match="exercises/exercise[@number]|exercisegroup/exercise[@number]" mode="serial-number">
     <xsl:apply-templates select="@number" />
 </xsl:template>
@@ -3661,6 +3772,20 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:param name="pad" />
 
     <xsl:choose>
+        <!-- when the lead node is a part, we just drop it,   -->
+        <!-- and we decrement the level.  We may later devise -->
+        <!-- an option with more part numbers, and we can     -->
+        <!-- condition here to include the part number in the -->
+        <!-- numbering scheme NB: this is *not* the serial    -->
+        <!-- number, so for example, the summary page for     -->
+        <!-- a part *will* have a number, and the right one   -->
+        <xsl:when test="$nodes[1][self::part]">
+            <xsl:apply-templates select="." mode="multi-number">
+                <xsl:with-param name="nodes" select="$nodes[position() > 1]" />
+                <xsl:with-param name="levels" select="$levels - 1" />
+                <xsl:with-param name="pad" select="$pad" />
+            </xsl:apply-templates>
+        </xsl:when>
         <!-- always halt when levels met -->
         <xsl:when test="$levels = 0" />
         <!-- not padding, halt if $nodes exhausted -->
@@ -3799,7 +3924,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- NB: newexercises: simplified match from before -->
 <xsl:template match="exercises/exercise" mode="structure-number">
     <xsl:choose>
-        <xsl:when test="$newexercises">
+        <xsl:when test="$b-newexercises">
             <!-- hop exercisegroup (perhaps explicitly?) -->
             <xsl:apply-templates select="parent::exercises/parent::*" mode="number" />
         </xsl:when>
@@ -3814,7 +3939,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 
 <xsl:template match="exercises/exercisegroup/exercise" mode="structure-number">
     <xsl:choose>
-        <xsl:when test="$newexercises">
+        <xsl:when test="$b-newexercises">
             <!-- hop exercisegroup (perhaps explicitly?) -->
             <xsl:apply-templates select="ancestor::exercises/parent::*" mode="number" />
         </xsl:when>
@@ -3832,7 +3957,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- NB: newexercises: step up one more parent -->
 <xsl:template match="exercisegroup" mode="structure-number">
     <xsl:choose>
-        <xsl:when test="$newexercises">
+        <xsl:when test="$b-newexercises">
             <xsl:apply-templates select="parent::exercises/parent::*" mode="number" />
         </xsl:when>
         <xsl:otherwise>
@@ -5464,18 +5589,18 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
             <xsl:text>}</xsl:text>
         </xsl:if>
     </xsl:variable>
-    <!-- Send the target and text representation for link to a    -->
+    <!-- Send the text representation for link and target to a    -->
     <!-- format-specific and target-specific link manufacture.    -->
-    <!-- This depends primarly on the $target, but we also        -->
-    <!-- send the location of the link.  Example: a link in       -->
+    <!-- This depends primarly on the $target, but the context is -->
+    <!-- holds the location of the link.  Example: a link in      -->
     <!-- display mathematics (rendered by MathJax for HTML)       -->
     <!-- requires radically different constructions as a knowl,   -->
     <!-- or as a hyperlink.  LaTeX barely cares.  We do wrap the  -->
     <!-- xref-text in \text{} for receipt in display mathematics. -->
     <!-- NB: could a xref with title text have math in it and mess-up here? -->
-    <xsl:apply-templates select="$target" mode="xref-link">
+    <xsl:apply-templates select="." mode="xref-link">
+        <xsl:with-param name="target" select="$target" />
         <xsl:with-param name="content" select="$text" />
-        <xsl:with-param name="xref" select="." />
     </xsl:apply-templates>
 </xsl:template>
 
@@ -5565,18 +5690,18 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
             <xsl:text>}</xsl:text>
         </xsl:if>
     </xsl:variable>
-    <!-- Send the target and text representation for link to a    -->
+    <!-- Send the text representation for link and target to a    -->
     <!-- format-specific and target-specific link manufacture.    -->
-    <!-- This depends primarly on the $target, but we also        -->
-    <!-- send the location of the link.  Example: a link in       -->
+    <!-- This depends primarly on the $target, but the context is -->
+    <!-- holds the location of the link.  Example: a link in      -->
     <!-- display mathematics (rendered by MathJax for HTML)       -->
     <!-- requires radically different constructions as a knowl,   -->
     <!-- or as a hyperlink.  LaTeX barely cares.  We do wrap the  -->
     <!-- xref-text in \text{} for receipt in display mathematics. -->
     <!-- NB: could a xref with title text have math in it and mess-up here? -->
-    <xsl:apply-templates select="$target-one" mode="xref-link">
+    <xsl:apply-templates select="." mode="xref-link">
+        <xsl:with-param name="target" select="$target-one" />
         <xsl:with-param name="content" select="$text" />
-        <xsl:with-param name="xref" select="." />
     </xsl:apply-templates>
 </xsl:template>
 
@@ -5652,18 +5777,18 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
             <xsl:text>}</xsl:text>
         </xsl:if>
     </xsl:variable>
-    <!-- Send the target and text representation for link to a    -->
+    <!-- Send the text representation for link and target to a    -->
     <!-- format-specific and target-specific link manufacture.    -->
-    <!-- This depends primarly on the $target, but we also        -->
-    <!-- send the location of the link.  Example: a link in       -->
+    <!-- This depends primarly on the $target, but the context is -->
+    <!-- holds the location of the link.  Example: a link in      -->
     <!-- display mathematics (rendered by MathJax for HTML)       -->
     <!-- requires radically different constructions as a knowl,   -->
     <!-- or as a hyperlink.  LaTeX barely cares.  We do wrap the  -->
     <!-- xref-text in \text{} for receipt in display mathematics. -->
     <!-- NB: could a xref with title text have math in it and mess-up here? -->
-    <xsl:apply-templates select="$target" mode="xref-link">
+    <xsl:apply-templates select="." mode="xref-link">
+        <xsl:with-param name="target" select="$target" />
         <xsl:with-param name="content" select="$text" />
-        <xsl:with-param name="xref" select="." />
     </xsl:apply-templates>
     <!-- check if we have exhausted the list, -->
     <!-- so check bibliography wrapping       -->
@@ -5835,7 +5960,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
         <!-- a 'unset' will appear here to activate new      -->
         <!-- default this could move later to the "otherwise"-->
         <xsl:when test="$legacy-autoname='unset'">
-            <xsl:text>type-hybrid</xsl:text>
+            <xsl:text>type-global</xsl:text>
         </xsl:when>
         <xsl:when test="$legacy-autoname='no'">
             <xsl:text>global</xsl:text>
@@ -5867,6 +5992,9 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <!-- recognize content s potential override -->
     <xsl:variable name="b-has-content" select="not($custom-text = '')" />
     <xsl:choose>
+        <xsl:when test="$target/self::contributor">
+            <xsl:apply-templates select="$target/personname" />
+        </xsl:when>
         <!-- equation override -->
         <xsl:when test="$b-is-equation-target">
             <xsl:if test="$b-has-content">
@@ -5874,14 +6002,18 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
                 <xsl:apply-templates select="." mode="nbsp"/>
             </xsl:if>
             <xsl:text>(</xsl:text>
-            <xsl:apply-templates select="$target" mode="xref-number" />
+            <xsl:apply-templates select="$target" mode="xref-number">
+                <xsl:with-param name="xref" select="." />
+            </xsl:apply-templates>
             <xsl:text>)</xsl:text>
         </xsl:when>
         <!-- bibliography override       -->
         <!-- number only, consumer wraps -->
         <!-- warn about useless content override (use as @detail?) -->
         <xsl:when test="$b-is-biblio-target">
-            <xsl:apply-templates select="$target" mode="xref-number" />
+            <xsl:apply-templates select="$target" mode="xref-number">
+                <xsl:with-param name="xref" select="." />
+            </xsl:apply-templates>
         </xsl:when>
         <!-- now not an equation or bibliography target -->
         <!-- custom text is additional, as prefix, with no type -->
@@ -5890,7 +6022,9 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
                 <xsl:copy-of select="$custom-text" />
                 <xsl:apply-templates select="." mode="nbsp"/>
             </xsl:if>
-            <xsl:apply-templates select="$target" mode="xref-number" />
+            <xsl:apply-templates select="$target" mode="xref-number">
+                <xsl:with-param name="xref" select="." />
+            </xsl:apply-templates>
         </xsl:when>
         <!-- custom text is additional, as prefix, with no type -->
         <xsl:when test="$text-style = 'local'">
@@ -5906,13 +6040,14 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
                 <xsl:when test="$b-has-content">
                     <xsl:copy-of select="$custom-text" />
                     <xsl:apply-templates select="." mode="nbsp"/>
-                    <xsl:apply-templates select="$target" mode="xref-number" />
                 </xsl:when>
                 <!-- usual, default case -->
                 <xsl:otherwise>
                     <xsl:apply-templates select="$target" mode="type-name" />
                     <xsl:apply-templates select="." mode="nbsp"/>
-                    <xsl:apply-templates select="$target" mode="xref-number" />
+                    <xsl:apply-templates select="$target" mode="xref-number">
+                        <xsl:with-param name="xref" select="." />
+                    </xsl:apply-templates>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:when>
@@ -6095,13 +6230,17 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
                     <xsl:text> of </xsl:text>
                     <xsl:apply-templates select="$highest-match" mode="type-name" />
                     <xsl:apply-templates select="." mode="nbsp" />
-                    <xsl:apply-templates select="$highest-match" mode="xref-number" />
+                    <xsl:apply-templates select="$highest-match" mode="xref-number">
+                        <xsl:with-param name="xref" select="." />
+                    </xsl:apply-templates>
                 </xsl:when>
                 <!-- hybrid styles need number for remainder -->
                 <xsl:when test="($text-style='hybrid') or ($text-style='type-hybrid')">
                     <xsl:choose>
                         <xsl:when test="$requires-global = 'true'">
-                            <xsl:apply-templates select="$target" mode="xref-number" />
+                            <xsl:apply-templates select="$target" mode="xref-number">
+                                <xsl:with-param name="xref" select="." />
+                            </xsl:apply-templates>
                         </xsl:when>
                         <xsl:otherwise>
                             <xsl:apply-templates select="$target" mode="serial-number" />
@@ -6149,23 +6288,57 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- template, which just repeats the content, with  -->
 <!-- an indication that this needs to be overridden  -->
 <!--   context -                                     -->
-<!--     the target of the link, so the right        -->
-<!--     identification can be produced              -->
+<!--      an xref usually, typically its parent      -->
+<!--      is inspected to vary link style            -->
 <!--   content -                                     -->
 <!--     an RTF of the visual text,                  -->
 <!--     suitable for location of the link           -->
-<!--   xref -                                        -->
-<!--     the link node itself, typically             -->
-<!--     its parent is inspected to vary             -->
-<!--   implementation based on location              -->
+<!--   target -                                      -->
+<!--     the target of the link, so the right        -->
+<!--     identification can be produced              -->
+<!--  implementation is based on location            -->
 <xsl:template match="*" mode="xref-link">
+    <xsl:param name="target" />
     <xsl:param name="content" />
-    <xsl:param name="xref" />
     <xsl:text>[LINK: </xsl:text>
     <xsl:copy-of select="$content" />
     <xsl:text>]</xsl:text>
 </xsl:template>
 
+<!-- For cross-references in books with parts, we only     -->
+<!-- want a part number in the cross-reference when the    -->
+<!-- "xref" and the "$target" are "far apart," so the part -->
+<!-- number is necessary to disambiguate the result.  This -->
+<!-- utility uses the target as context and the xref as a  -->
+<!-- parameter.  It evaluates to 'true' if and only if the -->
+<!-- two nodes cross a part boundary *and* the target lies -->
+<!-- inside a part.                                        -->
+<!-- NB: "ancestor-or-self" is not used here               -->
+<!--   (a) the $xref is not a part                         -->
+<!--   (b) if the target is a part, its number will be     -->
+<!--       its serial number, and will not need a prefix,  -->
+<!--       so this will return false                       -->
+<xsl:template match="*" mode="crosses-part-boundary">
+    <xsl:param name="xref" select="/.." />
+    <xsl:choose>
+        <!-- if parts are not structural, no need -->
+        <xsl:when test="$parts='absent' or $parts='decorative'">
+            <xsl:value-of select="false()" />
+        </xsl:when>
+        <!-- if target is not in a part, no need -->
+        <xsl:when test="not(ancestor::part)">
+            <xsl:value-of select="false()" />
+        </xsl:when>
+        <!-- xref can't be in target's part, so necessary -->
+        <xsl:when test="not($xref/ancestor::part)">
+            <xsl:value-of select="true()" />
+        </xsl:when>
+        <!-- target and xref both in parts.  Same one? -->
+        <xsl:otherwise>
+            <xsl:value-of select="count(ancestor::part|$xref/ancestor::part) = 2" />
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
 
 <!-- #################### -->
 <!-- Common Constructions -->
@@ -7100,6 +7273,26 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
         <xsl:with-param name="message" select="'the &quot;@latexsep&quot; attribute on the &quot;c&quot; element is no longer necessary.  It is being ignored, and can be removed'" />
     </xsl:call-template>
     <!--  -->
+    <!-- 2017-12-21  remove sage/@copy -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//sage/@copy" />
+        <xsl:with-param name="date-string" select="'2017-12-21'" />
+        <xsl:with-param name="message" select="'@copy on a &quot;sage&quot; element is deprecated, use the xinclude mechanism with common code in an external file'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2017-12-21  remove image/@copy -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//image/@copy" />
+        <xsl:with-param name="date-string" select="'2017-12-21'" />
+        <xsl:with-param name="message" select="'@copy on an &quot;image&quot; element is deprecated, possibly use the xinclude mechanism with common source code in an external file'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2017-12-22  latex-image-code to simply latex-image -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//latex-image-code" />
+        <xsl:with-param name="date-string" select="'2017-08-25'" />
+        <xsl:with-param name="message" select="'the &quot;latex-image-code&quot; element has been replaced by the functionally equivalent &quot;latex-image&quot;'" />
+    </xsl:call-template>
 </xsl:template>
 
 <!-- Miscellaneous -->

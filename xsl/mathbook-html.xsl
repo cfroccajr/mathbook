@@ -192,6 +192,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$html.chunk.level != ''">
             <xsl:value-of select="$html.chunk.level" />
         </xsl:when>
+        <xsl:when test="$root/book/part">3</xsl:when>
         <xsl:when test="$root/book">2</xsl:when>
         <xsl:when test="$root/article/section">1</xsl:when>
         <xsl:when test="$root/article">0</xsl:when>
@@ -309,7 +310,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:apply-templates />
 </xsl:template>
 
-<!-- We process structural nodes via chunking routine in   xsl/mathbook-common.html -->
+<!-- We process structural nodes via chunking routine in xsl/mathbook-common.xsl    -->
 <!-- This in turn calls specific modal templates defined elsewhere in this file     -->
 <!-- The xref-knowl templates run independently on content node of document tree    -->
 <xsl:template match="/mathbook|/pretext">
@@ -410,7 +411,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Structural Nodes -->
 <!-- ################ -->
 
-<!-- Read the code and documentation for "chunking" in xsl/mathbook-common.html -->
+<!-- Read the code and documentation for "chunking" in xsl/mathbook-common.xsl  -->
 <!-- This will explain document structure (not XML structure) and has the       -->
 <!-- routines which employ the realizations below of two abstract templates.    -->
 
@@ -443,7 +444,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:apply-templates select="." mode="section-header" />
         <xsl:apply-templates select="author|objectives|introduction|titlepage|abstract" />
         <nav class="summary-links">
-            <xsl:apply-templates select="*" mode="summary-nav" />
+            <ul>
+                <xsl:apply-templates select="*" mode="summary-nav" />
+            </ul>
         </nav>
         <xsl:apply-templates select="conclusion"/>
     </section>
@@ -459,18 +462,20 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:variable name="url">
         <xsl:apply-templates select="." mode="url" />
     </xsl:variable>
-    <a href="{$url}">
-        <!-- important not include codenumber span -->
-        <xsl:if test="$num!=''">
-            <span class="codenumber">
-                <xsl:value-of select="$num" />
+    <li>
+        <a href="{$url}">
+            <!-- important not include codenumber span -->
+            <xsl:if test="$num!=''">
+                <span class="codenumber">
+                    <xsl:value-of select="$num" />
+                </span>
+            </xsl:if>
+            <!-- title is required on structural elements -->
+            <span class="title">
+                <xsl:apply-templates select="." mode="title-simple" />
             </span>
-        </xsl:if>
-        <!-- title is required on structural elements -->
-        <span class="title">
-            <xsl:apply-templates select="." mode="title-simple" />
-        </span>
-    </a>
+        </a>
+    </li>
 </xsl:template>
 
 <!-- introduction (etc.) and conclusion get dropped -->
@@ -517,31 +522,26 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:otherwise />
         </xsl:choose>
     </xsl:variable>
-    <xsl:element name="header">
-         <xsl:attribute name="title">
+    <xsl:element name="{$heading-level}">
+        <xsl:attribute name="class">
+            <xsl:choose>
+                <xsl:when test="self::chapter">
+                    <xsl:text>heading</xsl:text>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:text>heading hide-type</xsl:text>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:attribute>
+        <xsl:attribute name="alt">
             <xsl:apply-templates select="." mode="tooltip-text" />
         </xsl:attribute>
-        <xsl:element name="{$heading-level}">
-            <xsl:attribute name="class">
-                <xsl:choose>
-                    <xsl:when test="self::chapter">
-                        <xsl:text>heading</xsl:text>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:text>heading hide-type</xsl:text>
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:attribute>
-            <xsl:attribute name="alt">
-                <xsl:apply-templates select="." mode="tooltip-text" />
-            </xsl:attribute>
-            <xsl:apply-templates select="." mode="header-content" />
-        </xsl:element>
-        <xsl:apply-templates select="." mode="permalink" />
-        <xsl:if test="author">
-            <p class="byline"><xsl:apply-templates select="author" mode="name-list"/></p>
-        </xsl:if>
+        <xsl:apply-templates select="." mode="header-content" />
     </xsl:element>
+    <xsl:apply-templates select="." mode="permalink" />
+    <xsl:if test="author">
+        <p class="byline"><xsl:apply-templates select="author" mode="name-list"/></p>
+    </xsl:if>
 </xsl:template>
 
 <!-- The front and back matter have their own style -->
@@ -860,7 +860,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:apply-templates select="statement" />
             </xsl:if>
             <!-- default templates will produce hidden knowls -->
-            <div class="hidden-knowl-wrapper solutions">
+            <div class="solutions">
                 <xsl:if test="hint and $exercise.backmatter.hint='yes'">
                     <xsl:apply-templates select="hint" />
                 </xsl:if>
@@ -941,8 +941,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:choose>
         <!-- found a structural or block parent -->
         <!-- we fashion a cross-reference link  -->
+        <!-- TODO: xref-link's select is a fiction, maybe lead to bugs? -->
         <xsl:when test="$structural='true' or $block='true'">
             <xsl:apply-templates select="." mode="xref-link">
+                <xsl:with-param name="target" select="." />
                 <xsl:with-param name="content">
                     <xsl:apply-templates select="." mode="type-name" />
                     <xsl:variable name="enclosure-number">
@@ -983,28 +985,26 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!--   (1) No author credit                                -->
 <!--   (2) No permalink                                    -->
 <xsl:template match="*" mode="list-of-header">
-    <header>
-        <xsl:element name="h1">
-            <xsl:attribute name="class">
-                <xsl:text>heading</xsl:text>
-            </xsl:attribute>
-             <xsl:attribute name="alt">
-                <xsl:apply-templates select="." mode="tooltip-text" />
-            </xsl:attribute>
-             <xsl:attribute name="title">
-                <xsl:apply-templates select="." mode="tooltip-text" />
-            </xsl:attribute>
-            <span class="type">
-                <xsl:apply-templates select="." mode="type-name" />
-            </span>
-            <span class="codenumber">
-                <xsl:apply-templates select="." mode="number" />
-            </span>
-            <span class="title">
-                <xsl:apply-templates select="." mode="title-full" />
-            </span>
-        </xsl:element>
-    </header>
+    <xsl:element name="h1">
+        <xsl:attribute name="class">
+            <xsl:text>heading</xsl:text>
+        </xsl:attribute>
+         <xsl:attribute name="alt">
+            <xsl:apply-templates select="." mode="tooltip-text" />
+        </xsl:attribute>
+         <xsl:attribute name="title">
+            <xsl:apply-templates select="." mode="tooltip-text" />
+        </xsl:attribute>
+        <span class="type">
+            <xsl:apply-templates select="." mode="type-name" />
+        </span>
+        <span class="codenumber">
+            <xsl:apply-templates select="." mode="number" />
+        </span>
+        <span class="title">
+            <xsl:apply-templates select="." mode="title-full" />
+        </span>
+    </xsl:element>
 </xsl:template>
 
 <!-- Entries in list-of's -->
@@ -1013,8 +1013,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- And spacing should be done with .type, .codenumber, .title                -->
 <xsl:template match="*" mode="list-of-element">
     <!-- Name and number as a knowl/link, div to open against -->
+    <!-- TODO: xref-link's select is a fiction, maybe lead to bugs? -->
     <div>
         <xsl:apply-templates select="." mode="xref-link">
+            <xsl:with-param name="target" select="." />
             <xsl:with-param name="content">
                 <xsl:apply-templates select="." mode="type-name" />
                 <xsl:text> </xsl:text>
@@ -1799,6 +1801,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:apply-templates select="." mode="is-hidden" />
     </xsl:variable>
     <xsl:choose>
+        <!-- born-hidden case -->
         <xsl:when test="$hidden = 'true'">
             <xsl:choose>
                 <!-- primary occurrence, born hidden as embedded knowl     -->
@@ -1811,35 +1814,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <!-- duplicating, so just make a xref-knowl in same style, -->
                 <!-- but therefore clean of id's or other identification   -->
                 <xsl:otherwise>
-                    <!-- perhaps we should use the "body-element" and "body-css-class" here? -->
-                    <xsl:variable name="birth-elt">
-                        <xsl:apply-templates select="." mode="birth-element" />
-                    </xsl:variable>
-                    <xsl:element name="{$birth-elt}">
-                        <!-- copied from "xref-link" template,  -->
-                        <!-- maybe build a 2-parameter template -->
-                        <xsl:element name="a">
-                            <xsl:attribute name="knowl">
-                                <xsl:apply-templates select="." mode="hidden-knowl-filename" />
-                            </xsl:attribute>
-                            <!-- TODO: check if this "knowl-id" is needed, knowl.js implies it is -->
-                            <xsl:attribute name="knowl-id">
-                                <xsl:text>hidden-</xsl:text>
-                                <xsl:apply-templates select="." mode="internal-id" />
-                            </xsl:attribute>
-                            <!-- add HTML title and alt attributes to the link -->
-                            <xsl:attribute name="alt">
-                                <xsl:apply-templates select="." mode="tooltip-text" />
-                            </xsl:attribute>
-                            <xsl:attribute name="title">
-                                <xsl:apply-templates select="." mode="tooltip-text" />
-                            </xsl:attribute>
-                            <xsl:apply-templates select="." mode="hidden-knowl-text" />
-                         </xsl:element>
-                    </xsl:element>
+                    <xsl:apply-templates select="." mode="duplicate-born-hidden">
+                        <xsl:with-param name="b-original" select="$b-original" />
+                    </xsl:apply-templates>
                 </xsl:otherwise>
             </xsl:choose>
         </xsl:when>
+        <!-- born-visible case -->
         <xsl:otherwise>
             <!-- pass-thru of b-original mandatory -->
             <xsl:apply-templates select="." mode="born-visible">
@@ -1863,29 +1844,69 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:apply-templates select="." mode="birth-element" />
     </xsl:variable>
     <!-- First: the link that is visible on the page         -->
-    <!-- Wrapped at the div level, not wrapped if span level -->
-    <xsl:choose>
-        <xsl:when test="$birth-elt = 'div'">
-            <xsl:element name="{$birth-elt}">
-                <xsl:attribute name="class">
-                    <xsl:text>hidden-knowl-wrapper</xsl:text>
-                </xsl:attribute>
-                <xsl:apply-templates select="." mode="hidden-knowl-link" />
-            </xsl:element>
-        </xsl:when>
-        <xsl:when test="$birth-elt = 'span'">
-            <xsl:apply-templates select="." mode="hidden-knowl-link" />
-        </xsl:when>
-    </xsl:choose>
+    <xsl:variable name="body-elt">
+        <xsl:apply-templates select="." mode="body-element" />
+    </xsl:variable>
+    <!-- If body-element is a span, that is an indicator that the   -->
+    <!-- bare "a" link is sufficient and it needs no more wrapping. -->
+    <!-- Presently: hint, answer, solution, footnote, biblio        -->
+    <!-- TODO: use a better indicator, perhaps an empty body-element -->
+    <xsl:element name="{$body-elt}">
+        <xsl:attribute name="class">
+            <xsl:apply-templates select="." mode="body-css-class" />
+        </xsl:attribute>
+        <!-- this horrible hack should go away once better CSS is in place -->
+        <!-- likely this particular version never gets used                -->
+        <xsl:if test="self::poem">
+            <xsl:attribute name="style">
+                <xsl:text>display: table; width: auto; max-width: 90%; margin: 0 auto;</xsl:text>
+            </xsl:attribute>
+        </xsl:if>
+        <xsl:apply-templates select="." mode="hidden-knowl-link" />
+    </xsl:element>
     <!-- Second: the content of the knowl, to be revealed/parsed later -->
     <xsl:apply-templates select="." mode="hidden-knowl-content">
         <xsl:with-param name="b-original" select="$b-original" />
     </xsl:apply-templates>
 </xsl:template>
 
+<!-- An external file knowl, impersonating a hidden knowl -->
+<xsl:template match="*" mode="duplicate-born-hidden">
+    <xsl:param name="b-original" select="false()" />
+    <xsl:variable name="birth-elt">
+        <xsl:apply-templates select="." mode="birth-element" />
+    </xsl:variable>
+    <xsl:variable name="body-elt">
+        <xsl:apply-templates select="." mode="body-element" />
+    </xsl:variable>
+    <xsl:element name="{$body-elt}">
+        <xsl:attribute name="class">
+            <xsl:apply-templates select="." mode="body-css-class" />
+        </xsl:attribute>
+        <!-- this horrible hack should go away once better CSS is in place -->
+        <!-- likely this particular version never gets used                -->
+        <xsl:if test="self::poem">
+            <xsl:attribute name="style">
+                <xsl:text>display: table; width: auto; max-width: 90%; margin: 0 auto;</xsl:text>
+            </xsl:attribute>
+        </xsl:if>
+        <xsl:apply-templates select="." mode="duplicate-hidden-knowl-link" />
+    </xsl:element>
+</xsl:template>
 
-<!-- a hidden-knowl version of a clickable -->
+<!-- Hidden knowls are in two pieces.  This template -->
+<!-- ensures consistency of the common, linking id.  -->
+<xsl:template match="*" mode="hidden-knowl-id">
+    <xsl:text>hk-</xsl:text>  <!-- "hidden-knowl" -->
+    <xsl:apply-templates select="." mode="internal-id" />
+</xsl:template>
+
+<!-- The link portion of a hidden-knowl -->
 <xsl:template match="*" mode="hidden-knowl-link">
+    <!-- TODO: only being used here as block/inline signal -->
+    <xsl:variable name="birth-elt">
+        <xsl:apply-templates select="." mode="birth-element" />
+    </xsl:variable>
     <xsl:element name="a">
         <xsl:choose>
             <!-- Hack: WW not working from embedded knowls,     -->
@@ -1909,17 +1930,13 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:attribute name="title">
                     <xsl:apply-templates select="." mode="tooltip-text" />
                 </xsl:attribute>
-                <xsl:apply-templates select="." mode="hidden-knowl-text" />
+                <xsl:apply-templates select="." mode="heading-birth" />
             </xsl:when>
             <!-- this is the "real" code, bust out once WW fixed -->
             <xsl:otherwise>
-                <!-- Point to the file version, which is ineffective -->
-                <xsl:attribute name="knowl">
-                    <xsl:apply-templates select="." mode="xref-knowl-filename" />
-                </xsl:attribute>
                 <!-- empty, indicates content *not* in a file -->
                 <xsl:attribute name="knowl" />
-                <!-- class indicates content is in div referenced by id -->
+                <!-- id-ref class means content is in div referenced by id -->
                 <xsl:attribute name="class">
                     <xsl:text>id-ref</xsl:text>
                 </xsl:attribute>
@@ -1934,21 +1951,29 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 </xsl:attribute>
                 <!-- marked-up knowl text link *inside* of knowl anchor to be effective -->
                 <!-- heading in an HTML container -->
-                <xsl:apply-templates select="." mode="hidden-knowl-text" />
+                <xsl:apply-templates select="." mode="heading-birth" />
             </xsl:otherwise>
         </xsl:choose>
     </xsl:element>
 </xsl:template>
 
-
-<!-- create the hidden/embedded content  -->
-<!-- Should this just *always* be a div? -->
+<!-- The content portion of a hidden knowl -->
+<!-- *Always* as div.hidden-content"       -->
+<!-- TODO: exception is a footnote until we  -->
+<!-- move out of the interior of a paragraph -->
 <xsl:template match="*" mode="hidden-knowl-content">
     <xsl:param name="b-original" select="true()" />
-    <xsl:variable name="birth-elt">
-        <xsl:apply-templates select="." mode="birth-element" />
+    <xsl:variable name="hidden-content-type">
+        <xsl:choose>
+            <xsl:when test="self::fn">
+                <xsl:text>span</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>div</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:variable>
-    <xsl:element name="{$birth-elt}">
+    <xsl:element name="{$hidden-content-type}">
         <!-- different id, for use by the knowl mechanism -->
         <xsl:attribute name="id">
             <xsl:apply-templates select="." mode="hidden-knowl-id" />
@@ -1966,30 +1991,29 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:element>
 </xsl:template>
 
-<xsl:template match="*" mode="hidden-knowl-text">
-    <xsl:variable name="body-elt">
-        <xsl:apply-templates select="." mode="body-element" />
+<!-- The link for a duplicate hidden knowl -->
+<xsl:template match="*" mode="duplicate-hidden-knowl-link">
+    <xsl:variable name="birth-elt">
+        <xsl:apply-templates select="." mode="birth-element" />
     </xsl:variable>
-    <xsl:element name="{$body-elt}">
-        <xsl:attribute name="class">
-            <xsl:apply-templates select="." mode="body-css-class" />
+    <xsl:element name="a">
+        <xsl:attribute name="knowl">
+            <xsl:apply-templates select="." mode="hidden-knowl-filename" />
         </xsl:attribute>
-        <!-- this horrible hack should go away once better CSS is in place -->
-        <!-- likely this particular version never gets used                -->
-        <xsl:if test="self::poem">
-            <xsl:attribute name="style">
-                <xsl:text>display: table; width: auto; max-width: 90%; margin: 0 auto;</xsl:text>
-            </xsl:attribute>
-        </xsl:if>
+        <!-- TODO: check if this "knowl-id" is needed, knowl.js implies it is -->
+        <xsl:attribute name="knowl-id">
+            <xsl:text>hidden-</xsl:text>
+            <xsl:apply-templates select="." mode="internal-id" />
+        </xsl:attribute>
+        <!-- add HTML title and alt attributes to the link -->
+        <xsl:attribute name="alt">
+            <xsl:apply-templates select="." mode="tooltip-text" />
+        </xsl:attribute>
+        <xsl:attribute name="title">
+            <xsl:apply-templates select="." mode="tooltip-text" />
+        </xsl:attribute>
         <xsl:apply-templates select="." mode="heading-birth" />
     </xsl:element>
-</xsl:template>
-
-<!-- Hidden knowls are embedded in a div that MathJax ignores.   -->
-<!-- That div needs an id for the knowl to be able to locate it  -->
-<xsl:template match="*" mode="hidden-knowl-id">
-    <xsl:text>hk-</xsl:text>  <!-- "hidden-knowl" -->
-    <xsl:apply-templates select="." mode="internal-id" />
 </xsl:template>
 
 
@@ -2388,7 +2412,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <!-- Exceptional for backward compatibility, 2017-08-25 -->
             <xsl:if test="title and not(caption)">
                 <figcaption>
-                    <span class="heading">
+                    <span class="type">
                         <xsl:apply-templates select="." mode="type-name"/>
                     </span>
                     <span class="codenumber">
@@ -2634,7 +2658,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:with-param name="b-original" select="$b-original" />
             </xsl:apply-templates>
             <xsl:if test="hint|answer|solution">
-                <div class="hidden-knowl-wrapper solutions">
+                <div class="solutions">
                     <xsl:apply-templates select="hint|answer|solution">
                         <xsl:with-param name="b-original" select="$b-original" />
                     </xsl:apply-templates>
@@ -2782,7 +2806,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:if>
             <!-- after statement, div of hidden knowls -->
             <xsl:if test="(hint and $exercise.text.hint='yes') or (answer and $exercise.text.answer='yes') or (solution and $exercise.text.solution='yes')">
-                <div class="hidden-knowl-wrapper solutions">
+                <div class="solutions">
                     <xsl:if test="$exercise.text.hint='yes'">
                         <xsl:apply-templates select="hint">
                             <xsl:with-param name="b-original" select="$b-original" />
@@ -2868,7 +2892,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <!-- this could be a useful three-parameter template -->
             <xsl:if test="(hint and $project.text.hint='yes') or (answer and $project.text.answer='yes') or (solution and $project.text.solution='yes')">
                 <!-- then can populate div full of solution -->
-                <div class="hidden-knowl-wrapper solutions">
+                <div class="solutions">
                     <xsl:if test="$project.text.hint='yes'">
                         <xsl:apply-templates select="hint">
                             <xsl:with-param name="b-original" select="$b-original" />
@@ -2957,7 +2981,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <!-- this could be a useful three-parameter template -->
             <xsl:if test="(hint and $project.text.hint='yes') or (answer and $project.text.answer='yes') or (solution and $project.text.solution='yes')">
                 <!-- then can populate div full of solution -->
-                <div class="hidden-knowl-wrapper solutions">
+                <div class="solutions">
                     <xsl:if test="$project.text.hint='yes'">
                         <xsl:apply-templates select="hint">
                             <xsl:with-param name="b-original" select="$b-original" />
@@ -3357,7 +3381,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:apply-templates>
     </div>
     <xsl:if test="note">
-        <div class="hidden-knowl-wrapper solutions">
+        <div class="knowl-container">
             <xsl:apply-templates select="note">
                 <xsl:with-param name="b-original" select="$b-original" />
             </xsl:apply-templates>
@@ -3847,7 +3871,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:attribute name="uri"><xsl:text>1</xsl:text></xsl:attribute>
         </xsl:if>
     </xsl:element> <!-- end iframe -->
-    <script type="text/javascript">iFrameResize({log:true,inPageLinks:true,resizeFrom:'child'})</script>
+    <script type="text/javascript">
+        <xsl:text>iFrameResize({log:true,inPageLinks:true,resizeFrom:'child',checkOrigin:["</xsl:text>
+        <xsl:value-of select="$webwork-server" />
+        <xsl:text>"]})</xsl:text>
+    </script>
 </xsl:template>
 
 
@@ -4243,7 +4271,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!--   Asymptote graphics language                 -->
 <!--   LaTeX source code images                    -->
 <!--   Sage graphics plots, w/ PNG fallback for 3D -->
-<xsl:template match="image[asymptote]|image[latex-image-code]|image[sageplot]">
+<xsl:template match="image[asymptote]|image[latex-image-code]|image[latex-image]|image[sageplot]">
     <xsl:variable name="base-pathname">
         <xsl:value-of select="$directory.images" />
         <xsl:text>/</xsl:text>
@@ -5711,7 +5739,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:with-param name="right-margin" select="$right-margin" />
             </xsl:call-template>
         </xsl:if>
-        <span class="heading">
+        <span class="type">
             <xsl:apply-templates select="parent::*" mode="type-name"/>
         </span>
         <span class="codenumber">
@@ -5787,6 +5815,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- LaTeX the \ref and \label mechanism                 -->
 <!-- NB: we do exactly the same thing in the mathbook-webwork-pg.xsl -->
 <xsl:template match="*" mode="xref-number">
+    <xsl:param name="xref" select="/.." />
+    <xsl:variable name="needs-part-prefix">
+        <xsl:apply-templates select="." mode="crosses-part-boundary">
+            <xsl:with-param name="xref" select="$xref" />
+        </xsl:apply-templates>
+    </xsl:variable>
+    <xsl:if test="$needs-part-prefix = 'true'">
+        <xsl:apply-templates select="ancestor::part" mode="serial-number" />
+        <xsl:text>.</xsl:text>
+    </xsl:if>
     <xsl:apply-templates select="." mode="number" />
 </xsl:template>
 
@@ -5801,31 +5839,33 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- actual link, which is sensitive to display   -->
 <!-- math in particular                           -->
 <!-- See xsl/mathbook-common.xsl for more info    -->
+<!-- TODO: could match on "xref" once link routines  -->
+<!-- are broken into two and other uses are rearranged -->
 <xsl:template match="*" mode="xref-link">
+    <xsl:param name="target" select="/.." />
     <xsl:param name="content" select="'MISSING LINK CONTENT'"/>
-    <xsl:param name="xref" select="/.." />
     <xsl:variable name="knowl">
-        <xsl:apply-templates select="." mode="xref-as-knowl" />
+        <xsl:apply-templates select="$target" mode="xref-as-knowl" />
     </xsl:variable>
     <xsl:choose>
         <!-- 1st exceptional case, xref in webwork -->
         <!-- Just parrot the content               -->
-        <xsl:when test="$xref/ancestor::webwork">
+        <xsl:when test="ancestor::webwork|ancestor::title|ancestor::subtitle">
             <xsl:value-of select="$content" />
         </xsl:when>
         <!-- 2nd exceptional case, xref in mrow of display math  -->
         <!-- Requires http://aimath.org/mathbook/mathjaxknowl.js -->
         <!-- loaded as a MathJax extension for knowls to render  -->
-        <xsl:when test="$xref/parent::mrow">
+        <xsl:when test="parent::mrow">
             <!-- MathJax expects similar constructions, variation is here -->
             <xsl:choose>
                 <xsl:when test="$knowl='true'">
                     <xsl:text>\knowl{</xsl:text>
-                    <xsl:apply-templates select="." mode="xref-knowl-filename" />
+                    <xsl:apply-templates select="$target" mode="xref-knowl-filename" />
                 </xsl:when>
                 <xsl:otherwise>
                     <xsl:text>\href{</xsl:text>
-                    <xsl:apply-templates select="." mode="url" />
+                    <xsl:apply-templates select="$target" mode="url" />
                 </xsl:otherwise>
             </xsl:choose>
             <xsl:text>}{</xsl:text>
@@ -5840,39 +5880,34 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                     <xsl:when test="$knowl='true'">
                         <!-- build a modern knowl -->
                         <xsl:attribute name="knowl">
-                            <xsl:apply-templates select="." mode="xref-knowl-filename" />
+                            <xsl:apply-templates select="$target" mode="xref-knowl-filename" />
                         </xsl:attribute>
                         <!-- TODO: check if this "knowl-id" is needed, knowl.js implies it is -->
                         <xsl:attribute name="knowl-id">
                             <xsl:text>xref-</xsl:text>
-                            <xsl:apply-templates select="." mode="internal-id" />
+                            <xsl:apply-templates select="$target" mode="internal-id" />
                         </xsl:attribute>
                     </xsl:when>
                     <xsl:otherwise>
                         <!-- build traditional hyperlink -->
                         <xsl:attribute name="href">
-                            <xsl:apply-templates select="." mode="url" />
+                            <xsl:apply-templates select="$target" mode="url" />
+                        </xsl:attribute>
+                        <!-- use a class to identify an internal link -->
+                        <xsl:attribute name="class">
+                            <xsl:text>xref</xsl:text>
                         </xsl:attribute>
                     </xsl:otherwise>
                 </xsl:choose>
                 <!-- add HTML title and alt attributes to the link -->
                 <xsl:attribute name="alt">
-                    <xsl:apply-templates select="." mode="tooltip-text" />
+                    <xsl:apply-templates select="$target" mode="tooltip-text" />
                 </xsl:attribute>
                 <xsl:attribute name="title">
-                    <xsl:apply-templates select="." mode="tooltip-text" />
+                    <xsl:apply-templates select="$target" mode="tooltip-text" />
                 </xsl:attribute>
                 <!-- link content from common template -->
-                <!-- For a contributor we bypass autonaming, etc -->
-                <!-- TODO: should this be more integrated? -->
-                <xsl:choose>
-                    <xsl:when test="self::contributor">
-                        <xsl:apply-templates select="personname" />
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="$content" />
-                    </xsl:otherwise>
-                </xsl:choose>
+                <xsl:value-of select="$content" />
             </xsl:element>
         </xsl:otherwise>
     </xsl:choose>
@@ -6191,26 +6226,37 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <!-- External URLs, Email        -->
-<!-- Open in new windows         -->
-<!-- URL itself, if content-less -->
-<!-- automatically verbatim      -->
+<!-- Open in new window/tab as external reference                        -->
+<!-- If content-less, then automatically formatted like code             -->
+<!-- Within titles, we just produce (formatted) text, but nothing active -->
 <!-- http://stackoverflow.com/questions/9782021/check-for-empty-xml-element-using-xslt -->
 <xsl:template match="url">
-    <a class="external-url" href="{@href}" target="_blank">
+    <!-- visible portion of HTML is the URL itself,   -->
+    <!-- formatted as code, or content of PTX element -->
+    <xsl:variable name="visible-text">
+        <xsl:choose>
+            <xsl:when test="not(*) and not(normalize-space())">
+                <code class="code-inline tex2jax_ignore">
+                    <xsl:value-of select="@href" />
+                </code>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates />
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:variable>
+    <!-- Normally in an active link, except inactive in titles -->
     <xsl:choose>
-        <xsl:when test="not(*) and not(normalize-space())">
-            <xsl:element name="tt">
-                <xsl:attribute name="class">
-                    <xsl:text>code-inline tex2jax_ignore</xsl:text>
-                </xsl:attribute>
-                <xsl:value-of select="@href" />
-            </xsl:element>
+        <xsl:when test="ancestor::title|ancestor::subtitle">
+            <xsl:copy-of select="$visible-text" />
         </xsl:when>
         <xsl:otherwise>
-            <xsl:apply-templates />
+            <!-- class name identifies an external link -->
+            <a class="url" href="{@href}" target="_blank">
+                <xsl:copy-of select="$visible-text" />
+            </a>
         </xsl:otherwise>
     </xsl:choose>
-    </a>
 </xsl:template>
 
 <xsl:template match="email">
@@ -6232,12 +6278,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- PCDATA only, so drop non-text nodes -->
 <!-- NB: "code-block" class otherwise -->
 <xsl:template match="c">
-    <xsl:element name="tt">
-        <xsl:attribute name="class">
-            <xsl:text>code-inline tex2jax_ignore</xsl:text>
-        </xsl:attribute>
+    <code class="code-inline tex2jax_ignore">
         <xsl:value-of select="." />
-    </xsl:element>
+    </code>
 </xsl:template>
 
 
@@ -6755,12 +6798,19 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- See common file for more on language handlers, and "language-prettify" template          -->
 <!-- Coordinate with disabling in Sage Notebook production                                    -->
 <xsl:template match="program">
+    <!-- with language, pre.prettyprint activates styling and Prettifier -->
+    <!-- with no language, pre.plainprint just yields some styling       -->
     <xsl:variable name="classes">
-        <xsl:text>prettyprint</xsl:text>
-        <xsl:if test="@language">
-            <xsl:text> lang-</xsl:text>
-            <xsl:value-of select="@language" />
-        </xsl:if>
+        <xsl:choose>
+            <xsl:when test="@language">
+                <xsl:text>prettyprint</xsl:text>
+                <xsl:text> lang-</xsl:text>
+                <xsl:value-of select="@language" />
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>plainprint</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:variable>
     <pre class="{$classes}" style="font-size:80%">
     <xsl:call-template name="sanitize-text">
@@ -6971,30 +7021,6 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <xsl:template name="webwork">
     <link href="{$webwork-server}/webwork2_files/js/apps/MathView/mathview.css" rel="stylesheet" />
     <script type="text/javascript" src="{$webwork-server}/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.min.js"></script>
-</xsl:template>
-
-<!-- The request for a "knowl-clickable" of webwork problem comes  -->
-<!-- from within the environment/knowl scheme of an exercise       -->
-<!-- It assumes the xref-knowl has been built already              -->
-<!-- TODO: make WW problem a proper hidden knowl? -->
-<xsl:template match="webwork" mode="knowl-clickable">
-    <!-- Cribbed from "environment-hidden-factory" template -->
-    <xsl:element name="div">
-        <xsl:attribute name="class">
-            <xsl:text>hidden-knowl-wrapper</xsl:text>
-        </xsl:attribute>
-        <xsl:element name="a">
-            <xsl:attribute name="knowl">
-                <xsl:apply-templates select="." mode="xref-knowl-filename" />
-            </xsl:attribute>
-            <!-- make the anchor a target, eg of an in-context link -->
-            <xsl:attribute name="id">
-                <xsl:apply-templates select="." mode="internal-id" />
-            </xsl:attribute>
-            <!-- generally the "hidden-knowl-text", but generic here -->
-            <xsl:text>WeBWorK Exercise</xsl:text>
-        </xsl:element>
-    </xsl:element>
 </xsl:template>
 
 <!--                         -->
@@ -7796,13 +7822,28 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <!-- TODO: split out inner link formation, outer link formation? -->
 <xsl:template match="*" mode="toc-items">
     <xsl:if test="$b-has-toc">
+        <!-- Decrement level for books with parts, -->
+        <!-- then 0 is exceptional - parts only    -->
+        <xsl:variable name="adjusted-toc-level">
+            <xsl:choose>
+                <xsl:when test="not($parts = 'absent')">
+                    <xsl:value-of select="$toc-level - 1" />
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="$toc-level" />
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         <!-- Subtree for page this sidebar will adorn -->
         <xsl:variable name="this-page-node" select="descendant-or-self::*" />
-        <xsl:for-each select="$document-root/*">
+        <!-- If a book has parts, we include them as top level -->
+        <!-- Note: these include front matter, back matter     -->
+        <xsl:for-each select="$root/book/*|$root/book/part/*|$root/article/*">
             <xsl:variable name="structural">
                 <xsl:apply-templates select="." mode="is-structural" />
             </xsl:variable>
-            <xsl:if test="$structural='true'">
+            <!-- Bypass chapters for compact ToC for book with parts -->
+            <xsl:if test="$structural='true' and not(($adjusted-toc-level = 0) and self::chapter)">
                 <!-- Subtree represented by this ToC item -->
                 <xsl:variable name="outer-node" select="descendant-or-self::*" />
                 <xsl:variable name="outer-url">
@@ -7841,7 +7882,9 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
                         </span>
                     </xsl:element>
                 </h2>
-                <xsl:if test="$toc-level > 1">
+                <!-- We don't divide parts again, their  -->
+                <!-- chapters will be in $sublist anyway -->
+                <xsl:if test="not(self::part) and $adjusted-toc-level > 1">
                     <!-- a level 1 ToC entry may not have any structural      -->
                     <!-- descendants, so we build a possible sublist in a     -->
                     <!-- variable and do not use it if it ends up being empty -->
@@ -8201,7 +8244,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <!-- Program Listings from Google -->
 <!--   ?skin=sunburst  on end of src URL gives black terminal look -->
 <xsl:template name="goggle-code-prettifier">
-    <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 </xsl:template>
 
 <!-- JS setup for a Google Custom Search Engine box -->
@@ -8237,7 +8280,6 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 
 <!-- Knowl header -->
 <xsl:template name="knowl">
-<link href="https://aimath.org/knowlstyle.css" rel="stylesheet" type="text/css" />
 <script type="text/javascript" src="https://aimath.org/knowl.js"></script>
 </xsl:template>
 
@@ -8371,7 +8413,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
     <xsl:choose>
         <xsl:when test="$docinfo/brandlogo">
             <a id="logo-link" href="{$docinfo/brandlogo/@url}" target="_blank" >
-                <img src="{$docinfo/brandlogo/@source}" alt="Logo image for document"/>
+                <img src="{$docinfo/brandlogo/@source}" alt="Logo image"/>
             </a>
         </xsl:when>
         <xsl:otherwise>

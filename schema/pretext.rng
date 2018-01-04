@@ -42,14 +42,21 @@
       <optional>
         <ref name="BookFrontMatter"/>
       </optional>
-      <ref name="Chapter"/>
-      <zeroOrMore>
-        <choice>
+      <choice>
+        <group>
           <ref name="Chapter"/>
-          <ref name="Exercises"/>
-          <ref name="References"/>
-        </choice>
-      </zeroOrMore>
+          <zeroOrMore>
+            <choice>
+              <ref name="Chapter"/>
+              <ref name="Exercises"/>
+              <ref name="References"/>
+            </choice>
+          </zeroOrMore>
+        </group>
+        <oneOrMore>
+          <ref name="Part"/>
+        </oneOrMore>
+      </choice>
       <optional>
         <ref name="BackMatter"/>
       </optional>
@@ -63,6 +70,14 @@
   <define name="Memorandum">
     <element name="memo">
       <empty/>
+    </element>
+  </define>
+  <define name="Part">
+    <element name="part">
+      <ref name="MetaDataTitle"/>
+      <oneOrMore>
+        <ref name="Chapter"/>
+      </oneOrMore>
     </element>
   </define>
   <define name="Chapter">
@@ -292,7 +307,7 @@
   <define name="Credit">
     <element name="credit">
       <element name="title">
-        <ref name="TextShort"/>
+        <ref name="TextLong"/>
       </element>
       <oneOrMore>
         <ref name="Author"/>
@@ -1375,7 +1390,6 @@
     <choice>
       <ref name="ImageRaster"/>
       <ref name="ImageCode"/>
-      <ref name="ImageCopy"/>
     </choice>
   </define>
   <define name="ImageRaster">
@@ -1414,7 +1428,7 @@
         </element>
       </optional>
       <choice>
-        <element name="latex-image-code">
+        <element name="latex-image">
           <text/>
         </element>
         <element name="asymptote">
@@ -1424,14 +1438,6 @@
           <text/>
         </element>
       </choice>
-    </element>
-  </define>
-  <define name="ImageCopy">
-    <element name="image">
-      <optional>
-        <ref name="UniqueID"/>
-      </optional>
-      <attribute name="copy"/>
     </element>
   </define>
   <define name="ImageWW">
@@ -1662,9 +1668,6 @@
     <element name="sage">
       <optional>
         <ref name="UniqueID"/>
-      </optional>
-      <optional>
-        <attribute name="copy"/>
       </optional>
       <optional>
         <attribute name="doctest"/>
@@ -1946,7 +1949,7 @@
   </define>
   <define name="BibTitle">
     <element name="title">
-      <ref name="TextShort"/>
+      <ref name="TextLong"/>
     </element>
   </define>
   <define name="BibNote">
@@ -2201,12 +2204,12 @@
   </define>
   <define name="Title">
     <element name="title">
-      <ref name="TextShort"/>
+      <ref name="TextLong"/>
     </element>
   </define>
   <define name="Subtitle">
     <element name="subtitle">
-      <ref name="TextShort"/>
+      <ref name="TextLong"/>
     </element>
   </define>
   <define name="XMLBase">
@@ -3387,5 +3390,19 @@
         </oneOrMore>
       </element>
     </choice>
+  </define>
+  <define name="Configuration" combine="choice">
+    <element name="numbering">
+      <optional>
+        <element name="division">
+          <attribute name="part">
+            <choice>
+              <value>decorative</value>
+              <value>structural</value>
+            </choice>
+          </attribute>
+        </element>
+      </optional>
+    </element>
   </define>
 </grammar>

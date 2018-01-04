@@ -42,11 +42,16 @@
         <xs:extension base="MetaDataSubtitle">
           <xs:sequence>
             <xs:group minOccurs="0" ref="BookFrontMatter"/>
-            <xs:element ref="chapter"/>
-            <xs:choice minOccurs="0" maxOccurs="unbounded">
-              <xs:element ref="chapter"/>
-              <xs:element ref="exercises"/>
-              <xs:element ref="references"/>
+            <xs:choice>
+              <xs:sequence>
+                <xs:element ref="chapter"/>
+                <xs:choice minOccurs="0" maxOccurs="unbounded">
+                  <xs:element ref="chapter"/>
+                  <xs:element ref="exercises"/>
+                  <xs:element ref="references"/>
+                </xs:choice>
+              </xs:sequence>
+              <xs:element maxOccurs="unbounded" ref="part"/>
             </xs:choice>
             <xs:element minOccurs="0" ref="backmatter"/>
           </xs:sequence>
@@ -59,6 +64,17 @@
   </xs:element>
   <xs:element name="memo">
     <xs:complexType/>
+  </xs:element>
+  <xs:element name="part">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="MetaDataTitle">
+          <xs:sequence>
+            <xs:element maxOccurs="unbounded" ref="chapter"/>
+          </xs:sequence>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
   </xs:element>
   <xs:element name="chapter">
     <xs:complexType>
@@ -272,7 +288,7 @@
   </xs:element>
   <xs:element name="title">
     <xs:complexType mixed="true">
-      <xs:group ref="TextShort"/>
+      <xs:group ref="TextLong"/>
     </xs:complexType>
   </xs:element>
   <xs:element name="date">
@@ -1353,7 +1369,6 @@
     <xs:choice>
       <xs:group ref="ImageRaster"/>
       <xs:group ref="ImageCode"/>
-      <xs:group ref="ImageCopy"/>
     </xs:choice>
   </xs:group>
   <xs:group name="ImageRaster">
@@ -1386,7 +1401,7 @@
               </xs:complexType>
             </xs:element>
             <xs:choice>
-              <xs:element ref="latex-image-code"/>
+              <xs:element ref="latex-image"/>
               <xs:element ref="asymptote"/>
               <xs:element ref="sageplot"/>
             </xs:choice>
@@ -1398,19 +1413,9 @@
       </xs:element>
     </xs:sequence>
   </xs:group>
-  <xs:element name="latex-image-code" type="xs:string"/>
+  <xs:element name="latex-image" type="xs:string"/>
   <xs:element name="asymptote" type="xs:string"/>
   <xs:element name="sageplot" type="xs:string"/>
-  <xs:group name="ImageCopy">
-    <xs:sequence>
-      <xs:element name="image">
-        <xs:complexType>
-          <xs:attribute ref="xml:id"/>
-          <xs:attribute name="copy" use="required"/>
-        </xs:complexType>
-      </xs:element>
-    </xs:sequence>
-  </xs:group>
   <xs:group name="ImageWW">
     <xs:sequence>
       <xs:element name="image">
@@ -1679,7 +1684,6 @@
         <xs:element minOccurs="0" ref="output"/>
       </xs:sequence>
       <xs:attribute ref="xml:id"/>
-      <xs:attribute name="copy"/>
       <xs:attribute name="doctest"/>
       <xs:attribute name="tolerance"/>
       <xs:attribute name="language"/>
@@ -2136,7 +2140,7 @@
   </xs:attributeGroup>
   <xs:element name="subtitle">
     <xs:complexType mixed="true">
-      <xs:group ref="TextShort"/>
+      <xs:group ref="TextLong"/>
     </xs:complexType>
   </xs:element>
   <xs:attributeGroup name="XMLBase">
@@ -3244,6 +3248,7 @@
         <xs:element ref="search"/>
         <xs:element ref="analytics"/>
       </xs:choice>
+      <xs:element ref="numbering"/>
     </xs:choice>
   </xs:group>
   <xs:element name="brandlogo">
@@ -3343,4 +3348,23 @@
     </xs:complexType>
   </xs:element>
   <xs:element name="security" type="xs:string"/>
+  <xs:element name="numbering">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" ref="division"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="division">
+    <xs:complexType>
+      <xs:attribute name="part" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="decorative"/>
+            <xs:enumeration value="structural"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>

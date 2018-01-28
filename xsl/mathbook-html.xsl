@@ -349,80 +349,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:message>
 </xsl:template>
 
-
-
-
-<!-- Authors, editors in serial lists for headers           -->
-<!-- Presumes authors get selected first, so editors follow -->
-<!-- TODO: Move to common -->
-<xsl:template match="author[1]" mode="name-list" >
-    <xsl:apply-templates select="personname" />
-</xsl:template>
-<xsl:template match="author" mode="name-list" >
-    <xsl:text>, </xsl:text>
-    <xsl:apply-templates select="personname" />
-</xsl:template>
-<xsl:template match="editor[1]" mode="name-list" >
-    <xsl:if test="//frontmatter/titlepage/author" >
-        <xsl:text>, </xsl:text>
-    </xsl:if>
-    <xsl:apply-templates select="personname" />
-    <xsl:text> (</xsl:text>
-    <xsl:apply-templates select="." mode="type-name" />
-    <xsl:text>)</xsl:text>
-</xsl:template>
-<xsl:template match="editor" mode="name-list" >
-    <xsl:text>, </xsl:text>
-    <xsl:apply-templates select="personname" />
-    <xsl:text> (</xsl:text>
-    <xsl:apply-templates select="." mode="type-name" />
-    <xsl:text>)</xsl:text>
-</xsl:template>
-
-<!-- Authors and editors with affiliations (eg, on title page) -->
-<xsl:template match="author|editor" mode="full-info">
-    <p>
-        <xsl:apply-templates select="personname" />
-        <xsl:if test="self::editor">
-            <xsl:text>, </xsl:text>
-            <xsl:apply-templates select="." mode="type-name" />
-        </xsl:if>
-        <xsl:if test="department|institution|email">
-            <xsl:if test="department">
-                <br />
-                <xsl:apply-templates select="department" />
-            </xsl:if>
-            <xsl:if test="institution">
-                <br />
-                <xsl:apply-templates select="institution" />
-            </xsl:if>
-            <xsl:if test="email">
-                <br />
-                <xsl:apply-templates select="email" />
-            </xsl:if>
-        </xsl:if>
-    </p>
-</xsl:template>
-
-<!-- Departments and Institutions are free-form, or sequences of lines -->
-<xsl:template match="department|institution">
-    <xsl:apply-templates />
-</xsl:template>
-
-<xsl:template match="department[line]|institution[line]">
-    <xsl:apply-templates select="line" />
-</xsl:template>
-
-<!-- Sneak in dedication line element here as well -->
-<xsl:template match="department/line|institution/line|dedication/p/line">
-    <xsl:apply-templates />
-    <!-- is there a next line to separate? -->
-    <xsl:if test="following-sibling::*">
-        <br />
-    </xsl:if>
-</xsl:template>
-
-
 <!-- ################ -->
 <!-- Structural Nodes -->
 <!-- ################ -->
@@ -676,9 +602,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- ####################### -->
 
 <!-- Title Page -->
-<!-- A frontmatter has no title, so we reproduce the            -->
-<!-- title of the work (book or article) here                   -->
-<!-- We add other material prior to links to major subdivisions -->
+<!-- A frontmatter has no title, so we reproduce the       -->
+<!-- title of the work (book or article) here              -->
+<!-- NB: this could done with a "section-header" template? -->
+<!-- Other divisions (eg, colophon, preface) will follow   -->
+<!-- This is all within a .frontmatter class for CSS       -->
 <xsl:template match="titlepage">
     <h1 class="heading">
         <span>
@@ -691,34 +619,110 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </span>
         </xsl:if>
     </h1>
-    <!-- We list full info for each author and editor in document order -->
-    <!-- Minor players (credits) come next                              -->
-    <address class="contributors">
-        <xsl:apply-templates select="author|editor" mode="full-info" />
-        <xsl:apply-templates select="credit" />
-    </address>
+    <!-- We list authors and editors in document order -->
+    <xsl:apply-templates select="author|editor" mode="full-info"/>
+    <!-- A credit is subsidiary, so follows -->
+    <xsl:apply-templates select="credit" />
     <xsl:apply-templates select="date" />
 </xsl:template>
 
-<!-- A "credit" can have a "title" followed by an author (or several)  -->
-<!-- Better CSS would have the title in the same size as author info   -->
-<!-- then name, etc in slightly smaller font (generally de-emphasised) -->
+<!-- A "credit" required "title" followed by an author (or several)    -->
+<!-- CSS should give lesser prominence to these (versus "full" author) -->
 <xsl:template match="titlepage/credit">
-    <xsl:if test="title">
-        <p>
-        <xsl:apply-templates select="." mode="title-full"/>
-        </p>
-    </xsl:if>
-    <xsl:apply-templates select="author" mode="full-info" />
+    <div class="credit">
+        <div class="title">
+            <xsl:apply-templates select="." mode="title-full"/>
+        </div>
+        <xsl:apply-templates select="author" mode="full-info" />
+    </div>
 </xsl:template>
 
-<!-- A template manages the date      -->
-<!-- Until we have better CSS for it  -->
+<!-- The time element has content that is "human readable" time -->
 <xsl:template match="titlepage/date">
-    <address class="contributors">
+    <time class="date">
         <xsl:apply-templates />
-    </address>
-    <p></p>
+    </time>
+</xsl:template>
+
+<!-- Authors, Editors, Creditors -->
+
+<!-- Authors and editors with affiliations (eg, on title page) -->
+<!-- CSS does not distinguish authors from editors             -->
+<xsl:template match="author|editor" mode="full-info">
+    <div class="author">
+        <div class="author-name">
+            <xsl:apply-templates select="personname" />
+            <xsl:if test="self::editor">
+                <xsl:text>, </xsl:text>
+                <xsl:apply-templates select="." mode="type-name" />
+            </xsl:if>
+        </div>
+        <div class="author-info">
+            <xsl:if test="department">
+                <xsl:apply-templates select="department" />
+                <xsl:if test="department/following-sibling::*">
+                    <br />
+                </xsl:if>
+            </xsl:if>
+            <xsl:if test="institution">
+                <xsl:apply-templates select="institution" />
+                <xsl:if test="institution/following-sibling::*">
+                    <br />
+                </xsl:if>
+            </xsl:if>
+            <xsl:if test="email">
+                <xsl:apply-templates select="email" />
+                <xsl:if test="email/following-sibling::*">
+                    <br />
+                </xsl:if>
+            </xsl:if>
+        </div>
+    </div>
+</xsl:template>
+
+<!-- Departments and Institutions are free-form, or sequences of lines -->
+<xsl:template match="department|institution">
+    <xsl:apply-templates />
+</xsl:template>
+
+<xsl:template match="department[line]|institution[line]">
+    <xsl:apply-templates select="line" />
+</xsl:template>
+
+<!-- Sneak in dedication line element here as well -->
+<xsl:template match="department/line|institution/line|dedication/p/line">
+    <xsl:apply-templates />
+    <!-- is there a next line to separate? -->
+    <xsl:if test="following-sibling::*">
+        <br />
+    </xsl:if>
+</xsl:template>
+
+<!-- Authors, editors in serial lists for headers           -->
+<!-- Presumes authors get selected first, so editors follow -->
+<!-- TODO: Move to common -->
+<xsl:template match="author[1]" mode="name-list" >
+    <xsl:apply-templates select="personname" />
+</xsl:template>
+<xsl:template match="author" mode="name-list" >
+    <xsl:text>, </xsl:text>
+    <xsl:apply-templates select="personname" />
+</xsl:template>
+<xsl:template match="editor[1]" mode="name-list" >
+    <xsl:if test="//frontmatter/titlepage/author" >
+        <xsl:text>, </xsl:text>
+    </xsl:if>
+    <xsl:apply-templates select="personname" />
+    <xsl:text> (</xsl:text>
+    <xsl:apply-templates select="." mode="type-name" />
+    <xsl:text>)</xsl:text>
+</xsl:template>
+<xsl:template match="editor" mode="name-list" >
+    <xsl:text>, </xsl:text>
+    <xsl:apply-templates select="personname" />
+    <xsl:text> (</xsl:text>
+    <xsl:apply-templates select="." mode="type-name" />
+    <xsl:text>)</xsl:text>
 </xsl:template>
 
 <!-- Front Colophon -->

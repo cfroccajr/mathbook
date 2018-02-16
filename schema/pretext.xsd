@@ -242,7 +242,17 @@
   <xs:element name="titlepage">
     <xs:complexType>
       <xs:sequence>
-        <xs:element maxOccurs="unbounded" ref="author"/>
+        <xs:choice>
+          <xs:sequence>
+            <xs:element ref="author"/>
+            <xs:element minOccurs="0" maxOccurs="unbounded" ref="author"/>
+            <xs:element minOccurs="0" maxOccurs="unbounded" ref="editor"/>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:element ref="editor"/>
+            <xs:element minOccurs="0" maxOccurs="unbounded" ref="editor"/>
+          </xs:sequence>
+        </xs:choice>
         <xs:element minOccurs="0" maxOccurs="unbounded" ref="credit"/>
         <xs:element minOccurs="0" ref="date"/>
       </xs:sequence>
@@ -278,6 +288,30 @@
     </xs:complexType>
   </xs:element>
   <xs:element name="email" type="xs:string"/>
+  <xs:element name="editor">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="personname"/>
+        <xs:element minOccurs="0" name="department">
+          <xs:complexType mixed="true">
+            <xs:choice>
+              <xs:group ref="TextSimple"/>
+              <xs:group maxOccurs="unbounded" ref="Line"/>
+            </xs:choice>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" name="institution">
+          <xs:complexType mixed="true">
+            <xs:choice>
+              <xs:group ref="TextSimple"/>
+              <xs:group maxOccurs="unbounded" ref="Line"/>
+            </xs:choice>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" ref="email"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
   <xs:element name="credit">
     <xs:complexType>
       <xs:sequence>
@@ -384,9 +418,8 @@
       <xs:sequence>
         <xs:group ref="MetaDataTitleOptional"/>
         <xs:choice maxOccurs="unbounded">
-          <xs:group ref="BlockText"/>
-          <xs:group ref="SideBySideNoCaption"/>
-          <xs:group ref="SideBySideGroupNoCaption"/>
+          <xs:group ref="BlockStatementNoCaption"/>
+          <xs:group ref="ParagraphsNoNumber"/>
         </xs:choice>
       </xs:sequence>
       <xs:attributeGroup ref="MetaDataTitleOptional"/>
@@ -409,9 +442,8 @@
       <xs:sequence>
         <xs:group ref="MetaDataTitleOptional"/>
         <xs:choice maxOccurs="unbounded">
-          <xs:group ref="BlockText"/>
-          <xs:group ref="SideBySideNoCaption"/>
-          <xs:group ref="SideBySideGroupNoCaption"/>
+          <xs:group ref="BlockStatementNoCaption"/>
+          <xs:group ref="ParagraphsNoNumber"/>
         </xs:choice>
       </xs:sequence>
       <xs:attributeGroup ref="MetaDataTitleOptional"/>
@@ -424,23 +456,20 @@
         <xs:choice>
           <xs:sequence>
             <xs:choice maxOccurs="unbounded">
-              <xs:group ref="BlockText"/>
-              <xs:group ref="SideBySideNoCaption"/>
-              <xs:group ref="SideBySideGroupNoCaption"/>
+              <xs:group ref="BlockStatementNoCaption"/>
+              <xs:group ref="ParagraphsNoNumber"/>
             </xs:choice>
             <xs:element minOccurs="0" maxOccurs="unbounded" ref="attribution"/>
           </xs:sequence>
           <xs:sequence>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
-              <xs:group ref="BlockText"/>
-              <xs:group ref="SideBySideNoCaption"/>
-              <xs:group ref="SideBySideGroupNoCaption"/>
+              <xs:group ref="BlockStatementNoCaption"/>
+              <xs:group ref="ParagraphsNoNumber"/>
             </xs:choice>
             <xs:element ref="contributors"/>
             <xs:choice minOccurs="0" maxOccurs="unbounded">
-              <xs:group ref="BlockText"/>
-              <xs:group ref="SideBySideNoCaption"/>
-              <xs:group ref="SideBySideGroupNoCaption"/>
+              <xs:group ref="BlockStatementNoCaption"/>
+              <xs:group ref="ParagraphsNoNumber"/>
             </xs:choice>
           </xs:sequence>
         </xs:choice>
@@ -483,6 +512,22 @@
               <xs:sequence>
                 <xs:element minOccurs="0" maxOccurs="unbounded" ref="idx"/>
                 <xs:group maxOccurs="unbounded" ref="BlockDivision"/>
+              </xs:sequence>
+            </xs:extension>
+          </xs:complexContent>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:group name="ParagraphsNoNumber">
+    <xs:sequence>
+      <xs:element name="paragraphs">
+        <xs:complexType>
+          <xs:complexContent>
+            <xs:extension base="MetaDataTitle">
+              <xs:sequence>
+                <xs:element minOccurs="0" maxOccurs="unbounded" ref="idx"/>
+                <xs:group maxOccurs="unbounded" ref="BlockStatementNoCaption"/>
               </xs:sequence>
             </xs:extension>
           </xs:complexContent>
@@ -571,7 +616,6 @@
       <xs:element ref="poem"/>
       <xs:element ref="assemblage"/>
       <xs:element ref="list-of"/>
-      <xs:element ref="geogebra-applet"/>
       <xs:element ref="demonstration"/>
     </xs:choice>
   </xs:group>
@@ -2713,7 +2757,7 @@
         <xs:element ref="term"/>
         <xs:element ref="alert"/>
         <xs:element ref="foreign"/>
-        <xs:element ref="booktitle"/>
+        <xs:element ref="pubtitle"/>
       </xs:choice>
       <xs:choice>
         <xs:element ref="delete"/>
@@ -2788,7 +2832,7 @@
       <xs:group ref="TextLong"/>
     </xs:complexType>
   </xs:element>
-  <xs:element name="booktitle">
+  <xs:element name="pubtitle">
     <xs:complexType mixed="true">
       <xs:group ref="TextLong"/>
     </xs:complexType>
@@ -3207,15 +3251,6 @@
   <xs:element name="solution-list">
     <xs:complexType/>
   </xs:element>
-  <xs:element name="geogebra-applet">
-    <xs:complexType>
-      <xs:sequence minOccurs="0">
-        <xs:element ref="ggbBase64"/>
-        <xs:group ref="Figure"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="ggbBase64" type="xs:string"/>
   <xs:element name="demonstration">
     <xs:complexType>
       <xs:sequence>

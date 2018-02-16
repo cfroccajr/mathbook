@@ -178,7 +178,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- Pointers to realizations of the actual document -->
 <xsl:param name="address.html" select="''" />
 <xsl:param name="address.pdf" select="''" />
-
+<!-- Publisher option to surround emdash -->
+<!-- Default is none, option is thin     -->
+<xsl:param name="emdash.space" select="''" />
 <!-- Whitespace discussion: http://www.xmlplease.com/whitespace               -->
 <!-- Describes source expectations, DO NOT override in subsequent conversions -->
 <!-- Strip whitespace text nodes from container elements                      -->
@@ -604,6 +606,24 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:param name="debug.datedfiles" select="'yes'" />
 <xsl:variable name="b-debug-datedfiles" select="not($debug.datedfiles = 'no')" />
 
+<xsl:variable name="emdash-space">
+    <xsl:choose>
+        <xsl:when test="$emdash.space = ''">
+            <xsl:text>none</xsl:text>
+        </xsl:when>
+        <xsl:when test="$emdash.space = 'thin'">
+            <xsl:text>thin</xsl:text>
+        </xsl:when>
+        <xsl:when test="$emdash.space = 'none'">
+            <xsl:text>none</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+            <xsl:message>MBX:ERROR:   Option for "emdash.space" should be "none" or "thin", not "<xsl:value-of select="$emdash.space" />".  Assuming the default, "none".</xsl:message>
+            <xsl:text>none</xsl:text>
+        </xsl:otherwise>
+    </xsl:choose>
+</xsl:variable>
+
 <!-- ############## -->
 <!-- Entry Template -->
 <!-- ############## -->
@@ -851,6 +871,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!--       Slick device, LaTeX only                                  -->
 <!--       But avoid clobbering numbers on right                     -->
 <!--                                                                 -->
+<!-- (4) display-math-wrapper                                        -->
+<!--       An enclosing environment for any displayed mathematics    -->
+<!--       Necessary for HTML, no-op for LaTeX                       -->
+<!--                                                                 -->
 <!-- This is the HTML "body" template, which other conversions       -->
 <!-- can just call trivially with some implementations of the        -->
 <!-- abstract templates                                              -->
@@ -881,51 +905,57 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
-    <!-- we provide a newline for visual appeal -->
-    <xsl:call-template name="display-math-visual-blank-line" />
-    <xsl:text>\begin{</xsl:text>
-    <xsl:apply-templates select="." mode="displaymath-alignment" />
-    <xsl:text>}</xsl:text>
-    <xsl:apply-templates select="." mode="alignat-columns" />
-    <!-- leading whitespace not present, or stripped -->
-    <xsl:text>&#xa;</xsl:text>
-    <!-- we clean whitespace that is irrelevant to LaTeX so that we -->
-    <!--   (1) avoid LaTeX compilation errors                       -->
-    <!--   (2) avoid spurious blank lines leading to new paragraphs -->
-    <!--   (3) provide human-readable source of high quality        -->
-    <!-- sanitize-latex template does not provide a final newline   -->
-    <!-- and we do not add one here either, since it is inline math -->
-    <!-- MathJax is more tolerant, but readability is still useful  -->
-    <xsl:call-template name="sanitize-latex">
-        <xsl:with-param name="text" select="$raw-latex" />
-    </xsl:call-template>
-    <!-- look ahead to absorb immediate clause-ending punctuation      -->
-    <!-- for original versions, and as a child of a duplicated element -->
-    <!-- but not in a duplicate that is entirely the display math      -->
-    <xsl:if test="$b-original or not($b-top-level)">
-        <xsl:apply-templates select="." mode="get-clause-punctuation" />
-    </xsl:if>
-    <!-- For "men" in LaTeX we supply a \label{},       -->
-    <!-- and for HTML we hard-code the equation number, -->
-    <!-- plus a label if it has an xml:id               -->
-    <!-- This is a no-op for "me"                       -->
-    <xsl:apply-templates select="." mode="tag">
+    <xsl:variable name="complete-latex">
+        <!-- we provide a newline for visual appeal -->
+        <xsl:call-template name="display-math-visual-blank-line" />
+        <xsl:text>\begin{</xsl:text>
+        <xsl:apply-templates select="." mode="displaymath-alignment" />
+        <xsl:text>}</xsl:text>
+        <xsl:apply-templates select="." mode="alignat-columns" />
+        <!-- leading whitespace not present, or stripped -->
+        <xsl:text>&#xa;</xsl:text>
+        <!-- we clean whitespace that is irrelevant to LaTeX so that we -->
+        <!--   (1) avoid LaTeX compilation errors                       -->
+        <!--   (2) avoid spurious blank lines leading to new paragraphs -->
+        <!--   (3) provide human-readable source of high quality        -->
+        <!-- sanitize-latex template does not provide a final newline   -->
+        <!-- and we do not add one here either, since it is inline math -->
+        <!-- MathJax is more tolerant, but readability is still useful  -->
+        <xsl:call-template name="sanitize-latex">
+            <xsl:with-param name="text" select="$raw-latex" />
+        </xsl:call-template>
+        <!-- look ahead to absorb immediate clause-ending punctuation      -->
+        <!-- for original versions, and as a child of a duplicated element -->
+        <!-- but not in a duplicate that is entirely the display math      -->
+        <xsl:if test="$b-original or not($b-top-level)">
+            <xsl:apply-templates select="." mode="get-clause-punctuation" />
+        </xsl:if>
+        <!-- For "men" in LaTeX we supply a \label{},       -->
+        <!-- and for HTML we hard-code the equation number, -->
+        <!-- plus a label if it has an xml:id               -->
+        <!-- This is a no-op for "me"                       -->
+        <xsl:apply-templates select="." mode="tag">
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+        <!-- For "me" and LaTeX output we perhaps sneak  -->
+        <!-- in a \qedhere for tombstone placement       -->
+        <!-- Inappropriate if numbers exist to the right -->
+        <xsl:apply-templates select="." mode="qed-here" />
+        <!-- We add a newline for visually appealing source -->
+        <xsl:text>&#xa;</xsl:text>
+        <xsl:text>\end{</xsl:text>
+        <xsl:apply-templates select="." mode="displaymath-alignment" />
+        <xsl:text>}</xsl:text>
+        <!-- We must return to a paragraph, so                     -->
+        <!-- we can add an unprotected newline                     -->
+        <!-- Note: clause-ending punctuation has been absorbed,    -->
+        <!-- so is not left orphaned at the start of the next line -->
+        <xsl:text>&#xa;</xsl:text>
+    </xsl:variable>
+    <xsl:apply-templates select="." mode="display-math-wrapper">
         <xsl:with-param name="b-original" select="$b-original" />
+        <xsl:with-param name="content" select="$complete-latex" />
     </xsl:apply-templates>
-    <!-- For "me" and LaTeX output we perhaps sneak  -->
-    <!-- in a \qedhere for tombstone placement       -->
-    <!-- Inappropriate if numbers exist to the right -->
-    <xsl:apply-templates select="." mode="qed-here" />
-    <!-- We add a newline for visually appealing source -->
-    <xsl:text>&#xa;</xsl:text>
-    <xsl:text>\end{</xsl:text>
-    <xsl:apply-templates select="." mode="displaymath-alignment" />
-    <xsl:text>}</xsl:text>
-    <!-- We must return to a paragraph, so                     -->
-    <!-- we can add an unprotected newline                     -->
-    <!-- Note: clause-ending punctuation has been absorbed,    -->
-    <!-- so is not left orphaned at the start of the next line -->
-    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <!-- Always an "equation" for an "me"              -->
@@ -953,6 +983,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- (1) display-math-visual-blank-line                             -->
 <!--       Just a line in source to help visually (% for LaTeX)     -->
 <!--                                                                -->
+<!-- (2) display-math-wrapper                                       -->
+<!--       An enclosing environment for any displayed mathematics   -->
+<!--       Necessary for HTML, no-op for LaTeX                      -->
+<!--                                                                -->
 <!-- This is the HTML "body" template, which other conversions      -->
 <!-- can just call trivially with some implementations of the       -->
 <!-- abstract templates                                             -->
@@ -970,36 +1004,42 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <!-- Look across all mrow for 100% no-number rows              -->
     <!-- This just allows for slightly nicer human-readable source -->
     <xsl:variable name="b-nonumbers" select="self::md and not(mrow[@number='yes' or @tag])" />
-    <!-- we provide a newline for visual appeal -->
-    <xsl:call-template name="display-math-visual-blank-line" />
-    <xsl:text>\begin{</xsl:text>
-    <xsl:apply-templates select="." mode="displaymath-alignment">
-        <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
-    </xsl:apply-templates>
-    <xsl:text>}</xsl:text>
-    <xsl:apply-templates select="." mode="alignat-columns" />
-    <!-- leading whitespace not present, or stripped -->
-    <xsl:text>&#xa;</xsl:text>
-    <!-- We don't sanitize, but instead sanitize text versions of  -->
-    <!-- each individual "mrow", while not sanitizing "intertext", -->
-    <!-- which may be a non-text format (eg HTML).                 -->
-    <xsl:apply-templates select="mrow|intertext">
+    <xsl:variable name="complete-latex">
+        <!-- we provide a newline for visual appeal -->
+        <xsl:call-template name="display-math-visual-blank-line" />
+        <xsl:text>\begin{</xsl:text>
+        <xsl:apply-templates select="." mode="displaymath-alignment">
+            <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
+        </xsl:apply-templates>
+        <xsl:text>}</xsl:text>
+        <xsl:apply-templates select="." mode="alignat-columns" />
+        <!-- leading whitespace not present, or stripped -->
+        <xsl:text>&#xa;</xsl:text>
+        <!-- We don't sanitize, but instead sanitize text versions of  -->
+        <!-- each individual "mrow", while not sanitizing "intertext", -->
+        <!-- which may be a non-text format (eg HTML).                 -->
+        <xsl:apply-templates select="mrow|intertext">
+            <xsl:with-param name="b-original" select="$b-original" />
+            <xsl:with-param name="b-top-level" select="$b-top-level" />
+            <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
+        </xsl:apply-templates>
+        <!-- each mrow provides a newline, so unlike  -->
+        <!-- above, we do not need to add one here    -->
+        <xsl:text>\end{</xsl:text>
+        <xsl:apply-templates select="." mode="displaymath-alignment">
+            <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
+        </xsl:apply-templates>
+        <xsl:text>}</xsl:text>
+        <!-- We must return to a paragraph, so                     -->
+        <!-- we can add an unprotected newline                     -->
+        <!-- Note: clause-ending punctuation has been absorbed,    -->
+        <!-- so is not left orphaned at the start of the next line -->
+        <xsl:text>&#xa;</xsl:text>
+    </xsl:variable>
+    <xsl:apply-templates select="." mode="display-math-wrapper">
         <xsl:with-param name="b-original" select="$b-original" />
-        <xsl:with-param name="b-top-level" select="$b-top-level" />
-        <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
+        <xsl:with-param name="content" select="$complete-latex" />
     </xsl:apply-templates>
-    <!-- each mrow provides a newline, so unlike  -->
-    <!-- above, we do not need to add one here    -->
-    <xsl:text>\end{</xsl:text>
-    <xsl:apply-templates select="." mode="displaymath-alignment">
-        <xsl:with-param name="b-nonumbers" select="$b-nonumbers" />
-    </xsl:apply-templates>
-    <xsl:text>}</xsl:text>
-    <!-- We must return to a paragraph, so                     -->
-    <!-- we can add an unprotected newline                     -->
-    <!-- Note: clause-ending punctuation has been absorbed,    -->
-    <!-- so is not left orphaned at the start of the next line -->
-    <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <!-- We sniff around for ampersands, to decide between "align"    -->
@@ -1285,7 +1325,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
     <xsl:call-template name="end-inline-math" />
 </xsl:template>
-
 
 <!-- Intertext -->
 <!-- "intertext" needs wildly different implementations, -->
@@ -7286,9 +7325,9 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
     <!--  -->
     <!-- 2017-12-07  "c" content totally escaped for LaTeX -->
     <xsl:call-template name="deprecation-message">
-        <xsl:with-param name="occurences" select="$document-root//c/@latexsep" />
+        <xsl:with-param name="occurences" select="$document-root//c/@latexsep|$document-root//cd/@latexsep" />
         <xsl:with-param name="date-string" select="'2017-12-07'" />
-        <xsl:with-param name="message" select="'the &quot;@latexsep&quot; attribute on the &quot;c&quot; element is no longer necessary.  It is being ignored, and can be removed'" />
+        <xsl:with-param name="message" select="'the &quot;@latexsep&quot; attribute on the &quot;c&quot; and &quot;cd&quot; elements is no longer necessary.  It is being ignored, and can be removed'" />
     </xsl:call-template>
     <!--  -->
     <!-- 2017-12-21  remove sage/@copy -->
@@ -7310,6 +7349,20 @@ http://andrewmccarthy.ie/2014/11/06/swung-dash-in-latex/
         <xsl:with-param name="occurences" select="$document-root//latex-image-code" />
         <xsl:with-param name="date-string" select="'2017-08-25'" />
         <xsl:with-param name="message" select="'the &quot;latex-image-code&quot; element has been replaced by the functionally equivalent &quot;latex-image&quot;'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2018-02-04  geogebra-applet gone -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//geogebra-applet" />
+        <xsl:with-param name="date-string" select="'2018-02-04'" />
+        <xsl:with-param name="message" select="'the &quot;geogebra-applet&quot; element has been removed, investigate newer &quot;interactive&quot; element'" />
+    </xsl:call-template>
+    <!--  -->
+    <!-- 2018-02-05  booktitle becomes pubtitle -->
+    <xsl:call-template name="deprecation-message">
+        <xsl:with-param name="occurences" select="$document-root//booktitle" />
+        <xsl:with-param name="date-string" select="'2018-02-05'" />
+        <xsl:with-param name="message" select="'the &quot;booktitle&quot; element has been replaced by the functionally equivalent &quot;pubtitle&quot;'" />
     </xsl:call-template>
 </xsl:template>
 

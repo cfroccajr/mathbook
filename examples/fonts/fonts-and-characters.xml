@@ -35,6 +35,15 @@ and apply  xelatex  to  "fonts-and-characters.tex"  in the current working direc
 
 <mathbook>
 
+    <docinfo>
+        <!-- Graphics requiring a  xelatex  engine are included        -->
+        <!-- here.  In particular, we load PSTricks, with extensions,  -->
+        <!-- because our first ever test example seemed to require it. -->
+        <latex-image-preamble>
+        \usepackage{pstricks-add}
+        </latex-image-preamble>
+    </docinfo>
+
     <article xml:id="fonts-and-characters">
         <title>Characters, Fonts, and Languages in MathBook XML</title>
 
@@ -44,7 +53,7 @@ and apply  xelatex  to  "fonts-and-characters.tex"  in the current working direc
             <p>This is a sample MathBook XML document to demonstrate and test different fonts used for different languages.  For PDF output, and best results, process with <c>xelatex</c> (or <c>lualatex</c>, unsupported).  If processed with <c>pdflatex</c>,  be prepared for errors, and maybe try running with the command-line option <c>-interaction batchmode</c> or <c>-interaction nonstopmode</c>.  Commentary here, and in the original source file, should help you track down what might be missing in your system if the <c>xelatex</c> results are not satisfactory.  You can also compare PDF output with the HTML output, which should work well for many different characters tested here.</p>
 
             <p><ol>
-                <li>Your source XML file should always have <cd latexsep="!">&lt;?xml version="1.0" encoding="UTF-8" ?&gt;</cd> as the first line of the file to specify that your file contains Unicode characters.</li>
+                <li>Your source XML file should always have <cd>&lt;?xml version="1.0" encoding="UTF-8" ?&gt;</cd> as the first line of the file to specify that your file contains Unicode characters.</li>
 
                 <li>You will need to determine how to make your operating system, keyboard and editor cooperate to create the Unicode characters you need.  The <url href="http://www.cs.tut.fi/~jkorpela/fui.html8">Full Unicode Input utility</url> can be useful for generating short snippets or you can copy/paste from the source of this document.</li>
 
@@ -317,7 +326,7 @@ and apply  xelatex  to  "fonts-and-characters.tex"  in the current working direc
                         <row><cell><c>002_</c></cell><cell><c>&#x0020;</c></cell><cell><c>&#x0021;</c></cell><cell><c>&#x0022;</c></cell><cell><c>&#x0023;</c></cell><cell><c>&#x0024;</c></cell><cell><c>&#x0025;</c></cell><cell><c>&#x0026;</c></cell><cell><c>&#x0027;</c></cell>
                                                      <cell><c>&#x0028;</c></cell><cell><c>&#x0029;</c></cell><cell><c>&#x002A;</c></cell><cell><c>&#x002B;</c></cell><cell><c>&#x002C;</c></cell><cell><c>&#x002D;</c></cell><cell><c>&#x002E;</c></cell><cell><c>&#x002F;</c></cell></row>
                         <row><cell><c>003_</c></cell><cell><c>&#x0030;</c></cell><cell><c>&#x0031;</c></cell><cell><c>&#x0032;</c></cell><cell><c>&#x0033;</c></cell><cell><c>&#x0034;</c></cell><cell><c>&#x0035;</c></cell><cell><c>&#x0036;</c></cell><cell><c>&#x0037;</c></cell>
-                                                     <cell><c>&#x0038;</c></cell><cell><c>&#x0039;</c></cell><cell><c>&#x003A;</c></cell><cell><c>&#x003B;</c></cell><cell><c>&#x003C;</c></cell><cell><c>&#x003D;</c></cell><cell><c>&#x003E;</c></cell><cell><c latexsep="|">&#x003F;</c></cell></row>
+                                                     <cell><c>&#x0038;</c></cell><cell><c>&#x0039;</c></cell><cell><c>&#x003A;</c></cell><cell><c>&#x003B;</c></cell><cell><c>&#x003C;</c></cell><cell><c>&#x003D;</c></cell><cell><c>&#x003E;</c></cell><cell><c>&#x003F;</c></cell></row>
                         <row><cell><c>004_</c></cell><cell><c>&#x0040;</c></cell><cell><c>&#x0041;</c></cell><cell><c>&#x0042;</c></cell><cell><c>&#x0043;</c></cell><cell><c>&#x0044;</c></cell><cell><c>&#x0045;</c></cell><cell><c>&#x0046;</c></cell><cell><c>&#x0047;</c></cell>
                                                      <cell><c>&#x0048;</c></cell><cell><c>&#x0049;</c></cell><cell><c>&#x004A;</c></cell><cell><c>&#x004B;</c></cell><cell><c>&#x004C;</c></cell><cell><c>&#x004D;</c></cell><cell><c>&#x004E;</c></cell><cell><c>&#x004F;</c></cell></row>
                         <row><cell><c>005_</c></cell><cell><c>&#x0050;</c></cell><cell><c>&#x0051;</c></cell><cell><c>&#x0052;</c></cell><cell><c>&#x0053;</c></cell><cell><c>&#x0054;</c></cell><cell><c>&#x0055;</c></cell><cell><c>&#x0056;</c></cell><cell><c>&#x0057;</c></cell>
@@ -573,5 +582,40 @@ and apply  xelatex  to  "fonts-and-characters.tex"  in the current working direc
             </table>
         </section>
 
+        <section>
+            <title>Graphics</title>
+
+            <introduction>
+                <p>Some graphics languages require the <c>xelatex</c> engine, which this document presumes.</p>
+            </introduction>
+
+            <subsection>
+                <title>PSTricks</title>
+                <idx>PSTricks</idx>
+
+               <p>PSTricks is a <latex /> package for drawing diagrams and pictures, dating back to the days before <init>PDF</init> when PostScript (<init>PS</init>) was king.  Given its history, it does not seem to work easily with the <c>pdflatex</c> engine.  But it will work easily with the <c>xelatex</c> engine.  So we test and document this approach here.</p>
+
+                <p>For the following we add<cd>\usepackage{pstricks-add}</cd> to the <c>latex-image-preamble</c> portion of <c>docinfo</c>.  Your diagrams might be fine with simply the <c>pstricks</c> package.  Following comes from<cd>https://www.tug.org/PSTricks/main.cgi?file=Examples/polar#lemniscate</cd>accessed on 2018-02-05.</p>
+
+                <p>Note that the <c>width</c> attribute is respected for <init>HTML</init> output, but ignored for the <latex /> output.  This situation could change.</p>
+
+                <!-- 2018-02-05:  https://www.tug.org/PSTricks/main.cgi?file=Examples/polar#lemniscate-->
+                <!-- ~/mathbook/mathbook/script/mbx -v -f svg -c latex-image -d /tmp/f ~/mathbook/mathbook/examples/fonts/fonts-and-characters.xml -->
+                <figure>
+                    <caption>A Lemniscate</caption>
+                    <image xml:id="lemniscate-pstricks" width="50%">
+                        <latex-image>
+                        \psset{unit=3cm,opacity=0.4}
+                        \begin{pspicture}(-2,-1)(2,1)
+                          \psgrid[gridcolor=lightgray,subgriddiv=0]
+                          \psset{polarplot,plotpoints=500,linecolor=red,fillcolor=blue!30,fillstyle=solid,linewidth=2pt}
+                          \psplot{-45}{45}{x dup add cos 3 mul sqrt}
+                          \psplot[fillcolor=red!30,fillstyle=solid,linecolor=blue]{135}{225}{x dup add cos 3 mul sqrt}
+                        \end{pspicture}
+                        </latex-image>
+                    </image>
+                </figure>
+            </subsection>
+        </section>
     </article>
 </mathbook>

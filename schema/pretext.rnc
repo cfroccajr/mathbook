@@ -136,12 +136,23 @@
             }
         TitlePage =
             element titlepage {
-                Author+,
+                (
+                    (Author, Author*, Editor*)
+                    |
+                    (Editor, Editor*)
+                ),
                 Credit*,
                 Date?
             }
         Author =
             element author {
+                element personname {TextSimple},
+                element department {TextSimple | Line+}?,
+                element institution {TextSimple | Line+}?,
+                element email {text}?
+            }
+        Editor =
+            element editor {
                 element personname {TextSimple},
                 element department {TextSimple | Line+}?,
                 element institution {TextSimple | Line+}?,
@@ -183,7 +194,7 @@
         Biography = 
             element biography {
                 MetaDataTitleOptional,
-                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
+                (BlockStatementNoCaption | ParagraphsNoNumber)+
             }
         Dedication = 
             element dedication {
@@ -193,14 +204,22 @@
         Acknowledgement = 
             element acknowledgement {
                 MetaDataTitleOptional,
-                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
+                (BlockStatementNoCaption | ParagraphsNoNumber)+
             }
         Preface =
             element preface {
                 MetaDataTitleOptional,
                 (
-                    ((BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+, Attribution*) |
-                    ((BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)*, Contributors, (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)*)
+                    (
+                        (BlockStatementNoCaption | ParagraphsNoNumber)+, 
+                        Attribution*
+                    )
+                    |
+                    (
+                        (BlockStatementNoCaption | ParagraphsNoNumber)*, 
+                        Contributors, 
+                        (BlockStatementNoCaption | ParagraphsNoNumber)*
+                    )
                 )
             }
         
@@ -225,6 +244,12 @@
                 MetaDataTitle,
                 Index*,
                 BlockDivision+
+            }
+        ParagraphsNoNumber =
+            element paragraphs {
+                MetaDataTitle,
+                Index*,
+                BlockStatementNoCaption+
             }
         ParagraphsTitleOptional =
             element paragraphs {
@@ -264,7 +289,7 @@
             Remark | Computation | Theorem | Proof | Definition |
             Axiom | Example | Exercise | Project |
             Poem | Assemblage | ListGenerator |
-            GGB | Demonstration
+            Demonstration
         
         
         Prelude =
@@ -1278,7 +1303,7 @@
             element term {TextLong} |
             element alert {TextLong} |
             element foreign {TextLong} |
-            element booktitle {TextLong}
+            element pubtitle {TextLong}
         
             
         Group |= 
@@ -1426,12 +1451,6 @@
             element solution-list {empty}
         
         
-        GGB = 
-            element geogebra-applet {
-                empty |
-                (element ggbBase64 {text},
-                Figure)
-            }
         Demonstration = element demonstration {
             Title,
             Paragraph,

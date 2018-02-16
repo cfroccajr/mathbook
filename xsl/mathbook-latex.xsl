@@ -3153,6 +3153,17 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>\end{exercise}&#xa;</xsl:text>
 </xsl:template>
 
+<xsl:template match="exercise[myopenmath]">
+    <xsl:text>\begin{exercise}</xsl:text>
+    <xsl:apply-templates select="title" mode="environment-option" />
+    <xsl:apply-templates select="." mode="label"/>
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:apply-templates select="introduction"/>
+    <xsl:apply-templates select="myopenmath" />
+    <xsl:apply-templates select="conclusion"/>
+    <xsl:text>\end{exercise}&#xa;</xsl:text>
+</xsl:template>
+
 <!-- Exercise Group -->
 <!-- We interrupt a description list with short commentary, -->
 <!-- typically instructions for a list of similar exercises -->
@@ -3210,9 +3221,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
     <!-- condition on webwork wrapper or not -->
     <xsl:choose>
-        <xsl:when test="webwork">
+        <xsl:when test="webwork|myopenmath">
             <xsl:apply-templates select="introduction" />
-            <xsl:apply-templates select="webwork" />
+            <xsl:apply-templates select="webwork|myopenmath" />
             <xsl:apply-templates select="conclusion" />
         </xsl:when>
         <xsl:otherwise>
@@ -3588,6 +3599,31 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:text>}&#xa;</xsl:text>
 </xsl:template>
 
+<!-- ################### -->
+<!-- MyOpenMath Problems -->
+<!-- ################### -->
+
+
+<!-- Static MyOpenMath Exercises -->
+<!-- We only try to open an external file when the source -->
+<!-- has a MOM problem (with an id number).  The second   -->
+<!-- argument of the "document()" function is a node and  -->
+<!-- causes the relative file name to resolve according   -->
+<!-- to the location of the XML.   Experiments with the   -->
+<!-- empty node "/.." are interesting.                    -->
+<!-- https://ajwelch.blogspot.co.za/2008/04/relative-paths-and-document-function.html -->
+<!-- http://www.dpawson.co.uk/xsl/sect2/N2602.html#d3862e73 (Point 4) -->
+
+<xsl:template match="myopenmath">
+    <xsl:variable name="filename" select="concat(concat('problems/mom-', @problem), '.xml')" />
+    <xsl:apply-templates select="document($filename, .)/myopenmath/*" />
+</xsl:template>
+
+<xsl:template match="myopenmath/solution">
+    <xsl:apply-templates select="." mode="solution-heading" />
+    <xsl:apply-templates />
+</xsl:template>
+
 
 <!-- Remark Like, Computation Like Example Like, Project Like -->
 <!-- Simpler than theorems, definitions, etc            -->
@@ -3929,11 +3965,21 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 
 <!-- Displayed Single-Line Math ("me", "men") -->
+
+<!-- All displayed mathematics gets wrapped by  -->
+<!-- an abstract template, a necessity for HTML -->
+<!-- output.  It is unnecessary for LaTeX, and  -->
+<!-- so just a copy machine.                    -->
+<xsl:template match="me|men|md|mdn" mode="display-math-wrapper">
+    <xsl:param name="content" />
+    <xsl:value-of select="$content" />
+</xsl:template>
+
+
 <!-- The default template just calls the modal "body"      -->
 <!-- template needed for the HTML knowl production scheme. -->
 <!-- The variables in the "body" template have the right   -->
 <!-- defaults for this application                         -->
-
 <xsl:template match="me|men">
     <xsl:apply-templates select="." mode="body" />
 </xsl:template>
@@ -5097,8 +5143,21 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- Dashes, Hyphen -->
 <!-- http://www.public.asu.edu/~arrows/tidbits/dashes.html -->
+<!-- NB: global $emdash-space-char could go local to "mdash" template -->
+<xsl:variable name="emdash-space-char">
+    <xsl:choose>
+        <xsl:when test="$emdash-space='none'">
+            <xsl:text />
+        </xsl:when>
+        <xsl:when test="$emdash-space='thin'">
+            <xsl:text>\,</xsl:text>
+        </xsl:when>
+    </xsl:choose>
+</xsl:variable>
 <xsl:template match="mdash">
+    <xsl:value-of select="$emdash-space-char" />
     <xsl:text>\textemdash{}</xsl:text>
+    <xsl:value-of select="$emdash-space-char" />
 </xsl:template>
 <xsl:template match="ndash">
     <xsl:text>\textendash{}</xsl:text>
@@ -5185,12 +5244,20 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 
-<!-- Titles of Books and Articles -->
-<xsl:template match="booktitle">
+<!-- Titles of Publications -->
+<!-- 2018-02-05: Deprecate "booktitle" in favor of       -->
+<!-- "pubtitle".  Will still maintain all for a while.   -->
+<!-- CMOS:  When quoted in text or listed in a           -->
+<!-- bibliography, titles of books, journals, plays,     -->
+<!-- and other freestanding works are italicized; titles -->
+<!-- of articles, chapters, and other shorter works      -->
+<!-- are set in roman and enclosed in quotation marks.   -->
+<xsl:template match="pubtitle|booktitle">
     <xsl:text>\textsl{</xsl:text>
     <xsl:apply-templates />
     <xsl:text>}</xsl:text>
 </xsl:template>
+
 <xsl:template match="articletitle">
     <xsl:text>``</xsl:text>
     <xsl:apply-templates />
@@ -5405,21 +5472,44 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
-<!-- Geogebra                                     -->
-<!-- Stock warning, or possible figure processing -->
-<xsl:template match="geogebra-applet[not(ggbBase64)]">
-    <xsl:text>\par\smallskip\centerline{Blank GeoGebra canvas is here in Web version.}\smallskip</xsl:text>
+<!-- ############ -->
+<!-- Interactives -->
+<!-- ############ -->
+
+<!-- Geogebra -->
+<xsl:template match="interactive[@geogebra]" mode="info-text">
+    <xsl:text>Geogebra: \href{https://www.geogebra.org/m/</xsl:text>
+    <xsl:value-of select="@geogebra" />
+    <xsl:text>}{\mono{www.geogebra.org/m/</xsl:text>
+    <xsl:value-of select="@geogebra" />
+    <xsl:text>}}</xsl:text>
 </xsl:template>
 
-<xsl:template match="geogebra-applet[ggbBase64]">
-    <xsl:choose>
-        <xsl:when test="figure">
-            <xsl:apply-templates select="figure" />
-        </xsl:when>
-        <xsl:otherwise>
-            <xsl:text>\par\smallskip\centerline{A GeoGebra demonstration is here in Web version.}\smallskip</xsl:text>
-        </xsl:otherwise>
-    </xsl:choose>
+<!-- Desmos -->
+<xsl:template match="interactive[@desmos]" mode="info-text">
+    <xsl:text>Desmos: \href{https://www.desmos.com/calculator/</xsl:text>
+    <xsl:value-of select="@desmos" />
+    <xsl:text>}{\mono{www.desmos.com/calculator/</xsl:text>
+    <xsl:value-of select="@desmos" />
+    <xsl:text>}}&#xa;</xsl:text>
+</xsl:template>
+
+<!-- CalcPlot3D -->
+<xsl:template match="interactive[@calcplot3d]" mode="info-text">
+    <xsl:text>CalcPlot3D: \href{https://www.monroecc.edu/faculty/paulseeburger/calcnsf/CalcPlot3D/?</xsl:text>
+    <xsl:value-of select="code" />
+    <xsl:text>}{\mono{www.monroecc.edu/faculty/paulseeburger/calcnsf/CalcPlot3D}}&#xa;</xsl:text>
+</xsl:template>
+
+
+<!-- Static interactives -->
+<!-- Contents of "static" element, plus    -->
+<!-- a line of information below, per type -->
+<xsl:template match="interactive[@geogebra]|interactive[@geogebra]|interactive[@calcplot3d]">
+    <xsl:apply-templates select="static/*" />
+    <xsl:text>\centerline{</xsl:text>
+    <xsl:apply-templates select="." mode="info-text" />
+    <xsl:text>}&#xa;</xsl:text>
 </xsl:template>
 
 <!-- JSXGraph -->

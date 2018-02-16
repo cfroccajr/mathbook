@@ -46,6 +46,7 @@ the xsltproc executable.
 <mathbook>
 <!-- <mathbook xml:lang="pt-BR"> -->
 <!-- <mathbook xml:lang="fr-FR"> -->
+<!-- <mathbook xml:lang="cs-CZ"> -->
 
     <!--
     "docinfo" is like metadata, it is necessary technical
@@ -424,7 +425,7 @@ the xsltproc executable.
                 <output>-1/4*sin(4) + 1</output>
             </sage>
 
-            <p>There are integrals you really do not want to evaluate, or you do not want your reader to evaluate.  A Sage cell can be configured for display purposes only <mdash /> you can look but you cannot touch.</p>
+            <p>There are integrals you really do not want to evaluate, or you do not want your reader to evaluate.  A Sage cell can be configured for display purposes only<mdash />you can look but you cannot touch.</p>
 
             <sage type="display">
                 <input>integral(e^(x^2), x)</input>
@@ -766,7 +767,7 @@ the xsltproc executable.
                         </statement>
 
                         <solution>
-                            <p>This is a <q>solution</q> to the exploration.  In practice, you might choose to not make this visible for students, but instead include it as part of some guidance you might provide to instructors (<eg /> an <booktitle>Instructor's Manual</booktitle>).</p>
+                            <p>This is a <q>solution</q> to the exploration.  In practice, you might choose to not make this visible for students, but instead include it as part of some guidance you might provide to instructors (<eg /> an <pubtitle>Instructor's Manual</pubtitle>).</p>
                         </solution>
                     </exploration>
 
@@ -1125,7 +1126,7 @@ the xsltproc executable.
                 </image>
             </figure>
 
-            <p>Lists can have multiple columns.  With <init>HTML</init> items displayed in row-major order (horizontally first) and with <latex /> items are displayed in column-major order (vertically first).  When one order, or the other, becomes workable in both variants, maybe we will be consistent in presentation.  (Note that with just one row, it makes no difference.)  We used it above for the two items <mdash /> derivatives and integrals <mdash /> where each item was a list of its own.  Here are two more examples, one with short snippets and lots of columns, the other with lots of text in paragraphs.<idx xml:id="index-start-multicolumn" finish="index-finish-multicolumn"><h>list</h><h>multicolumn</h></idx><ol cols="5">
+            <p>Lists can have multiple columns.  With <init>HTML</init> items displayed in row-major order (horizontally first) and with <latex /> items are displayed in column-major order (vertically first).  When one order, or the other, becomes workable in both variants, maybe we will be consistent in presentation.  (Note that with just one row, it makes no difference.)  We used it above for the two items<mdash />derivatives and integrals<mdash />where each item was a list of its own.  Here are two more examples, one with short snippets and lots of columns, the other with lots of text in paragraphs.<idx xml:id="index-start-multicolumn" finish="index-finish-multicolumn"><h>list</h><h>multicolumn</h></idx><ol cols="5">
                 <li><p>Red</p></li>
                 <li><p>Blue</p></li>
                 <li><p>Green</p></li>
@@ -1477,7 +1478,7 @@ the xsltproc executable.
                     <mrow>\alpha\neq\beta</mrow>
                 </md>.  We are not suggesting here that using words in place of symbols, as in the first line, is a good practice.  (It is not.)</p>
 
-                <p>The following example is a good stress-test of using the <c>\text{}</c> macro to achieve certain effects.  Note the Unicode left and right smart quotes.  This a contribution from Alex Jordan as part of his work on <booktitle>APEX Calculus</booktitle>.<md>
+                <p>The following example is a good stress-test of using the <c>\text{}</c> macro to achieve certain effects.  Note the Unicode left and right smart quotes.  This a contribution from Alex Jordan as part of his work on <pubtitle>APEX Calculus</pubtitle>.<md>
                     <mrow>y \rightarrow \frac{\sin(0) }{0} \rightarrow {{\text{“}}\atop{}}\frac{0}{0}{{\text{”}}\atop{}}\text{.}</mrow>
                 </md>And another one from Alex.  Note the use of the <c>\mathord{}</c> and <c>\mathrel{}</c> macros to control spacing around the mathematical symbols.  Examine the source to see how the quotation marks have been authored with <init>XML</init> syntax for Unicode characters.<md>
                     <mrow>\zeta(1)=\sum_{n=1}^{\infty}\frac{1}{n}\mathrel{\text{ &#x201c;}\mathord{=}{\text{&#x201d; }}}\prod_{p}\left(\frac{1}{1-1/p}\right)=\prod_{p}\left(\frac{1}{1-p^{-1}}\right)</mrow>
@@ -1616,6 +1617,8 @@ the xsltproc executable.
                 <backtick /></p>
 
                 <p>We also distinguish between abbreviations (<abbr>vs.</abbr>), acronyms (<acro>SCUBA</acro>) and initialisms (<init>XML</init>).  This is a test of the text version of a multiplication symbol: 2<nbsp /><times /><nbsp />4.</p>
+
+                <p>An <term>em dash</term> is the long dash used much like parentheses (not an <term>en dash</term> used to denote a range, such as a range of page numbers).  It should not have spaces around it, but some style guides allow for a <em>thin</em> space, which<mdash />we test right now.  The command line stringparam <c>emdash.space</c> can be set to <c>none</c> or <c>thin</c> to control this.</p>
             </subsection>
 
             <subsection xml:id="section-urls">
@@ -1696,7 +1699,7 @@ the xsltproc executable.
             <subsection>
                 <title>Groupings</title>
 
-                <p>It is possible to make some other groupings like quotations, such as <braces>some <em>emphasized text</em> grouped within braces</braces>, or <brackets>a <booktitle>Book Title</booktitle> inside brackets</brackets>, <angles>some <foreign>foreign words</foreign> inside angle brackets</angles>, or <dblbrackets>just a bit of text within double brackets</dblbrackets>.  Some of these are used extensively by scholars who study texts to note various restorations or deletions.</p>
+                <p>It is possible to make some other groupings like quotations, such as <braces>some <em>emphasized text</em> grouped within braces</braces>, or <brackets>a <pubtitle>Book Title</pubtitle> inside brackets</brackets>, <angles>some <foreign>foreign words</foreign> inside angle brackets</angles>, or <dblbrackets>just a bit of text within double brackets</dblbrackets>.  Some of these are used extensively by scholars who study texts to note various restorations or deletions.</p>
             </subsection>
 
             <subsection>
@@ -1906,7 +1909,7 @@ the xsltproc executable.
                     </image>
                 </figure>
 
-        <p>The pgfplots package was included in <c>docinfo/latex-image-preamble</c>. Here, it is used. Also, here we demonstrate using <c>\amp</c> where you would normally use an ampersand in <latex />. There are known issues with <c>xelatex</c> processing any gradient shading in <c>tikz</c>. To (successfully) create the gradient shading in the 3D image here, you may need to use <c>pdflatex</c> until <latex /> developers resolve this issue.</p>
+                <p>The pgfplots package was included in <c>docinfo/latex-image-preamble</c>. Here, it is used. Also, here we demonstrate using <c>\amp</c> where you would normally use an ampersand in <latex />. There are known issues with <c>xelatex</c> processing any gradient shading in <c>tikz</c>. To (successfully) create the gradient shading in the 3D image here, you may need to use <c>pdflatex</c> until <latex /> developers resolve this issue.</p>
 
                 <figure xml:id="figure-pgfplots-demo">
                     <caption>Sample pgfplots plot</caption>
@@ -1980,6 +1983,9 @@ the xsltproc executable.
                     </image>
                 </figure>
 
+                <p>PSTricks is a <latex /> package for drawing diagrams and pictures, dating back to the days before <init>PDF</init>, when PostScript (<init>PS</init>) was king.  Given its history, it does not seem to work easily with the <c>pdflatex</c> engine.  But it will work easily with the <c>xelatex</c> engine.  We try to keep this present sample document workable with both engines, so we have presented an example of the use of PSTricks in the xelatex-exclusive sample document where we test obscure fonts and characters.  So your best bet is to look there.<idx>PSTricks</idx></p>
+
+                <p>There are suggestions online that <cd>\usepackage[pdf]{pstricks}</cd>along with <cd>pdflatex --shell-escape *.tex</cd> is workable.  We could not make it happen, and a <q>shell escape</q> can be a dangerous security hole.  That said, updates to this approach are welcome.</p>
             </subsection>
 
             <subsection>
@@ -2503,7 +2509,7 @@ the xsltproc executable.
 
         </section>
 
-        <section>
+        <section xml:id="lists">
             <title>List Calisthenics</title>
 
             <subsection>
@@ -2659,7 +2665,7 @@ the xsltproc executable.
                     <title>Group</title>
                     <idx>Group</idx>
                     <statement>
-                        <p><ol label="a)">
+                        <p><idx><h>group</h><h>definition</h></idx><idx><h>paragraph</h><h>initial list</h></idx><ol label="a)">
                             <li>There is a binary operation, denoted <q><m>\cdot</m></q>.</li>
                             <li>The operation is associative.</li>
                             <li>There is an identity element, <m>e</m>.</li>
@@ -2680,7 +2686,7 @@ the xsltproc executable.
             <subsection>
                 <title>List Spacing, I</title>
 
-                <p>This is a short list that ends a subsection, so can be used to address the necessary spacing.  We also test two XML elements separated by a space (which should not go missing).<ol cols="2">
+                <p>This is a short list that ends a subsection, so can be used to address the necessary spacing.  We also test two XML elements separated by a space (which should not go missing).<ol cols="2" label="(a)">
                     <li>One item.</li>
                     <li><em>Two</em> <alert>ducks</alert>.</li>
                     <li>Three items.</li>
@@ -3577,71 +3583,76 @@ the xsltproc executable.
         </section>
 
 
-        <section>
+        <section xml:id="section-interactive">
             <title>Embedded Interactive Elements</title>
+            <idx>interactive elements</idx>
+            <idx>embedded interactive elements</idx>
 
             <introduction>
-                <p>When outputting Web page versions, it is possible to embed a variety of dynamic interactive elements.  In a <latex />/PDF version, these will necessarily need to be replaced by some static substitute, such as a screenshot.  See Section<nbsp /><xref ref="section-sage-cells" /> for the specifics of embedding instances of the Sage Cell Server.</p>
+                <p>When outputting Web page versions, it is possible to embed a variety of dynamic interactive elements.  In a <latex />/PDF version, these will necessarily need to be replaced by some static substitute, such as a screenshot.  See Section<nbsp /><xref ref="section-sage-cells" /> for the specifics of embedding instances of the Sage Cell Server, which is more elaborate, and not entirely similar.</p>
+
+                <p>(2018-02-04) Almost everything in this section is under active development and not stable yet.  Feel free to experiment and make suggestions and requests.</p>
             </introduction>
 
             <subsection>
-                <title>GeoGebra</title>
-                <idx><h>GeoGebra</h></idx>
+                <title>Geogebra Materials</title>
+                <idx>Geogebra materials</idx>
 
-                <p>This first example of a  GeoGebra demonstration has just the controls for moving the three vertices on the circumfrence of the circle.  This is courtesy of Danny Parsons at the African Institute of Mathematical Sciences.  This demo requires Java, which could be problematic.</p>
+                <p>A Geogebra <term>material</term> is something you might use in a class.  It could also be called an interactive demonstration.  Go browsing at <url href="https://www.geogebra.org/materials/">www.geogebra.org/materials</url> and find something appropriate for your project.  Or make an account and create your own.</p>
 
-                <p>GeoGebra will create screenshots of demonstrations in TikZ/<latex /> code.  For a static version, we use this as a figure.</p>
+                <p>Once you find a material that looks instructive, it will be at a <init>URL</init> such as<cd>https://www.geogebra.org/m/KGn2d4Qd</cd> and you want to pick off the identifier on the end, in this case <c>KGn2d4Qd</c>.  Then author<cd>&lt;interactive geogebra="KGn2d4Qd" /&gt;</cd>  At this writing (2018-02-04) you will want to place this inside a <c>figure</c>, with a caption, as we do right now with material <c>KGn2d4Qd</c>.</p>
 
-               <!-- 1. Build a GeoGebra applet                            -->
-               <!-- 2. Save it as an HTML page                            -->
-               <!-- 3. Open the HTML and find the Base64 encoded version  -->
-               <!-- 4. Copy (with no line breaks!) into ggbBase64 element -->
+                <figure>
+                    <caption>Right Triangle Paradox</caption>
+                    <interactive geogebra="KGn2d4Qd">
+                        <static>
+                            <image source="images/right-triangle-paradox.png" />
+                        </static>
+                    </interactive>
+                </figure>
 
-                <geogebra-applet>
-                    <ggbBase64>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</ggbBase64>
-                   <figure>
-                        <caption>GeoGebra demonstration of the Euler Line</caption>
-                        <image xml:id="tikz-geogebra-euler">
-                            <latex-image>
-                            \begin{tikzpicture}
-                            \definecolor{ffqqqq}{rgb}{1,0,0}
-                            \definecolor{uuuuuu}{rgb}{0.27,0.27,0.27}
-                            \definecolor{zzttqq}{rgb}{0.6,0.2,0}
-                            \definecolor{qqqqff}{rgb}{0,0,1}
-                            \clip(-8.34,-5.38) rectangle (14.1,7.73);
-                            \fill[color=zzttqq,fill=zzttqq,fill opacity=0.1] (-4.55,-1.57) -- (1.17,-0.04) -- (-2.89,2.73) -- cycle;
-                            \draw [color=zzttqq] (-4.55,-1.57)-- (1.17,-0.04);
-                            \draw [color=zzttqq] (1.17,-0.04)-- (-2.89,2.73);
-                            \draw [color=zzttqq] (-2.89,2.73)-- (-4.55,-1.57);
-                            \draw(-1.87,-0.13) circle (3.04cm);
-                            \draw [color=ffqqqq,domain=-8.34:14.1] plot(\x,{(-1.96-1.02*\x)/0.44});
-                            \draw (-1.89,6.62) node[anchor=north west] {Euler Line Demonstration};
-                            \fill [color=qqqqff] (-4.55,-1.57) circle (1.5pt);
-                            \draw[color=qqqqff] (-4.32,-1.18) node {$A$};
-                            \fill [color=qqqqff] (1.17,-0.04) circle (1.5pt);
-                            \draw[color=qqqqff] (1.41,0.35) node {$B$};
-                            \fill [color=qqqqff] (-2.89,2.73) circle (1.5pt);
-                            \draw[color=qqqqff] (-2.64,3.11) node {$C$};
-                            \fill [color=uuuuuu] (-2.09,0.37) circle (1.5pt);
-                            \draw[color=uuuuuu] (-0.84,0.74) node {$centeroid$};
-                            \fill [color=uuuuuu] (-1.87,-0.13) circle (1.5pt);
-                            \draw[color=uuuuuu] (-0.24,0.02) node {$circumcentre$};
-                            \fill [color=uuuuuu] (-2.53,1.39) circle (1.5pt);
-                            \draw[color=uuuuuu] (-1.29,1.79) node {$orthocentre$};
-                            \draw[color=ffqqqq] (-3.75,6.23) node {$Euler$};
-                            \end{tikzpicture}
-                            </latex-image>
-                        </image>
-                    </figure>
-                </geogebra-applet>
-
-                <p>With a totally empty <q>geogebra</q> element, you will get a blank slate to play around in.   This is based on an example of embedding GeoGebra into Sage notebooks by Bruce Cohen.  Notice the full suite of menus and tools (in contrast to the previous example).</p>
-
-                <p>Again, this example will run with Java.  GeoGebra demonstrations can be run via HTML5 without invoking Java, but this seems to only be possible in the Chrome browser.  Support will be expanded, especially if requested.</p>
-
-                <geogebra-applet />
-
+                <p>Note that materials hosted at <c>geogebra.org</c> have a non-standard, non-commercial license you must agree to before you can download them as source code.  Perhaps you must forfeit your copyright when you upload a material?  We have not investigated this thoroughly.</p>
             </subsection>
+
+            <subsection>
+                <title>Desmos Graphs</title>
+                <idx>Desmos graphs</idx>
+
+                <p><term>Desmos</term> provides interactive graphing applications.  The following example was created by Ann Cary and made available via the <q>Share</q> function of Desmos.  You can make your own Desmos graph, choose the <q>Share</q> icon, and the <q>Embed</q> option, to get a <init>URL</init> such as <cd>https://www.desmos.com/calculator/ttox1bvxku</cd>  You want to pick off the identifier on the end, in this case <c>ttox1bvxku</c>, then author<cd>&lt;interactive desmos="ttox1bvxku" /&gt;</cd> as we have done here.</p>
+
+                <p>The static image employed in the <latex /> version of this article was obtained by viewing the graph at the Desmos site (<ie />, not the embedded version in the <pretext /> HTML version), and using the Share button to export a <init>PNG</init> image.  In this case, we used a <q>Medium Rectangle</q> and <q>Thick</q> lines.</p>
+
+                <figure>
+                    <caption>Graph of <m>ln(x^2+5)-3</m></caption>
+                    <interactive desmos="ttox1bvxku">
+                        <static>
+                            <image source="images/desmos-graph.png" width="60%"/>
+                        </static>
+                    </interactive>
+                </figure>
+
+                <p>Note that Desmos has extensive <pubtitle>Terms of Service</pubtitle> which include restrictions on commercial uses.</p>
+            </subsection>
+
+            <subsection>
+                <title>CalcPlot3D</title>
+                <idx>CalcPlot3D</idx>
+
+                <p>CalcPlot3D is a Javascript application for creating, visualizing, and understanding plots of 3D surfaces.  So it would be an ideal companion to a book on multivariate calculus, but should be useful in other course of study.</p>
+
+                <p>To use it, find find the <a href="http://www.monroecc.edu/faculty/paulseeburger/calcnsf/CalcPlot3D/">online app version</a> at<cd>http://www.monroecc.edu/faculty/paulseeburger/calcnsf/CalcPlot3D/</cd>Create a plot and adjust the image to a viewpoint and scale you like.  Then, click the menu icon in the upper-left and choose <c>File</c>.  From here you can save a <init>PNG</init> iamge for the static version, but you also want to select <c>Encode View in URL</c>.  Now your browser address bar with a query string that has all the information about your plot so it can reproduced.  Copy everything after the first question-mark to <c>interactive/code</c> element.  Be sure to replace any ampersands by <c>&amp;amp;</c>.  Examine the source to see how this example was authored.</p>
+
+                <figure>
+                    <caption>Plot of <m>f(x,y)=\dfrac{1}{y-x^2}</m> on <m>[-2,2]\times[-2,2]</m></caption>
+                    <interactive calcplot3d="url">
+                        <code language="url">type=z;z=1/(y-x^2);visible=true;umin=-2;umax=2;vmin=-2;vmax=2;grid=30;format=normal;alpha=-1;constcol=rgb(255,0,0);contourcolor=red&amp;type=window;hsrmode=3;anaglyph=-1;center=5.529712854135209,7.349875454071844,3.9244880634856956,1;focus=0,0,0,1;up=-0.26875302682986874,-0.2884991397174344,0.9189886054528014,1;transparent=true;alpha=140;edgeson=true;faceson=true;showbox=true;showaxes=true;showticks=true;perspective=true;centerxpercent=0.5;centerypercent=0.5;rotationsteps=30;autospin=true;xygrid=false;yzgrid=false;xzgrid=false;gridsonbox=true;gridplanes=false;gridcolor=rgb(128,128,128);xmin=-2;xmax=2;ymin=-2;ymax=2;zmin=-4;zmax=4;xscale=1;yscale=1;zscale=1;zcmin=-4;zcmax=4;zoom=0.468667;xscalefactor=1;yscalefactor=1;zscalefactor=1</code>
+                        <static>
+                            <image source="images/calcplot3d.png" width="45%"/>
+                        </static>
+                    </interactive>
+                </figure>
+            </subsection>
+
 
             <subsection>
                 <title>JSXGraph</title>
@@ -4871,7 +4882,7 @@ the xsltproc executable.
             <algorithm xml:id="algorithm-sieve-eratosthenes">
                 <title>Sieve of Eratosthenes</title>
                 <statement>
-                    <p>On input of a positive integer <c>n</c> this algorithm will compute all the prime numbers up to, and including, <c>n</c>.  It was named for Eratosthenes of Cyrene (<circa /> 276 BC<ndash /><circa /> 195/194 BC) by Nicomachus (<circa /> 60<ndash /><circa /> 120 CE) in <booktitle>Introduction to Arithmetic</booktitle>. (<url href="http://en.wikipedia.org/wiki/Sieve_of_Eratosthenes">Wikipedia</url>, 2015)<ol>
+                    <p>On input of a positive integer <c>n</c> this algorithm will compute all the prime numbers up to, and including, <c>n</c>.  It was named for Eratosthenes of Cyrene (<circa /> 276 BC<ndash /><circa /> 195/194 BC) by Nicomachus (<circa /> 60<ndash /><circa /> 120 CE) in <pubtitle>Introduction to Arithmetic</pubtitle>. (<url href="http://en.wikipedia.org/wiki/Sieve_of_Eratosthenes">Wikipedia</url>, 2015)<ol>
                         <li>Input: <c>n</c></li>
                         <li>Form the list of all integers from <c>2</c> to <c>n</c></li>
                         <li>Set <c>p = 2</c></li>
@@ -5104,7 +5115,7 @@ the xsltproc executable.
             <p>In <init>HTML</init> output, a program can be interactive.  This is an example program provided by <url href="http://www.pythontutor.com/">Python Tutor</url>.</p>
 
             <listing xml:id="program-interactive">
-                <caption>An interactive Python program, using <booktitle>Python Tutor</booktitle></caption>
+                <caption>An interactive Python program, using <pubtitle>Python Tutor</pubtitle></caption>
                 <program xml:id="happy" language="python" interactive="pythontutor">
                     <input>
                     # From "Teaching with Python" by John Zelle
@@ -5942,7 +5953,7 @@ the xsltproc executable.
                 </figure>
 
                 <figure>
-                    <caption>A graph defined by data (from Keller and Trotter's <booktitle>Applied Combinatorics</booktitle>)</caption>
+                    <caption>A graph defined by data (from Keller and Trotter's <pubtitle>Applied Combinatorics</pubtitle>)</caption>
                     <sidebyside widths="20% 40%" valign="middle" margins="15%">
                         <pre>
                             graph1.txt
@@ -6581,7 +6592,7 @@ the xsltproc executable.
                 <sidebyside margins="10%">
                     <figure>
                         <title>Sometime Around Midnight</title>
-                        <caption><booktitle>Sometime Around Midnight</booktitle>, Airborne Toxic Event, 2009</caption>
+                        <caption><pubtitle>Sometime Around Midnight</pubtitle>, Airborne Toxic Event, 2009</caption>
                         <video xml:id="airborne-midnight-2" youtube="UYPoMjR6-Ao" start="48" end="100" />
                     </figure>
                 </sidebyside>
@@ -6852,6 +6863,27 @@ the xsltproc executable.
 
         </section>
 
+        <section xml:id="section-myopenmath">
+            <title>MyOpenMath Interactive Problems</title>
+
+            <p>This is a <em>test</em> with two inline exercises containing MyOpenMath (MOM) problems.  None of this is in the schema, and all of it is subject to change.</p>
+
+            <exercise>
+                <title>Negative Numbers and Exponents</title>
+                <introduction>
+                    <p>This is an introduction, providing articulation between the MOM problem and the contents of the text.  For example, you might cross-reference a result or example given previosly.  (HTML Note: The resizer for the knowl is not functioning yet.)</p>
+                </introduction>
+                <myopenmath problem="2572" />
+            </exercise>
+
+            <exercise>
+                <title>A Statistical Test</title>
+                <introduction>
+                    <p>This is an introduction, providing articulation between the MOM problem and the contents of the text.  For example, you might cross-reference a result or example given previosly.  (HTML Note: The resizer for the knowl is not functioning yet.)</p>
+                </introduction>
+                <myopenmath problem="7492" />
+            </exercise>
+        </section>
 
 
         <backmatter xml:id="backmatter">

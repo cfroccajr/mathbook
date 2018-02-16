@@ -2845,7 +2845,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:param name="b-original" select="true()" />
     <xsl:choose>
         <!-- just an unstructured statement, no solutions -->
-        <xsl:when test="not(statement or webwork)">
+        <xsl:when test="not(statement or webwork or myopenmath)">
             <xsl:apply-templates select="*|text()">
                 <xsl:with-param name="b-original" select="$b-original" />
             </xsl:apply-templates>
@@ -2881,6 +2881,12 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <!-- webwork case -->
         <xsl:when test="webwork">
             <xsl:apply-templates select="introduction|webwork|conclusion">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:when>
+        <!-- MyOpenMath case -->
+        <xsl:when test="myopenmath">
+            <xsl:apply-templates select="introduction|myopenmath|conclusion">
                 <xsl:with-param name="b-original" select="$b-original" />
             </xsl:apply-templates>
         </xsl:when>
@@ -3595,7 +3601,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:if test="$block-type = 'xref'">
         <xsl:apply-templates select="." mode="heading-xref-knowl" />
     </xsl:if>
-    <xsl:element name="p">
+    <p>
         <!-- label original -->
         <xsl:if test="$b-original">
             <xsl:attribute name="id">
@@ -3605,7 +3611,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:apply-templates select="*|text()">
             <xsl:with-param name="b-original" select="$b-original" />
         </xsl:apply-templates>
-    </xsl:element>
+    </p>
 </xsl:template>
 
 <!-- Paragraphs, with displays within                   -->
@@ -3622,23 +3628,28 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:if>
     <!-- will later loop over displays within paragraph -->
     <xsl:variable name="displays" select="ul|ol|dl|me|men|md|mdn|cd" />
-    <!-- all interesting nodes of paragraph, before first display -->
-    <xsl:variable name="initial" select="$displays[1]/preceding-sibling::node()[self::* or self::text()]" />
-    <!-- content prior to first display is exceptional  -->
-    <!-- first HTML paragraph gets id, even if empty    -->
-    <!-- otherwise, empty paragraphs are never produced -->
-    <xsl:if test="(count($initial) > 0) or $b-original">
-        <xsl:element name="p">
+    <!-- content prior to first display is exceptional, but if empty,   -->
+    <!-- as indicated by $initial, we do not produce an empty paragraph -->
+    <!-- NB: this means first display must check for no predecessor,    -->
+    <!-- and react accordingly to employ the real paragraph's id.  See  -->
+    <!-- the modal "insert-paragraph-id" jsut below, and its employment -->
+    <!--                                                                -->
+    <!-- all interesting nodes of paragraph, before first display       -->
+    <xsl:variable name="initial" select="$displays[1]/preceding-sibling::*|$displays[1]/preceding-sibling::text()" />
+    <xsl:variable name="initial-content">
+        <xsl:apply-templates select="$initial">
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+    </xsl:variable>
+    <xsl:if test="not($initial-content='')">
+        <p>
             <xsl:if test="$b-original">
-                <!-- alternative for placing id, when empty? -->
                 <xsl:attribute name="id">
                     <xsl:apply-templates select="." mode="internal-id" />
                 </xsl:attribute>
             </xsl:if>
-            <xsl:apply-templates select="$initial">
-                <xsl:with-param name="b-original" select="$b-original" />
-            </xsl:apply-templates>
-        </xsl:element>
+            <xsl:copy-of select="$initial-content" />
+        </p>
     </xsl:if>
     <!-- for each display, output the display, plus trailing content -->
     <xsl:for-each select="$displays">
@@ -3647,11 +3658,11 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             <xsl:with-param name="b-original" select="$b-original" />
         </xsl:apply-templates>
         <!-- look through remainder, all element and text nodes, and the next display -->
-        <xsl:variable name="rightward" select="following-sibling::node()[self::* or self::text()]" />
+        <xsl:variable name="rightward" select="following-sibling::*|following-sibling::text()" />
         <xsl:variable name="next-display" select="following-sibling::*[self::ul or self::ol or self::dl or self::me or self::men or self::md or self::mdn or self::cd][1]" />
         <xsl:choose>
             <xsl:when test="$next-display">
-                <xsl:variable name="leftward" select="$next-display/preceding-sibling::node()[self::* or self::text()]" />
+                <xsl:variable name="leftward" select="$next-display/preceding-sibling::*|$next-display/preceding-sibling::text()" />
                 <!-- device below forms set intersection -->
                 <xsl:variable name="common" select="$rightward[count(. | $leftward) = count($leftward)]" />
                 <!-- No id on these, as the first "p" got that    -->
@@ -3688,6 +3699,32 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:otherwise>
         </xsl:choose>
     </xsl:for-each>
+</xsl:template>
+
+<!-- We drop an empty "leading paragraph" above.  Whatever     -->
+<!-- display comes next needs to grab the id of the enclosing  -->
+<!-- paragraph and place it on the enclosing HTML element of   -->
+<!-- that item.  So these displays should never have an id     -->
+<!-- anyway.  Said differently, a paragraph should be atomic,  -->
+<!-- and you cannot point to its constituents. The $b-original -->
+<!-- flag is passed in by the enclosing paragraph and is not a -->
+<!-- property of the display, per se, but instead is the       -->
+<!-- paragraph's status.                                       -->
+<xsl:template match="ul|ol|dl|me|men|md|mdn|cd" mode="insert-paragraph-id">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:if test="parent::p and $b-original">
+        <xsl:variable name="leading" select="preceding-sibling::*|preceding-sibling::text()" />
+        <xsl:variable name="leading-content">
+            <xsl:apply-templates select="$leading">
+                <xsl:with-param name="b-original" select="$b-original" />
+            </xsl:apply-templates>
+        </xsl:variable>
+        <xsl:if test="$leading-content = ''">
+            <xsl:attribute name="id">
+                <xsl:apply-templates select="parent::p" mode="internal-id" />
+            </xsl:attribute>
+        </xsl:if>
+    </xsl:if>
 </xsl:template>
 
 
@@ -3745,15 +3782,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <xsl:if test="$b-original">
                     <xsl:attribute name="id">
                         <xsl:apply-templates select="." mode="internal-id" />
-                    </xsl:attribute>
-                </xsl:if>
-                <xsl:if test="parent::*[@cols]">
-                    <xsl:attribute name="style">
-                        <xsl:text>width:</xsl:text>
-                        <xsl:value-of select="98 div parent::*/@cols" />
-                        <xsl:text>%;</xsl:text>
-                        <xsl:text> </xsl:text>
-                        <xsl:text>float:left;</xsl:text>
                     </xsl:attribute>
                 </xsl:if>
                 <xsl:apply-templates>
@@ -3966,6 +3994,24 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 
 <!-- Displayed Single-Line Math ("me", "men") -->
+
+<!-- All displayed mathematics is wrapped by a div,    -->
+<!-- motivated in part by the need to sometimes put an -->
+<!-- HTML id on the first item of an exploded logical  -->
+<!-- paragraph into several HTML block level items     -->
+<!-- NB: displaymath might have an intertext           -->
+<!-- becoming "p", thus the necessity of "copy-of"     -->
+<xsl:template match="me|men|md|mdn" mode="display-math-wrapper">
+    <xsl:param name="b-original" select="true()" />
+    <xsl:param name="content" />
+    <div class="displaymath">
+        <xsl:apply-templates select="." mode="insert-paragraph-id" >
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+        <xsl:copy-of select="$content" />
+    </div>
+</xsl:template>
+
 <!-- "men" needs to be handled in the knowl production          -->
 <!-- scheme (but just barely), since it can be duplicated,      -->
 <!-- and there are minor details with trailing punctuation.     -->
@@ -4076,7 +4122,18 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- solution for this.                                  -->
 <!-- NB: "displaymath-alignment" needs to be just right  -->
 <!-- NB: we check the *parent* for alignment information -->
-<!-- TODO: pass duplication flag, reaction unnecessary? -->
+<!-- NB: the out-of-order LaTeX begin/end pairs mean     -->
+<!-- the "p" for intertext are contained in the overall  -->
+<!-- "display-math-wrapper".  It might be advisable      -->
+<!-- to unpack the whole md/mdn into math bits and       -->
+<!-- intertext bits, similar to how paragraphs are       -->
+<!-- exploded.  This will make it harder to locate       -->
+<!-- the id of an enclosing paragraph onto the first     -->
+<!-- component (first in exploded paragraph, first in    -->
+<!-- exploded md/intertext).                             -->
+<!-- An abstact "intertext-wrapper" would allow all      -->
+<!-- this to live in -common.                            -->
+<!-- TODO: pass duplication flag, reaction unnecessary?  -->
 <xsl:template match="intertext">
     <xsl:param name="b-nonumbers" select="false()" />
     <xsl:text>\end{</xsl:text>
@@ -4154,7 +4211,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- enumeration style to HTML list-style-type       -->
 <!-- NB: this is currently inferior to latex version -->
 <!-- NB: all pre-, post-formatting is lost           -->
-<xsl:template match="ol" mode="html-list-label">
+<xsl:template match="ol" mode="html-list-class">
     <xsl:variable name="mbx-format-code">
         <xsl:apply-templates select="." mode="format-code" />
     </xsl:variable>
@@ -4170,7 +4227,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </xsl:choose>
 </xsl:template>
 
-<xsl:template match="ul" mode="html-list-label">
+<xsl:template match="ul" mode="html-list-class">
     <xsl:variable name="mbx-format-code">
         <xsl:apply-templates select="." mode="format-code" />
     </xsl:variable>
@@ -4178,7 +4235,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:when test="$mbx-format-code = 'disc'">disc</xsl:when>
         <xsl:when test="$mbx-format-code = 'circle'">circle</xsl:when>
         <xsl:when test="$mbx-format-code = 'square'">square</xsl:when>
-        <xsl:when test="$mbx-format-code = 'none'">none</xsl:when>
+        <xsl:when test="$mbx-format-code = 'none'">no-marker</xsl:when>
         <xsl:otherwise>
             <xsl:message>MBX:BUG: bad MBX unordered list label format code in HTML conversion</xsl:message>
         </xsl:otherwise>
@@ -4192,22 +4249,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <xsl:template match="ol|ul">
     <xsl:param name="b-original" select="true()" />
     <xsl:element name="{local-name(.)}">
-        <!-- label original -->
-        <xsl:if test="$b-original">
-            <xsl:attribute name="id">
-                <xsl:apply-templates select="." mode="internal-id" />
-            </xsl:attribute>
-        </xsl:if>
-        <xsl:if test="@cols">
-            <xsl:attribute name="class">
+        <xsl:apply-templates select="." mode="insert-paragraph-id" >
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
+        <xsl:attribute name="class">
+            <xsl:apply-templates select="." mode="html-list-class" />
+            <xsl:if test="@cols">
+                <xsl:text> </xsl:text>
                 <!-- HTML-specific, but in mathbook-common.xsl -->
                 <xsl:apply-templates select="." mode="number-cols-CSS-class" />
-            </xsl:attribute>
-        </xsl:if>
-        <xsl:attribute name="style">
-            <xsl:text>list-style-type: </xsl:text>
-                <xsl:apply-templates select="." mode="html-list-label" />
-            <xsl:text>;</xsl:text>
+            </xsl:if>
         </xsl:attribute>
         <xsl:apply-templates select="li">
             <xsl:with-param name="b-original" select="$b-original" />
@@ -4220,13 +4271,10 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- tunnel duplication flag to list items -->
 <xsl:template match="dl">
     <xsl:param name="b-original" select="true()" />
-    <xsl:element name="dl">
-        <!-- label original -->
-        <xsl:if test="$b-original">
-            <xsl:attribute name="id">
-                <xsl:apply-templates select="." mode="internal-id" />
-            </xsl:attribute>
-        </xsl:if>
+    <dl>
+        <xsl:apply-templates select="." mode="insert-paragraph-id" >
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
         <xsl:attribute name="class">
             <xsl:choose>
                 <xsl:when test="@width = 'narrow'">
@@ -4241,7 +4289,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         <xsl:apply-templates select="li">
             <xsl:with-param name="b-original" select="$b-original" />
         </xsl:apply-templates>
-    </xsl:element>
+    </dl>
 </xsl:template>
 
 <!-- ############################# -->
@@ -6334,20 +6382,28 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 <!-- cd is for use in paragraphs, inline -->
 <!-- Unstructured is pure text           -->
 <xsl:template match="cd">
+    <xsl:param name="b-original" select="true()" />
     <xsl:element name="pre">
         <xsl:attribute name="class">
             <xsl:text>code-block tex2jax_ignore</xsl:text>
         </xsl:attribute>
+        <xsl:apply-templates select="." mode="insert-paragraph-id" >
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
         <xsl:value-of select="." />
     </xsl:element>
 </xsl:template>
 
 <!-- cline template is in xsl/mathbook-common.xsl -->
 <xsl:template match="cd[cline]">
+    <xsl:param name="b-original" select="true()" />
     <xsl:element name="pre">
         <xsl:attribute name="class">
             <xsl:text>code-block tex2jax_ignore</xsl:text>
         </xsl:attribute>
+        <xsl:apply-templates select="." mode="insert-paragraph-id" >
+            <xsl:with-param name="b-original" select="$b-original" />
+        </xsl:apply-templates>
         <xsl:apply-templates select="cline" />
     </xsl:element>
 </xsl:template>
@@ -6603,8 +6659,21 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- Dashes, Hyphen -->
 <!-- http://www.cs.tut.fi/~jkorpela/dashes.html -->
+<!-- NB: global $emdash-space-char could go local to "mdash" template -->
+<xsl:variable name="emdash-space-char">
+    <xsl:choose>
+        <xsl:when test="$emdash-space='none'">
+            <xsl:text />
+        </xsl:when>
+        <xsl:when test="$emdash-space='thin'">
+            <xsl:text>&#8201;</xsl:text>
+        </xsl:when>
+    </xsl:choose>
+</xsl:variable>
 <xsl:template match="mdash">
+    <xsl:value-of select="$emdash-space-char"/>
     <xsl:text>&#8212;</xsl:text>
+    <xsl:value-of select="$emdash-space-char"/>
 </xsl:template>
 <xsl:template match="ndash">
     <xsl:text>&#8211;</xsl:text>
@@ -6644,12 +6713,24 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     </span>
 </xsl:template>
 
-<!-- Titles of Books and Articles -->
-<xsl:template match="booktitle">
-    <span class="booktitle"><xsl:apply-templates /></span>
+<!-- Titles of Publications -->
+<!-- 2018-02-05: Deprecate "booktitle" in favor of       -->
+<!-- "pubtitle".  Will still maintain all for a while.   -->
+<!-- CMOS:  When quoted in text or listed in a           -->
+<!-- bibliography, titles of books, journals, plays,     -->
+<!-- and other freestanding works are italicized; titles -->
+<!-- of articles, chapters, and other shorter works      -->
+<!-- are set in roman and enclosed in quotation marks.   -->
+<xsl:template match="pubtitle|booktitle">
+    <span class="booktitle">
+        <xsl:apply-templates />
+    </span>
 </xsl:template>
+
 <xsl:template match="articletitle">
-    <span class="articletitle"><xsl:apply-templates /></span>
+    <span class="articletitle">
+        <xsl:apply-templates />
+    </span>
 </xsl:template>
 
 
@@ -6855,7 +6936,7 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
             </xsl:otherwise>
         </xsl:choose>
     </xsl:variable>
-    <pre class="{$classes}" style="font-size:80%">
+    <pre class="{$classes}">
     <xsl:call-template name="sanitize-text">
         <xsl:with-param name="text" select="input" />
     </xsl:call-template>
@@ -6945,67 +7026,35 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 
-<!-- Geogebra                               -->
-<!-- Empty cell for scribbling if empty tag -->
-<!-- From Bruce Cohen's Sage iFrame demo    -->
-<xsl:template match="geogebra-applet[not(ggbBase64)]">
-<table border="0" width="750">
-<tr><td>
-<applet name="ggbApplet" code="geogebra.GeoGebraApplet" archive="geogebra.jar"
-        codebase="https://www.geogebra.org/webstart/3.2/"
-        width="750" height="550" mayscript="true">
-        <param name="ggbBase64" value="UEsDBBQACAAIAMeAzj4AAAAAAAAAAAAAAAAMAAAAZ2VvZ2VicmEueG1srVQ9b9swEJ2bX0Fwb6yPuEgAyUGbLgGCdnCboRslnaWrKVIgKcfKr++RlGzHcyfq3j3evfugisdjL9kBjEWtSp7eJpyBqnWDqi356Haf7/nj5qZoQbdQGcF22vTClTy/zbjHR9zcfCpsp9+YkIHyivBW8p2QFjizgwHR2A7AfcDFeESJwkw/q79QO3t2xCDPahgpizMjYXXfvKBdzFVIOEh03/GADRgmdV3yL2uSTl+vYBzWQpb8LolIVvLsyklQ7r2dNviulfP0c3ApKpDUgK2bJDB28N48unZEZsziO1CzMo8Vq9CDAsZaYoNC+TqDRCIx9oaN60r+ELIBth2Vsb5LY7Raa9NsJ+ugZ8c/YDSJTnM/gyla2X2YiCXJlHCdBNelFcLAYQvOkWDLxBHOvWwNNh+MZ/tNyzM0aFTuSQxuNGHc+QyFuktOuYwX/FW1EmYspWl0UO8rfdzGJuQx9K9pCFeCoKp90lIbZnzn10SYzyqegeOVnlhJ4CSBMcfwQU/+9CELjHBW8YyjQhWlzZWnS9VpsqRByzzg20hbeio+DLnknI0K3cti0Hbsz6X6Cz/GvqLncbkfp5jp/4pZrK7Wp9iDUSDjkiia7ahHGzcx5gpCGqixJzM65pYIP67fJCCiDbQGFuHxccWGBW9yuYhXcLFaRHgNlrTWjv4SVI/ztUA/uIktPwb/pB09p5JXWHPWCEcU/4dYXd4Nz2W+sfkHUEsHCLTMTSIiAgAAfAQAAFBLAQIUABQACAAIAMeAzj60zE0iIgIAAHwEAAAMAAAAAAAAAAAAAAAAAAAAAABnZW9nZWJyYS54bWxQSwUGAAAAAAEAAQA6AAAAXAIAAAAA"/>
-        <param name="image" value="https://www.geogebra.org/webstart/loading.gif"  />
-        <param name="boxborder" value="false"  />
-        <param name="centerimage" value="true"  />
-        <param name="java_arguments" value="-Xmx512m -Djnlp.packEnabled=true" />
-        <param name="cache_archive" value="geogebra.jar, geogebra_main.jar, geogebra_gui.jar, geogebra_cas.jar, geogebra_export.jar, geogebra_properties.jar" />
-        <param name="cache_version" value="3.2.47.0, 3.2.47.0, 3.2.47.0, 3.2.47.0, 3.2.47.0, 3.2.47.0" />
-        <param name="framePossible" value="true" />
-        <param name="showResetIcon" value="true" />
-        <param name="showAnimationButton" value="true" />
-        <param name="enableRightClick" value="true" />
-        <param name="errorDialogsActive" value="true" />
-        <param name="enableLabelDrags" value="true" />
-        <param name="showMenuBar" value="true" />
-        <param name="showToolBar" value="true" />
-        <param name="showToolBarHelp" value="true" />
-        <param name="showAlgebraInput" value="true" />
-        <param name="allowRescaling" value="true" />
-This is a Java Applet created using GeoGebra from www.geogebra.org - it looks like you don't have Java installed, please go to www.java.com
-</applet>
-</td></tr></table>
+<!-- ############ -->
+<!-- Interactives -->
+<!-- ############ -->
+
+<!-- Interactive goodies to embed, with a general -->
+<!-- interface but specific implementations       -->
+
+<!-- TODO: -->
+<!-- sizing:  width x aspect-ratio -->
+<!-- internal-id:  migrate to iframes -->
+<!-- titles:  migrate to iframes -->
+
+<!-- PTX source will include a "static" -->
+<!-- element, which we routinely ignore -->
+
+<!-- Geogebra -->
+<xsl:template match="interactive[@geogebra]">
+    <iframe scrolling="no" src="https://www.geogebra.org/material/iframe/id/{@geogebra}/width/800/height/450/border/888888/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/false/rc/false/ld/false/sdz/false/ctl/false" width="800px" height="450px" />
 </xsl:template>
 
-<!-- Pre-built Geogebra demonstrations based on ggbBase64 strings -->
-<xsl:template match="geogebra-applet[ggbBase64]">
-<xsl:variable name="ggbBase64"><xsl:value-of select="ggbBase64" /></xsl:variable>
-<table border="0" width="750">
-<tr><td>
-<applet name="ggbApplet" code="geogebra.GeoGebraApplet" archive="geogebra.jar"
-        codebase="https://www.geogebra.org/webstart/3.2/unsigned/"
-        width="750" height="441" mayscript="true">
-        <param name="ggbBase64" value="{$ggbBase64}"/>
-        <param name="image" value="https://www.geogebra.org/webstart/loading.gif"  />
-        <param name="boxborder" value="false"  />
-        <param name="centerimage" value="true"  />
-        <param name="java_arguments" value="-Xmx512m -Djnlp.packEnabled=true" />
-        <param name="cache_archive" value="geogebra.jar, geogebra_main.jar, geogebra_gui.jar, geogebra_cas.jar, geogebra_export.jar, geogebra_properties.jar" />
-        <param name="cache_version" value="3.2.47.0, 3.2.47.0, 3.2.47.0, 3.2.47.0, 3.2.47.0, 3.2.47.0" />
-        <param name="framePossible" value="false" />
-        <param name="showResetIcon" value="false" />
-        <param name="showAnimationButton" value="true" />
-        <param name="enableRightClick" value="false" />
-        <param name="errorDialogsActive" value="true" />
-        <param name="enableLabelDrags" value="false" />
-        <param name="showMenuBar" value="false" />
-        <param name="showToolBar" value="false" />
-        <param name="showToolBarHelp" value="false" />
-        <param name="showAlgebraInput" value="false" />
-        <param name="allowRescaling" value="true" />
-This is a Java Applet created using GeoGebra from www.geogebra.org - it looks like you don't have Java installed, please go to www.java.com
-</applet>
-</td></tr></table>
+<!-- Desmos -->
+<xsl:template match="interactive[@desmos]">
+    <iframe src="https://www.desmos.com/calculator/{@desmos}" width="400" height="600" />
+</xsl:template>
+
+<!-- CalcPlot3D -->
+<xsl:template match="interactive[@calcplot3d]">
+    <xsl:variable name="query-url" select="code" />
+    <iframe src="https://www.monroecc.edu/faculty/paulseeburger/calcnsf/CalcPlot3D/?{$query-url}" width="600" height="800" />
 </xsl:template>
 
 <!-- JSXGraph -->
@@ -7064,6 +7113,26 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <xsl:template name="webwork">
     <link href="{$webwork-server}/webwork2_files/js/apps/MathView/mathview.css" rel="stylesheet" />
     <script type="text/javascript" src="{$webwork-server}/webwork2_files/js/vendor/iframe-resizer/js/iframeResizer.min.js"></script>
+</xsl:template>
+
+<!-- ############################# -->
+<!-- MyOpenMath Embedded Exercises -->
+<!-- ############################# -->
+
+<xsl:template match="myopenmath">
+    <xsl:element name="iframe">
+        <xsl:attribute name="width">
+            <xsl:text>100%</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="src">
+            <xsl:text>https://www.myopenmath.com/embedq.php?id=</xsl:text>
+            <xsl:value-of select="@problem" />
+            <!-- can't disable escaping text of an attribute -->
+            <xsl:text>&amp;resizer=true</xsl:text>
+        </xsl:attribute>
+    </xsl:element>
+    <!-- not so great -->
+    <!-- <script type="text/javascript">iFrameResize({log:true,inPageLinks:true,resizeFrom:'child'})</script> -->
 </xsl:template>
 
 <!--                         -->
@@ -7717,7 +7786,7 @@ This is a Java Applet created using GeoGebra from www.geogebra.org - it looks li
 <!-- ToC, Prev/Up/Next/Annotation buttons  -->
 <!-- Also organized for small screen modes -->
 <xsl:template match="*" mode="primary-navigation">
-    <nav id="primary-navbar" class="navbar" style="">
+    <nav id="primary-navbar" class="navbar">
         <div class="container">
             <!-- Several buttons across the top -->
             <div class="navbar-top-buttons">

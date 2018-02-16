@@ -181,6 +181,12 @@
                 Index*,
                 BlockDivision+
             }
+        ParagraphsNoNumber =
+            element paragraphs {
+                MetaDataTitle,
+                Index*,
+                BlockStatementNoCaption+
+            }
         ParagraphsTitleOptional =
             element paragraphs {
                 MetaDataTitleOptional,
@@ -499,7 +505,7 @@
             element term {TextLong} |
             element alert {TextLong} |
             element foreign {TextLong} |
-            element booktitle {TextLong}
+            element pubtitle {TextLong}
         </fragment>
 
         <fragment xml:id="editing-group">
@@ -639,7 +645,7 @@
 
         <p>Other division blocks include <c>poem</c>, <c>aside</c>, and <c>assemblage</c>.  These are never numbered, but can have titles.  The <c>list-of</c> mechanism is a convenience device to automatically create lists of contents, and so we leave surrounding divisional structure to the author.  A <c>sidebyside</c>, and its cousin, <c>sbsgroup</c>, are strictly layout devices.  The <c>sage</c> element is unique for its possibilities in certain electronic formats.</p>
 
-        <p><c>geogebra-applet</c> and <c>demonstration</c> are slated for removal or an overhaul, and so are in the <xref ref="badbank" text="title" />.  Avoid using them for now.</p>
+        <p><c>demonstration</c> is slated for removal or an overhaul, and so is in the <xref ref="badbank" text="title" />.  Avoid using them for now.</p>
 
         <fragment xml:id="block">
         BlockText =
@@ -656,7 +662,7 @@
             Remark | Computation | Theorem | Proof | Definition |
             Axiom | Example | Exercise | Project |
             Poem | Assemblage | ListGenerator |
-            GGB | Demonstration
+            Demonstration
         </fragment>
 
         <p>Blocks are often structured, in a light way.  Hints, answers, and solutions adorn exercises, examples, and projects.  A simple introduction or conclusion is sometimes useful.  A <c>prelude</c> or <c>postlude</c> are authored inside a block and so are associated with it.  But they are presented before and after the block visually.  An <c>interlude</c> will be used between the statment of a theorem and its proof.</p>
@@ -1769,12 +1775,23 @@
             }
         TitlePage =
             element titlepage {
-                Author+,
+                (
+                    (Author, Author*, Editor*)
+                    |
+                    (Editor, Editor*)
+                ),
                 Credit*,
                 Date?
             }
         Author =
             element author {
+                element personname {TextSimple},
+                element department {TextSimple | Line+}?,
+                element institution {TextSimple | Line+}?,
+                element email {text}?
+            }
+        Editor =
+            element editor {
                 element personname {TextSimple},
                 element department {TextSimple | Line+}?,
                 element institution {TextSimple | Line+}?,
@@ -1816,7 +1833,7 @@
         Biography = 
             element biography {
                 MetaDataTitleOptional,
-                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
+                (BlockStatementNoCaption | ParagraphsNoNumber)+
             }
         Dedication = 
             element dedication {
@@ -1826,14 +1843,22 @@
         Acknowledgement = 
             element acknowledgement {
                 MetaDataTitleOptional,
-                (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+
+                (BlockStatementNoCaption | ParagraphsNoNumber)+
             }
         Preface =
             element preface {
                 MetaDataTitleOptional,
                 (
-                    ((BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)+, Attribution*) |
-                    ((BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)*, Contributors, (BlockText | SideBySideNoCaption | SideBySideGroupNoCaption)*)
+                    (
+                        (BlockStatementNoCaption | ParagraphsNoNumber)+, 
+                        Attribution*
+                    )
+                    |
+                    (
+                        (BlockStatementNoCaption | ParagraphsNoNumber)*, 
+                        Contributors, 
+                        (BlockStatementNoCaption | ParagraphsNoNumber)*
+                    )
                 )
             }
         </fragment>
@@ -2103,12 +2128,6 @@
         <title>Bad Bank</title>
 
         <fragment xml:id="bad-bank">
-        GGB = 
-            element geogebra-applet {
-                empty |
-                (element ggbBase64 {text},
-                Figure)
-            }
         Demonstration = element demonstration {
             Title,
             Paragraph,

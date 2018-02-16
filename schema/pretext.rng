@@ -261,9 +261,23 @@
   </define>
   <define name="TitlePage">
     <element name="titlepage">
-      <oneOrMore>
-        <ref name="Author"/>
-      </oneOrMore>
+      <choice>
+        <group>
+          <ref name="Author"/>
+          <zeroOrMore>
+            <ref name="Author"/>
+          </zeroOrMore>
+          <zeroOrMore>
+            <ref name="Editor"/>
+          </zeroOrMore>
+        </group>
+        <group>
+          <ref name="Editor"/>
+          <zeroOrMore>
+            <ref name="Editor"/>
+          </zeroOrMore>
+        </group>
+      </choice>
       <zeroOrMore>
         <ref name="Credit"/>
       </zeroOrMore>
@@ -274,6 +288,38 @@
   </define>
   <define name="Author">
     <element name="author">
+      <element name="personname">
+        <ref name="TextSimple"/>
+      </element>
+      <optional>
+        <element name="department">
+          <choice>
+            <ref name="TextSimple"/>
+            <oneOrMore>
+              <ref name="Line"/>
+            </oneOrMore>
+          </choice>
+        </element>
+      </optional>
+      <optional>
+        <element name="institution">
+          <choice>
+            <ref name="TextSimple"/>
+            <oneOrMore>
+              <ref name="Line"/>
+            </oneOrMore>
+          </choice>
+        </element>
+      </optional>
+      <optional>
+        <element name="email">
+          <text/>
+        </element>
+      </optional>
+    </element>
+  </define>
+  <define name="Editor">
+    <element name="editor">
       <element name="personname">
         <ref name="TextSimple"/>
       </element>
@@ -391,9 +437,8 @@
       <ref name="MetaDataTitleOptional"/>
       <oneOrMore>
         <choice>
-          <ref name="BlockText"/>
-          <ref name="SideBySideNoCaption"/>
-          <ref name="SideBySideGroupNoCaption"/>
+          <ref name="BlockStatementNoCaption"/>
+          <ref name="ParagraphsNoNumber"/>
         </choice>
       </oneOrMore>
     </element>
@@ -414,9 +459,8 @@
       <ref name="MetaDataTitleOptional"/>
       <oneOrMore>
         <choice>
-          <ref name="BlockText"/>
-          <ref name="SideBySideNoCaption"/>
-          <ref name="SideBySideGroupNoCaption"/>
+          <ref name="BlockStatementNoCaption"/>
+          <ref name="ParagraphsNoNumber"/>
         </choice>
       </oneOrMore>
     </element>
@@ -428,9 +472,8 @@
         <group>
           <oneOrMore>
             <choice>
-              <ref name="BlockText"/>
-              <ref name="SideBySideNoCaption"/>
-              <ref name="SideBySideGroupNoCaption"/>
+              <ref name="BlockStatementNoCaption"/>
+              <ref name="ParagraphsNoNumber"/>
             </choice>
           </oneOrMore>
           <zeroOrMore>
@@ -440,17 +483,15 @@
         <group>
           <zeroOrMore>
             <choice>
-              <ref name="BlockText"/>
-              <ref name="SideBySideNoCaption"/>
-              <ref name="SideBySideGroupNoCaption"/>
+              <ref name="BlockStatementNoCaption"/>
+              <ref name="ParagraphsNoNumber"/>
             </choice>
           </zeroOrMore>
           <ref name="Contributors"/>
           <zeroOrMore>
             <choice>
-              <ref name="BlockText"/>
-              <ref name="SideBySideNoCaption"/>
-              <ref name="SideBySideGroupNoCaption"/>
+              <ref name="BlockStatementNoCaption"/>
+              <ref name="ParagraphsNoNumber"/>
             </choice>
           </zeroOrMore>
         </group>
@@ -496,6 +537,17 @@
       </zeroOrMore>
       <oneOrMore>
         <ref name="BlockDivision"/>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="ParagraphsNoNumber">
+    <element name="paragraphs">
+      <ref name="MetaDataTitle"/>
+      <zeroOrMore>
+        <ref name="Index"/>
+      </zeroOrMore>
+      <oneOrMore>
+        <ref name="BlockStatementNoCaption"/>
       </oneOrMore>
     </element>
   </define>
@@ -583,7 +635,6 @@
       <ref name="Poem"/>
       <ref name="Assemblage"/>
       <ref name="ListGenerator"/>
-      <ref name="GGB"/>
       <ref name="Demonstration"/>
     </choice>
   </define>
@@ -2855,7 +2906,7 @@
       <element name="foreign">
         <ref name="TextLong"/>
       </element>
-      <element name="booktitle">
+      <element name="pubtitle">
         <ref name="TextLong"/>
       </element>
     </choice>
@@ -3251,19 +3302,6 @@
   <define name="SolutionList">
     <element name="solution-list">
       <empty/>
-    </element>
-  </define>
-  <define name="GGB">
-    <element name="geogebra-applet">
-      <choice>
-        <empty/>
-        <group>
-          <element name="ggbBase64">
-            <text/>
-          </element>
-          <ref name="Figure"/>
-        </group>
-      </choice>
     </element>
   </define>
   <define name="Demonstration">

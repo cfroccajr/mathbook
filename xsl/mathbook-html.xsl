@@ -657,9 +657,9 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 
 <!-- The time element has content that is "human readable" time -->
 <xsl:template match="titlepage/date">
-    <time class="date">
+    <div class="date">
         <xsl:apply-templates />
-    </time>
+    </div>
 </xsl:template>
 
 <!-- Authors, Editors, Creditors -->
@@ -1036,9 +1036,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
     <xsl:element name="h1">
         <xsl:attribute name="class">
             <xsl:text>heading</xsl:text>
-        </xsl:attribute>
-         <xsl:attribute name="alt">
-            <xsl:apply-templates select="." mode="tooltip-text" />
         </xsl:attribute>
          <xsl:attribute name="title">
             <xsl:apply-templates select="." mode="tooltip-text" />
@@ -5383,20 +5380,16 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
                 <!-- Hidden content in here                   -->
                 <!-- Turn autoplay on, else two clicks needed -->
                 <iframe id="{$int-id}"
-                        type="text/html"
                         width="{$width}"
                         height="{$height}"
-                        frameborder="0"
                         allowfullscreen=""
                         src="{$source-url-autoplay-on}" />
             </div>
         </xsl:when>
         <xsl:otherwise>
             <iframe id="{$int-id}"
-                    type="text/html"
                     width="{$width}"
                     height="{$height}"
-                    frameborder="0"
                     allowfullscreen=""
                     src="{$source-url}" />
         </xsl:otherwise>
@@ -5446,9 +5439,6 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
         </xsl:attribute>
         <xsl:attribute name="height">
             <xsl:text>500</xsl:text>
-        </xsl:attribute>
-        <xsl:attribute name="frameborder">
-            <xsl:text>0</xsl:text>
         </xsl:attribute>
         <!-- empty attribute, just switch -->
         <xsl:attribute name="allowfullscreen">
@@ -6516,13 +6506,19 @@ along with MathBook XML.  If not, see <http://www.gnu.org/licenses/>.
 </xsl:template>
 
 <!-- Left Angle Bracket -->
+<!-- LEFT ANGLE BRACKET -->
+<!-- U+2329 was once used and caused a validator warning      -->
+<!-- "Text run is not in Unicode Normalization Form C" (NFC)  -->
 <xsl:template match="langle">
-    <xsl:text>&#x2329;</xsl:text>
+    <xsl:text>&#x3008;</xsl:text>
 </xsl:template>
 
 <!-- Right Angle Bracket -->
+<!-- RIGHT ANGLE BRACKET -->
+<!-- U+232A was once used and caused a validator warning      -->
+<!-- "Text run is not in Unicode Normalization Form C" (NFC)  -->
 <xsl:template match="rangle">
-    <xsl:text>&#x232a;</xsl:text>
+    <xsl:text>&#x3009;</xsl:text>
 </xsl:template>
 
 

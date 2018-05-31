@@ -2939,9 +2939,11 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- so we want to accomodate that option, and do so via     -->
 <!-- the localization routines.                              -->
 
-<!-- With modal templates below, the default template does nothing -->
+<!-- With modal templates below, the default template does nothing   -->
+<!-- We include the "creator" element of a theorem/axiom as metadata -->
 <xsl:template match="title" />
 <xsl:template match="subtitle" />
+<xsl:template match="creator" />
 
 <!-- Some items have default titles that make sense         -->
 <!-- Typically these are one-off subdivisions (eg preface), -->
@@ -3043,6 +3045,9 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:value-of select="$last-char and contains($title-ending-punctuation, $last-char)" />
 </xsl:template>
 
+<xsl:template match="&THEOREM-LIKE;|&AXIOM-LIKE;" mode="creator-full">
+    <xsl:apply-templates select="creator/node()" />
+</xsl:template>
 
 <!-- ################ -->
 <!-- Copies of Images -->
@@ -3220,7 +3225,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
     <xsl:variable name="width-fraction">
         <xsl:value-of select="substring-before($width-percent,'%') div 100" />
     </xsl:variable>
-    <xsl:value-of select="$design-width-pixels * $width-fraction" />
+    <xsl:value-of select="round($design-width-pixels * $width-fraction)" />
 </xsl:template>
 
 <!-- Square by default, when asked.  Can override -->
@@ -3238,7 +3243,7 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
             <xsl:with-param name="default-aspect" select="$default-aspect" />
         </xsl:apply-templates>
     </xsl:variable>
-    <xsl:value-of select="$design-width-pixels * $width-fraction div $aspect-ratio" />
+    <xsl:value-of select="round($design-width-pixels * $width-fraction div $aspect-ratio)" />
 </xsl:template>
 
 <!-- The HTML conversion generates "standalone" pages for videos   -->
@@ -3291,16 +3296,18 @@ Neither: A structural node that is simply a (visual) subdivision of a chunk
 <!-- with perhaps intervening groups, like an "exercisegroup" -->
 <xsl:template match="exercises//exercise" mode="type-name">
     <xsl:call-template name="type-name">
-        <xsl:with-param name="string-id" select="'exercises//exercise'" />
+        <xsl:with-param name="string-id" select="'divisionalexercise'" />
     </xsl:call-template>
 </xsl:template>
 
-<!-- Finally, an inline exercise has a division (several possible)         -->
+<!-- Finally, an inline exercise has a division (several possible)        -->
 <!-- as a parent. We just drop in here last if other matches do not       -->
 <!-- succeed, but could improve with a filter or list of specific matches -->
+<!-- This matches the LaTeX environment of the same name, so              -->
+<!-- template to create an "inlineexercise" environment runs smoothly     -->
 <xsl:template match="exercise" mode="type-name">
     <xsl:call-template name="type-name">
-        <xsl:with-param name="string-id" select="'division/exercise'" />
+        <xsl:with-param name="string-id" select="'inlineexercise'" />
     </xsl:call-template>
 </xsl:template>
 
